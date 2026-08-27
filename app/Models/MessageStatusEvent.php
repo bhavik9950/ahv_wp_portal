@@ -18,7 +18,9 @@ class MessageStatusEvent extends Model
 
     public const UPDATED_AT = null;
 
+    // Written only by trusted internal code (status updater / webhook job).
     protected $fillable = [
+        'organization_id',
         'message_id',
         'wamid',
         'status',

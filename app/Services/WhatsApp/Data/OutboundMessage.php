@@ -43,9 +43,55 @@ final readonly class OutboundMessage
         return new self($to, MessageType::Template, ['template' => $template]);
     }
 
+    /**
+     * Build a template message with body variable values.
+     *
+     * @param  list<string>  $bodyParams  ordered values for {{1}}, {{2}}, …
+     * @param  array<string, mixed>|null  $headerParam  e.g. ['type' => 'image', 'image' => ['id' => '...']]
+     */
+    public static function templateWithParams(Recipient $to, string $name, string $language, array $bodyParams = [], ?array $headerParam = null): self
+    {
+        $components = [];
+
+        if ($headerParam !== null) {
+            $components[] = ['type' => 'header', 'parameters' => [$headerParam]];
+        }
+
+        if ($bodyParams !== []) {
+            $components[] = [
+                'type' => 'body',
+                'parameters' => array_map(fn (string $v) => ['type' => 'text', 'text' => $v], $bodyParams),
+            ];
+        }
+
+        return self::template($to, $name, $language, $components);
+    }
+
     /** @return array<string, mixed> */
     public function toGraphPayload(): array
     {
         return ['type' => $this->type->value] + $this->content;
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        return [
+            'to' => $this->to->e164,
+            'type' => $this->type->value,
+            'content' => $this->content,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            new Recipient((string) $data['to']),
+            MessageType::from((string) $data['type']),
+            (array) $data['content'],
+        );
     }
 }

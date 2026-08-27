@@ -15,7 +15,7 @@ class WebhookEvent extends Model
 {
     use HasUlids;
 
-    public const UPDATED_AT = null;
+    public $timestamps = false;
 
     protected $fillable = [
         'organization_id',

@@ -65,11 +65,13 @@ class Message extends Model
         return $this->belongsTo(Contact::class);
     }
 
+    /** @return BelongsTo<WhatsappPhoneNumber, $this> */
     public function phoneNumber(): BelongsTo
     {
         return $this->belongsTo(WhatsappPhoneNumber::class, 'whatsapp_phone_number_id');
     }
 
+    /** @return BelongsTo<WhatsappTemplate, $this> */
     public function template(): BelongsTo
     {
         return $this->belongsTo(WhatsappTemplate::class, 'template_id');

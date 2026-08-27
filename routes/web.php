@@ -6,7 +6,10 @@ use App\Enums\Permission;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\SystemControlController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Whatsapp\MessageController;
 use App\Http\Controllers\Whatsapp\PhoneNumberController;
+use App\Http\Controllers\Whatsapp\TemplateController;
+use App\Http\Controllers\Whatsapp\TestSendController;
 use App\Http\Controllers\Whatsapp\WabaSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +38,22 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('phone-numbers', [PhoneNumberController::class, 'index'])->name('phone-numbers.index');
         Route::post('phone-numbers/sync', [PhoneNumberController::class, 'sync'])->name('phone-numbers.sync');
         Route::post('phone-numbers/{phoneNumber}/default', [PhoneNumberController::class, 'setDefault'])->name('phone-numbers.default');
+
+        // Templates
+        Route::get('templates', [TemplateController::class, 'index'])->name('templates.index');
+        Route::get('templates/create', [TemplateController::class, 'create'])->name('templates.create');
+        Route::post('templates', [TemplateController::class, 'store'])->name('templates.store');
+        Route::post('templates/sync', [TemplateController::class, 'sync'])->name('templates.sync');
+        Route::get('templates/{template}', [TemplateController::class, 'show'])->name('templates.show');
+        Route::delete('templates/{template}', [TemplateController::class, 'destroy'])->name('templates.destroy');
+
+        // Test send
+        Route::get('test-send', [TestSendController::class, 'create'])->name('test-send.create');
+        Route::post('test-send', [TestSendController::class, 'store'])->name('test-send.store');
+
+        // Messages / conversation viewer
+        Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
+        Route::get('messages/{message}', [MessageController::class, 'show'])->name('messages.show');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {

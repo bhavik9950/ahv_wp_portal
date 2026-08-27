@@ -87,6 +87,18 @@ return [
 
         // Retry backoff (seconds) for transient Meta errors, per attempt.
         'retry_backoff' => [5, 30, 120, 600],
+
+        'webhook' => [
+            // Reject unsigned / bad-signature webhooks. Keep true in production.
+            'require_signature' => (bool) env('WABA_WEBHOOK_REQUIRE_SIGNATURE', true),
+            // Consider webhook health stale after this many hours with no events.
+            'stale_after_hours' => (int) env('WABA_WEBHOOK_STALE_HOURS', 24),
+        ],
+
+        // Mock driver: emit simulated delivery-status webhooks after an accepted send.
+        'mock' => [
+            'emit_status_webhooks' => (bool) env('WABA_MOCK_EMIT_WEBHOOKS', true),
+        ],
     ],
 
 ];

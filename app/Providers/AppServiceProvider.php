@@ -47,5 +47,8 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(5)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),
             Limit::perMinute(20)->by((string) $request->ip()),
         ]);
+
+        // Meta can burst webhooks; keep this high but bounded per source IP.
+        RateLimiter::for('whatsapp-webhook', fn (Request $request) => Limit::perMinute(600)->by((string) $request->ip()));
     }
 }
