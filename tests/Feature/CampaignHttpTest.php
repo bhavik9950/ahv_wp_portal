@@ -47,6 +47,19 @@ it('creates a draft and walks the wizard via HTTP', function () {
         ->assertSee('Delivery rate');
 });
 
+it('renders the campaigns index as a DataTable with a labelled status filter', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    Campaign::factory()->for($org)->create(['name' => 'Autumn promo']);
+
+    $this->actingAs($manager)->get(route('whatsapp.campaigns.index'))
+        ->assertOk()
+        ->assertSee('id="campaigns-table"', false)
+        ->assertSee('data-dt-filter', false)
+        ->assertSee('Autumn promo')
+        ->assertSee('Status'); // visible filter label
+});
+
 it('a viewer cannot create or launch campaigns', function () {
     $org = makeOrganization();
     $viewer = makeMember($org, 'viewer');

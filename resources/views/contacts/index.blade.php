@@ -6,27 +6,25 @@
     @php($canExport = auth()->user()->can(\App\Enums\Permission::ContactExport->value))
 
     <div class="space-y-4" x-data="{ selected: [] }">
-        <div class="flex items-center justify-between flex-wrap gap-3">
-            <form method="GET" class="flex flex-wrap gap-2">
-                <input name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Name, phone or email…" class="input input-bordered input-sm">
-                <select name="opt_in" class="select select-bordered select-sm">
+        <div class="flex items-end justify-between flex-wrap gap-3">
+            <div class="flex flex-wrap items-end gap-2">
+                <x-dt-filter label="Opt-in" target="#contacts-table" col-name="Opt-in">
                     <option value="">Any opt-in</option>
                     @foreach ($optInStatuses as $s)
-                        <option value="{{ $s->value }}" @selected(($filters['opt_in'] ?? '') === $s->value)>{{ $s->label() }}</option>
+                        <option value="{{ $s->label() }}">{{ $s->label() }}</option>
                     @endforeach
-                </select>
-                <select name="group" class="select select-bordered select-sm">
+                </x-dt-filter>
+                <x-dt-filter label="Group" target="#contacts-table" col-name="Groups" match="contains">
                     <option value="">Any group</option>
                     @foreach ($groups as $g)
-                        <option value="{{ $g->id }}" @selected(($filters['group'] ?? '') === $g->id)>{{ $g->name }}</option>
+                        <option value="{{ $g->name }}">{{ $g->name }}</option>
                     @endforeach
-                </select>
-                <button class="btn btn-sm">Filter</button>
-            </form>
+                </x-dt-filter>
+            </div>
 
             <div class="flex gap-2">
                 @if ($canExport)
-                    <a href="{{ route('whatsapp.contacts.export', $filters) }}" class="btn btn-sm btn-outline"><i class="ti ti-download"></i> Export</a>
+                    <a href="{{ route('whatsapp.contacts.export') }}" class="btn btn-sm btn-outline"><i class="ti ti-download"></i> Export</a>
                 @endif
                 @if ($canImport)
                     <a href="{{ route('whatsapp.contacts.import.create') }}" class="btn btn-sm btn-outline"><i class="ti ti-file-upload"></i> Import CSV</a>
@@ -51,14 +49,18 @@
             </form>
         @endif
 
+        @if ($capped ?? false)
+            <p class="text-xs opacity-60"><i class="ti ti-info-circle"></i> Showing the most recent {{ number_format($limit) }} contacts. Use an export for the full list.</p>
+        @endif
+
         <div class="card bg-base-100 border border-base-300 overflow-x-auto">
-            <table class="table">
+            <table class="table" id="contacts-table" data-datatable data-order='[[{{ $canManage ? 5 : 4 }},"desc"]]' data-no-sort="{{ $canManage ? '0' : '' }}">
                 <thead><tr>
                     @if ($canManage)<th></th>@endif
                     <th>Name</th><th>Phone</th><th>Opt-in</th><th>Groups</th><th>Added</th>
                 </tr></thead>
                 <tbody>
-                    @forelse ($contacts as $c)
+                    @foreach ($contacts as $c)
                         <tr class="hover">
                             @if ($canManage)
                                 <td><input type="checkbox" class="checkbox checkbox-sm" x-model="selected" value="{{ $c->id }}"></td>
@@ -70,15 +72,11 @@
                                 <span class="badge badge-sm {{ $m[$c->opt_in_status->value] ?? 'badge-ghost' }}">{{ $c->opt_in_status->label() }}</span>
                             </td>
                             <td class="text-xs">{{ $c->groups->pluck('name')->implode(', ') ?: '—' }}</td>
-                            <td class="text-xs opacity-60">{{ $c->created_at?->diffForHumans() }}</td>
+                            <td class="text-xs opacity-60" data-order="{{ $c->created_at?->timestamp ?? 0 }}">{{ $c->created_at?->diffForHumans() }}</td>
                         </tr>
-                    @empty
-                        <tr><td colspan="6" class="text-center opacity-60 py-6">No contacts yet.</td></tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
-
-        {{ $contacts->links() }}
     </div>
 </x-app-layout>

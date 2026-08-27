@@ -65,22 +65,24 @@
         </div>
 
         {{-- Recipient detail --}}
+        <div class="flex flex-wrap items-end gap-2">
+            <x-dt-filter label="Recipient status" target="#recipients-table" :col="2">
+                <option value="">All statuses</option>
+                @foreach (\App\Enums\CampaignRecipientStatus::cases() as $s)
+                    <option value="{{ $s->value }}">{{ ucfirst($s->value) }}</option>
+                @endforeach
+            </x-dt-filter>
+        </div>
+
+        @if ($recipientsCapped ?? false)
+            <p class="text-xs opacity-60"><i class="ti ti-info-circle"></i> Showing {{ number_format($recipientLimit) }} recipients. Export the CSV for the full list.</p>
+        @endif
+
         <div class="card bg-base-100 border border-base-300 overflow-x-auto">
-            <div class="p-3 border-b border-base-300">
-                <form method="GET" class="flex gap-2">
-                    <select name="status" class="select select-bordered select-sm">
-                        <option value="">All statuses</option>
-                        @foreach (\App\Enums\CampaignRecipientStatus::cases() as $s)
-                            <option value="{{ $s->value }}" @selected(($filters['status'] ?? '') === $s->value)>{{ ucfirst($s->value) }}</option>
-                        @endforeach
-                    </select>
-                    <button class="btn btn-sm">Filter</button>
-                </form>
-            </div>
-            <table class="table table-sm">
+            <table class="table table-sm" id="recipients-table" data-datatable data-order='[[2,"asc"]]'>
                 <thead><tr><th>Phone</th><th>Contact</th><th>Status</th><th>Error</th><th>Attempts</th></tr></thead>
                 <tbody>
-                    @forelse ($recipients as $r)
+                    @foreach ($recipients as $r)
                         <tr>
                             <td class="font-mono">+{{ $r->phone_e164 }}</td>
                             <td>{{ $r->contact?->name ?? '—' }}</td>
@@ -89,14 +91,11 @@
                                 <span class="badge badge-sm {{ $rm[$r->status->value] ?? 'badge-ghost' }}">{{ $r->status->value }}</span>
                             </td>
                             <td class="text-xs opacity-70">{{ $r->error_message ?? $r->skip_reason ?? '' }}</td>
-                            <td>{{ $r->attempts }}</td>
+                            <td data-order="{{ $r->attempts }}">{{ $r->attempts }}</td>
                         </tr>
-                    @empty
-                        <tr><td colspan="5" class="text-center opacity-60 py-6">No recipients match.</td></tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
-        {{ $recipients->links() }}
     </div>
 </x-app-layout>

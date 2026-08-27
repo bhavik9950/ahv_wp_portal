@@ -24,6 +24,20 @@ it('creates a contact with a normalized E.164 number', function () {
         ->and($contact->opt_in_status)->toBe(OptInStatus::Unknown);
 });
 
+it('renders the contacts index as a DataTable with labelled filters', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    Contact::factory()->for($org)->create(['name' => 'Asha', 'phone_e164' => '919876500123']);
+
+    $this->actingAs($manager)->get(route('whatsapp.contacts.index'))
+        ->assertOk()
+        ->assertSee('id="contacts-table"', false)
+        ->assertSee('data-dt-filter', false)
+        ->assertSee('Asha')
+        ->assertSee('Opt-in')
+        ->assertSee('Group');
+});
+
 it('rejects a duplicate phone number', function () {
     $org = makeOrganization();
     $manager = makeMember($org, 'campaign_manager');

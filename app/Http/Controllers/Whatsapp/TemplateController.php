@@ -12,7 +12,6 @@ use App\Models\WhatsappTemplate;
 use App\Services\WhatsApp\Templates\TemplateComposer;
 use App\Services\WhatsApp\Templates\TemplateSubmissionService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TemplateController extends Controller
@@ -22,21 +21,13 @@ class TemplateController extends Controller
         private readonly TemplateComposer $composer,
     ) {}
 
-    public function index(Request $request): View
+    public function index(): View
     {
         $this->authorize('viewAny', WhatsappTemplate::class);
 
-        $templates = WhatsappTemplate::query()
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
-            ->when($request->filled('q'), fn ($q) => $q->where('name', 'like', '%'.$request->string('q').'%'))
-            ->orderBy('name')
-            ->paginate(20)
-            ->withQueryString();
-
+        // Search / filter / sort are handled client-side by DataTables.
         return view('whatsapp.templates.index', [
-            'templates' => $templates,
-            'filters' => $request->only(['status', 'category', 'q']),
+            'templates' => WhatsappTemplate::query()->orderBy('name')->get(),
             'hasAccount' => WhatsappBusinessAccount::query()->exists(),
         ]);
     }

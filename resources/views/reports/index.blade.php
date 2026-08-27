@@ -36,27 +36,25 @@
 
         <div class="card bg-base-100 border border-base-300 overflow-x-auto">
             <div class="p-3 border-b border-base-300 font-medium text-sm">Campaign performance</div>
-            <table class="table">
+            <table class="table" id="report-campaigns-table" data-datatable data-page-length="10" data-no-sort="6">
                 <thead><tr><th>Campaign</th><th>Status</th><th>Recipients</th><th>Delivery</th><th>Read</th><th>Failed</th><th></th></tr></thead>
                 <tbody>
-                    @forelse ($campaigns as $row)
+                    @foreach ($campaigns as $row)
                         @php($c = $row['campaign'])
                         <tr class="hover">
                             <td><a class="link link-hover" href="{{ route('whatsapp.campaigns.report', $c) }}">{{ $c->name }}</a></td>
                             <td><span class="badge badge-sm badge-ghost">{{ ucfirst($c->status->value) }}</span></td>
-                            <td class="tabular-nums">{{ number_format($row['total']) }}</td>
-                            <td class="tabular-nums">{{ $row['delivery'] }}%</td>
-                            <td class="tabular-nums">{{ $row['read'] }}%</td>
-                            <td class="tabular-nums">{{ number_format($row['failed']) }}</td>
+                            <td class="tabular-nums" data-order="{{ $row['total'] }}">{{ number_format($row['total']) }}</td>
+                            <td class="tabular-nums" data-order="{{ $row['delivery'] }}">{{ $row['delivery'] }}%</td>
+                            <td class="tabular-nums" data-order="{{ $row['read'] }}">{{ $row['read'] }}%</td>
+                            <td class="tabular-nums" data-order="{{ $row['failed'] }}">{{ number_format($row['failed']) }}</td>
                             <td class="text-right">
                                 @if ($canExport)
                                     <a href="{{ route('whatsapp.campaigns.report.export', $c) }}" class="btn btn-xs btn-ghost"><i class="ti ti-download"></i></a>
                                 @endif
                             </td>
                         </tr>
-                    @empty
-                        <tr><td colspan="7" class="text-center opacity-60 py-6">No campaigns have run yet.</td></tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>

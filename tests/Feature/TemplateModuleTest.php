@@ -22,6 +22,20 @@ it('syncs templates from the mock driver', function () {
         ->and(WhatsappTemplate::where('name', 'order_dispatched_update')->value('status'))->toBe('APPROVED');
 });
 
+it('renders the templates index with the DataTable + labelled filters', function () {
+    $account = wabaAccount();
+    $admin = makeMember($account->organization, 'org_admin');
+    WhatsappTemplate::factory()->forAccount($account)->create(['name' => 'order_ready', 'category' => 'UTILITY']);
+
+    $this->actingAs($admin)->get(route('whatsapp.templates.index'))
+        ->assertOk()
+        ->assertSee('id="templates-table"', false)
+        ->assertSee('data-datatable', false)
+        ->assertSee('data-dt-filter', false)
+        ->assertSee('order_ready')
+        ->assertSee('Category'); // the visible filter label
+});
+
 it('submits a valid template and creates a PENDING local record', function () {
     $account = wabaAccount();
     $admin = makeMember($account->organization, 'org_admin');

@@ -9,12 +9,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Keep DataTables controls readable inside daisyUI cards. */
+/* Make DataTables (v2 "dt" styling) blend into daisyUI. */
 @layer components {
+    .dt-container {
+        @apply text-sm;
+    }
+    .dt-container .dt-layout-row {
+        @apply items-center gap-2 py-2 px-3;
+    }
     table.dataTable tbody td {
         @apply align-middle;
     }
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-        @apply !bg-primary !text-primary-content !border-primary rounded;
+    table.dataTable thead th {
+        @apply text-xs uppercase tracking-wide opacity-70;
+    }
+
+    /* Search box + page-length select → daisyUI inputs */
+    .dt-search input,
+    .dt-length select {
+        @apply input input-bordered input-sm bg-base-100 !important;
+    }
+    .dt-length select {
+        @apply select select-bordered select-sm pr-8 !important;
+    }
+    .dt-search input {
+        @apply w-48 sm:w-64;
+    }
+    .dt-info {
+        @apply text-xs opacity-60;
+    }
+
+    /* Pagination buttons */
+    .dt-paging .dt-paging-button {
+        @apply btn btn-sm btn-ghost !rounded-md;
+    }
+    .dt-paging .dt-paging-button.current {
+        @apply !bg-primary !text-primary-content;
+    }
+    .dt-paging .dt-paging-button.disabled {
+        @apply opacity-40 pointer-events-none;
     }
 }

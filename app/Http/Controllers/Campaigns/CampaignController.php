@@ -36,18 +36,14 @@ class CampaignController extends Controller
         private readonly CampaignVariableRenderer $renderer,
     ) {}
 
-    public function index(Request $request): View
+    public function index(): View
     {
         $this->authorize('viewAny', Campaign::class);
 
-        $campaigns = Campaign::query()
-            ->withCount('recipients')
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
-
-        return view('campaigns.index', ['campaigns' => $campaigns, 'filters' => $request->only('status')]);
+        // Search / filter / sort are handled client-side by DataTables.
+        return view('campaigns.index', [
+            'campaigns' => Campaign::query()->withCount('recipients')->latest()->get(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

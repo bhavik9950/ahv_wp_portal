@@ -22,14 +22,14 @@
         @endif
 
         <div class="card bg-base-100 border border-base-300 overflow-x-auto">
-            <table class="table">
+            <table class="table" id="groups-table" data-datatable data-order='[[0,"asc"]]' data-no-sort="{{ $canManage ? '3' : '' }}">
                 <thead><tr><th>Name</th><th>Description</th><th>Contacts</th>@if ($canManage)<th></th>@endif</tr></thead>
                 <tbody>
-                    @forelse ($groups as $g)
+                    @foreach ($groups as $g)
                         <tr>
                             <td>{{ $g->name }}</td>
                             <td class="opacity-70">{{ $g->description ?: '—' }}</td>
-                            <td>{{ $g->contacts_count }}</td>
+                            <td data-order="{{ $g->contacts_count }}">{{ $g->contacts_count }}</td>
                             @if ($canManage)
                                 <td>
                                     <form method="POST" action="{{ route('whatsapp.groups.destroy', $g) }}" data-confirm="Delete group “{{ $g->name }}”? Contacts are kept.">
@@ -39,9 +39,7 @@
                                 </td>
                             @endif
                         </tr>
-                    @empty
-                        <tr><td colspan="4" class="text-center opacity-60 py-6">No groups yet.</td></tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>

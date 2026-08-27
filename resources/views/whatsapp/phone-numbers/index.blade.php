@@ -21,7 +21,7 @@
             </div>
         @else
             <div class="card bg-base-100 border border-base-300 overflow-x-auto">
-                <table class="table" data-datatable>
+                <table class="table" id="phone-numbers-table" data-datatable data-no-sort="5">
                     <thead>
                         <tr>
                             <th>Number</th><th>Verified name</th><th>Quality</th>
@@ -29,7 +29,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($numbers as $n)
+                        @foreach ($numbers as $n)
                             <tr>
                                 <td class="font-mono">{{ $n->display_phone_number ?? $n->phone_number_id }}</td>
                                 <td>{{ $n->verified_name ?? '—' }}</td>
@@ -51,9 +51,7 @@
                                     @endif
                                 </td>
                             </tr>
-                        @empty
-                            <tr><td colspan="6" class="text-center opacity-60 py-6">No phone numbers synced yet.</td></tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>

@@ -8,31 +8,33 @@ use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Services\Audit\AuditLogger;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CampaignReportController extends Controller
 {
-    public function show(Request $request, Campaign $campaign): View
+    public function show(Campaign $campaign): View
     {
         $this->authorize('view', $campaign);
 
         $live = ! in_array($campaign->status->value, ['completed', 'cancelled', 'failed', 'draft'], true);
         $totals = $live ? $campaign->recomputeTotals() : ($campaign->totals ?? $campaign->recomputeTotals());
 
+        $limit = 2000;
+
         $recipients = $campaign->recipients()
             ->with('contact')
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->orderBy('status')
-            ->paginate(50)
-            ->withQueryString();
+            ->limit($limit + 1)
+            ->get();
 
+        // Search / filter / sort are handled client-side by DataTables.
         return view('campaigns.report', [
             'campaign' => $campaign->load(['template', 'phoneNumber']),
             'totals' => $totals,
-            'recipients' => $recipients,
-            'filters' => $request->only('status'),
+            'recipients' => $recipients->take($limit),
+            'recipientsCapped' => $recipients->count() > $limit,
+            'recipientLimit' => $limit,
             'live' => $live,
             'rates' => $this->rates($totals),
         ]);

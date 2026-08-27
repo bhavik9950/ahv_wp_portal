@@ -13,7 +13,6 @@ use App\Services\Contacts\ContactService;
 use App\Services\Contacts\DuplicateContactException;
 use App\Services\Contacts\OptInService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ContactController extends Controller
@@ -23,29 +22,24 @@ class ContactController extends Controller
         private readonly OptInService $optIn,
     ) {}
 
-    public function index(Request $request): View
+    public function index(): View
     {
         $this->authorize('viewAny', Contact::class);
 
+        $limit = 2000;
+
         $contacts = Contact::query()
             ->with('groups')
-            ->when($request->filled('q'), function ($q) use ($request) {
-                $term = trim((string) $request->string('q'));
-                $q->where(fn ($qq) => $qq
-                    ->where('name', 'like', "%{$term}%")
-                    ->orWhere('email', 'like', "%{$term}%")
-                    ->orWhere('phone_e164', 'like', '%'.preg_replace('/\D/', '', $term).'%'));
-            })
-            ->when($request->filled('opt_in'), fn ($q) => $q->where('opt_in_status', $request->string('opt_in')))
-            ->when($request->filled('group'), fn ($q) => $q->whereHas('groups', fn ($g) => $g->whereKey($request->string('group'))))
             ->latest()
-            ->paginate(25)
-            ->withQueryString();
+            ->limit($limit + 1)
+            ->get();
 
+        // Search / filter / sort are handled client-side by DataTables.
         return view('contacts.index', [
-            'contacts' => $contacts,
+            'contacts' => $contacts->take($limit),
+            'capped' => $contacts->count() > $limit,
+            'limit' => $limit,
             'groups' => ContactGroup::query()->orderBy('name')->get(),
-            'filters' => $request->only(['q', 'opt_in', 'group']),
             'optInStatuses' => OptInStatus::cases(),
         ]);
     }
