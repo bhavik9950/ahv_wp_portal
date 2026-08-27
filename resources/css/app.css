@@ -1,11 +1,20 @@
-@import 'tailwindcss';
+/* Third-party UI CSS (bundled by Vite — no external CDN, matches strict CSP). */
+@import '@tabler/icons-webfont/dist/tabler-icons.min.css';
+@import 'datatables.net-dt/css/dataTables.dataTables.min.css';
+@import 'datatables.net-responsive-dt/css/responsive.dataTables.min.css';
+@import 'toastr/build/toastr.min.css';
+@import 'sweetalert2/dist/sweetalert2.min.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+/* Keep DataTables controls readable inside daisyUI cards. */
+@layer components {
+    table.dataTable tbody td {
+        @apply align-middle;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        @apply !bg-primary !text-primary-content !border-primary rounded;
+    }
 }
