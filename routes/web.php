@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Enums\Permission;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\SystemControlController;
+use App\Http\Controllers\Campaigns\CampaignController;
+use App\Http\Controllers\Campaigns\CampaignReportController;
 use App\Http\Controllers\Contacts\ContactController;
 use App\Http\Controllers\Contacts\ContactExportController;
 use App\Http\Controllers\Contacts\ContactGroupController;
@@ -93,6 +95,21 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::put('groups/{group}', [ContactGroupController::class, 'update'])->name('groups.update');
         Route::delete('groups/{group}', [ContactGroupController::class, 'destroy'])->name('groups.destroy');
         Route::post('groups/assign', [ContactGroupController::class, 'assign'])->name('groups.assign');
+
+        // Campaigns
+        Route::get('campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
+        Route::post('campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+        Route::get('campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaigns.edit');
+        Route::put('campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
+        Route::get('campaigns/{campaign}/audience-preview', [CampaignController::class, 'audiencePreview'])->name('campaigns.audience-preview');
+        Route::post('campaigns/{campaign}/test', [CampaignController::class, 'test'])->name('campaigns.test');
+        Route::post('campaigns/{campaign}/launch', [CampaignController::class, 'launch'])->name('campaigns.launch');
+        Route::post('campaigns/{campaign}/pause', [CampaignController::class, 'pause'])->name('campaigns.pause');
+        Route::post('campaigns/{campaign}/resume', [CampaignController::class, 'resume'])->name('campaigns.resume');
+        Route::post('campaigns/{campaign}/cancel', [CampaignController::class, 'cancel'])->name('campaigns.cancel');
+        Route::delete('campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+        Route::get('campaigns/{campaign}/report', [CampaignReportController::class, 'show'])->name('campaigns.report');
+        Route::get('campaigns/{campaign}/report/export', [CampaignReportController::class, 'export'])->name('campaigns.report.export');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {

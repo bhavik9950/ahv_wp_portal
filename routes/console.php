@@ -17,4 +17,6 @@ Artisan::command('inspire', function () {
  */
 Schedule::job(new SyncTemplatesJob, 'whatsapp-high')->hourly()->withoutOverlapping();
 
+Schedule::command('campaigns:dispatch-due')->everyMinute()->withoutOverlapping();
+
 Schedule::command('queue:prune-failed --hours=168')->daily();

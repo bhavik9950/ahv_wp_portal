@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\WhatsApp;
 
+use App\Enums\CampaignRecipientStatus;
 use App\Enums\MessageStatus;
+use App\Models\CampaignRecipient;
 use App\Models\Message;
 use App\Models\MessageStatusEvent;
 use Illuminate\Support\Carbon;
@@ -40,6 +42,55 @@ final class MessageStatusUpdater
         };
 
         $message->save();
+
+        $this->mirrorToCampaignRecipient($message, $status, $meta);
+    }
+
+    /**
+     * Keep the campaign report live: reflect delivery status onto the recipient
+     * row (forward-only). Sent/failed are handled by the send job; here we add
+     * delivered / read / late failures from webhooks.
+     *
+     * @param  array<string, mixed>  $meta
+     */
+    private function mirrorToCampaignRecipient(Message $message, MessageStatus $status, array $meta): void
+    {
+        if ($message->campaign_recipient_id === null) {
+            return;
+        }
+
+        $target = match ($status) {
+            MessageStatus::Delivered => CampaignRecipientStatus::Delivered,
+            MessageStatus::Read => CampaignRecipientStatus::Read,
+            MessageStatus::Failed => CampaignRecipientStatus::Failed,
+            default => null,
+        };
+
+        if ($target === null) {
+            return;
+        }
+
+        /** @var CampaignRecipient|null $recipient */
+        $recipient = CampaignRecipient::query()->withoutGlobalScopes()->find($message->campaign_recipient_id);
+        if ($recipient === null) {
+            return;
+        }
+
+        // Never regress a read recipient back to delivered.
+        $rank = fn (CampaignRecipientStatus $s) => match ($s) {
+            CampaignRecipientStatus::Sent => 1,
+            CampaignRecipientStatus::Delivered => 2,
+            CampaignRecipientStatus::Read => 3,
+            default => 0,
+        };
+
+        if ($target === CampaignRecipientStatus::Failed || $rank($target) > $rank($recipient->status)) {
+            $recipient->forceFill([
+                'status' => $target->value,
+                'error_code' => $meta['error_code'] ?? $recipient->error_code,
+                'error_message' => $meta['error_message'] ?? $recipient->error_message,
+            ])->save();
+        }
     }
 
     /**

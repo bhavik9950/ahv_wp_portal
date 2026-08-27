@@ -18,6 +18,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property MessageStatus $status
  * @property MessageType $type
  * @property int $organization_id
+ * @property string|null $campaign_id
+ * @property string|null $campaign_recipient_id
+ * @property string|null $contact_id
+ * @property string|null $wamid
+ * @property string|null $error_code
+ * @property string|null $error_message
  */
 class Message extends Model
 {
