@@ -21,6 +21,9 @@ final class WhatsAppRateLimiter
     /** Never send faster than this many per second per number, regardless of config. */
     private const SAFETY_FLOOR_INTERVAL_MS = 40; // ~25/s hard ceiling
 
+    /** Consecutive sends permitted above the strict interval before throttling. */
+    private const BURST_ALLOWANCE = 15;
+
     public function __construct(private readonly Cache $cache) {}
 
     /**
@@ -36,16 +39,26 @@ final class WhatsAppRateLimiter
         $intervalMs = max(self::SAFETY_FLOOR_INTERVAL_MS, $requestedDelaySeconds * 1000, $this->adaptiveIntervalMs($phoneNumberId));
 
         $key = "waba:rl:{$phoneNumberId}:next";
+        $burstKey = "waba:rl:{$phoneNumberId}:burst";
         $now = (int) (microtime(true) * 1000);
         $nextAllowed = (int) $this->cache->get($key, 0);
 
-        if ($now < $nextAllowed) {
-            return max(1, (int) ceil(($nextAllowed - $now) / 1000));
+        if ($now >= $nextAllowed) {
+            $this->cache->put($key, $now + $intervalMs, now()->addMinutes(5));
+            $this->cache->put($burstKey, self::BURST_ALLOWANCE, now()->addSeconds(2));
+
+            return 0;
         }
 
-        $this->cache->put($key, $now + $intervalMs, now()->addMinutes(5));
+        // Allow a small burst above the strict interval before making callers wait.
+        $burst = (int) $this->cache->get($burstKey, 0);
+        if ($burst > 0) {
+            $this->cache->put($burstKey, $burst - 1, now()->addSeconds(2));
 
-        return 0;
+            return 0;
+        }
+
+        return max(1, (int) ceil(($nextAllowed - $now) / 1000));
     }
 
     /** Meta signalled a rate limit — back off this number for a while. */

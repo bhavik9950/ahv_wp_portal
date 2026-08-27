@@ -56,8 +56,8 @@ return new class extends Migration
             $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['whatsapp_business_account_id', 'phone_number_id']);
-            $table->index(['organization_id', 'status']);
+            $table->unique(['whatsapp_business_account_id', 'phone_number_id'], 'wa_phone_numbers_account_number_unique');
+            $table->index(['organization_id', 'status'], 'wa_phone_numbers_org_status_index');
         });
     }
 

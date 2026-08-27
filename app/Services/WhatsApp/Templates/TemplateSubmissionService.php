@@ -42,24 +42,23 @@ final class TemplateSubmissionService
         $creds = $this->manager->credentialsFor($account);
         $response = $this->manager->driver()->createTemplate($creds, $definition);
 
-        $template = WhatsappTemplate::query()->withoutGlobalScopes()->updateOrCreate(
-            [
-                'whatsapp_business_account_id' => $account->getKey(),
-                'name' => $data['name'],
-                'language' => $data['language'],
-            ],
-            [
-                'organization_id' => $account->organization_id,
-                'category' => $definition['category'],
-                'status' => TemplateStatus::fromMeta($response['status'] ?? 'PENDING')->value,
-                'meta_template_id' => $response['id'] ?? null,
-                'components' => $components,
-                'raw_meta' => $response,
-                'rejection_reason' => null,
-                'created_by' => Auth::id(),
-                'last_synced_at' => now(),
-            ],
-        );
+        $template = WhatsappTemplate::query()->withoutGlobalScopes()->firstOrNew([
+            'whatsapp_business_account_id' => $account->getKey(),
+            'name' => $data['name'],
+            'language' => $data['language'],
+        ]);
+
+        $template->forceFill([
+            'organization_id' => $account->organization_id,
+            'category' => $definition['category'],
+            'status' => TemplateStatus::fromMeta($response['status'] ?? 'PENDING')->value,
+            'meta_template_id' => $response['id'] ?? null,
+            'components' => $components,
+            'raw_meta' => $response,
+            'rejection_reason' => null,
+            'created_by' => Auth::id(),
+            'last_synced_at' => now(),
+        ])->save();
 
         $this->audit->log('template.submitted', $template, [
             'name' => $template->name,

@@ -12,7 +12,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $organization_id
+ * @property string $whatsapp_business_account_id
+ * @property string $name
+ * @property string $language
+ * @property string|null $category
+ * @property string $status
+ * @property array<int, array<string, mixed>>|null $components
+ * @property array<string, mixed>|null $raw_meta
+ * @property string|null $rejection_reason
+ * @property Carbon|null $last_synced_at
+ */
 class WhatsappTemplate extends Model
 {
     use BelongsToOrganization;
@@ -23,6 +36,7 @@ class WhatsappTemplate extends Model
     use HasUlids, SoftDeletes;
 
     protected $fillable = [
+        'whatsapp_business_account_id',
         'name',
         'language',
         'category',

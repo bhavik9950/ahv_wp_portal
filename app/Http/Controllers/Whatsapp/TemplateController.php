@@ -67,7 +67,8 @@ class TemplateController extends Controller
     {
         $this->authorize('view', $template);
 
-        $body = collect($template->components)->firstWhere('type', 'BODY')['text'] ?? '';
+        $bodyComponent = collect($template->components ?? [])->firstWhere('type', 'BODY');
+        $body = is_array($bodyComponent) ? (string) ($bodyComponent['text'] ?? '') : '';
 
         return view('whatsapp.templates.show', [
             'template' => $template,

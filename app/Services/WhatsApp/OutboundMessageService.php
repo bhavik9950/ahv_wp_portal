@@ -6,7 +6,6 @@ namespace App\Services\WhatsApp;
 
 use App\Enums\ErrorCategory;
 use App\Enums\MessageStatus;
-use App\Enums\MessageType;
 use App\Jobs\EmitMockStatusWebhookJob;
 use App\Models\Message;
 use App\Models\WhatsappPhoneNumber;
@@ -153,9 +152,13 @@ final class OutboundMessageService
         if (! config('services.whatsapp.mock.emit_status_webhooks', true)) {
             return;
         }
-        if ($message->type === MessageType::Text || $message->wamid !== null) {
-            EmitMockStatusWebhookJob::dispatch($message->getKey())->afterCommit();
+        if ($message->wamid === null) {
+            return;
         }
+
+        // Mock driver + dev only: run inline so the delivered/read progression is
+        // visible without a queue worker. The real driver relies on Meta webhooks.
+        EmitMockStatusWebhookJob::dispatchSync($message->getKey());
     }
 
     private function isUniqueViolation(QueryException $e): bool

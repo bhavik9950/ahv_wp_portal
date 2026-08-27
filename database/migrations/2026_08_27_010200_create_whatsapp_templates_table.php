@@ -30,9 +30,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['whatsapp_business_account_id', 'name', 'language']);
-            $table->index(['organization_id', 'status']);
-            $table->index(['organization_id', 'category']);
+            $table->unique(['whatsapp_business_account_id', 'name', 'language'], 'wa_templates_account_name_lang_unique');
+            $table->index(['organization_id', 'status'], 'wa_templates_org_status_index');
+            $table->index(['organization_id', 'category'], 'wa_templates_org_category_index');
         });
     }
 

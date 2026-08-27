@@ -14,7 +14,6 @@ use App\Services\WhatsApp\Data\OutboundMessage;
 use App\Services\WhatsApp\Data\Recipient;
 use App\Services\WhatsApp\OutboundMessageService;
 use App\Services\WhatsApp\RateLimitedException;
-use App\Services\WhatsApp\Templates\TemplateComposer;
 use App\Services\WhatsApp\WhatsAppSendingDisabledException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
@@ -24,7 +23,6 @@ class TestSendController extends Controller
 {
     public function __construct(
         private readonly OutboundMessageService $sender,
-        private readonly TemplateComposer $composer,
     ) {}
 
     public function create(): View
