@@ -29,9 +29,35 @@ class TestSendController extends Controller
     {
         $this->authorize('create', Message::class);
 
+        $templates = WhatsappTemplate::query()
+            ->where('status', TemplateStatus::Approved->value)
+            ->orderBy('name')
+            ->get();
+
         return view('whatsapp.test-send.create', [
             'numbers' => WhatsappPhoneNumber::query()->orderByDesc('is_default')->get(),
-            'templates' => WhatsappTemplate::query()->where('status', TemplateStatus::Approved->value)->orderBy('name')->get(),
+            'templates' => $templates,
+            // Structure + example data the preview panel reads (CSP-safe JSON blob).
+            'templateData' => $templates->mapWithKeys(function (WhatsappTemplate $t): array {
+                $examples = $t->bodyVariableExamples();
+
+                return [$t->getKey() => [
+                    'name' => $t->name,
+                    'language' => $t->language,
+                    'category' => $t->category,
+                    'header' => $t->headerFormat() === null ? null : [
+                        'format' => $t->headerFormat(),
+                        'text' => $t->headerText(),
+                    ],
+                    'body' => $t->bodyText(),
+                    'footer' => $t->footerText(),
+                    'buttons' => $t->buttonLabels(),
+                    'variables' => array_map(fn (int $n): array => [
+                        'index' => $n,
+                        'example' => $examples[$n] ?? null,
+                    ], $t->variablePlaceholders()),
+                ]];
+            }),
         ]);
     }
 
@@ -60,7 +86,10 @@ class TestSendController extends Controller
                     $recipient,
                     $template->name,
                     $template->language,
-                    array_values($request->validated('variables', [])),
+                    array_map(
+                        static fn ($v): string => (string) $v,
+                        array_values((array) $request->validated('variables', [])),
+                    ),
                 )
                 : OutboundMessage::text($recipient, (string) $request->validated('body'));
 
@@ -80,9 +109,15 @@ class TestSendController extends Controller
             }
         }
 
+        $failed = collect($results)->reject(
+            fn ($r) => in_array($r['status'], ['sent', 'queued', 'delivered', 'read'], true),
+        )->count();
+
         return back()->with('test_send_results', $results)->with('flash_notify', [
-            'type' => 'info',
-            'message' => 'Test send processed for '.count($results).' number(s).',
+            'type' => $failed === 0 ? 'success' : ($failed === count($results) ? 'error' : 'warning'),
+            'message' => $failed === 0
+                ? 'Test message sent to '.count($results).' number(s).'
+                : "{$failed} of ".count($results).' test send(s) failed — see results below.',
         ]);
     }
 }

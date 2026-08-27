@@ -67,12 +67,92 @@ class WhatsappTemplate extends Model
         return $this->statusEnum()->isSendable();
     }
 
-    /** Distinct {{n}} placeholders referenced anywhere in the components. */
+    /** Distinct {{n}} placeholders referenced anywhere in the components, sorted. */
     public function variablePlaceholders(): array
     {
         $json = json_encode($this->components) ?: '';
         preg_match_all('/\{\{\s*(\d+)\s*\}\}/', $json, $matches);
 
-        return array_values(array_unique(array_map('intval', $matches[1])));
+        $numbers = array_values(array_unique(array_map('intval', $matches[1])));
+        sort($numbers);
+
+        return $numbers;
+    }
+
+    /**
+     * One component by its Meta type (HEADER / BODY / FOOTER / BUTTONS).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function component(string $type): ?array
+    {
+        foreach ($this->components ?? [] as $component) {
+            if (strtoupper((string) ($component['type'] ?? '')) === strtoupper($type)) {
+                return $component;
+            }
+        }
+
+        return null;
+    }
+
+    /** TEXT / IMAGE / VIDEO / DOCUMENT / LOCATION, or null when there is no header. */
+    public function headerFormat(): ?string
+    {
+        $header = $this->component('HEADER');
+
+        return $header === null ? null : strtoupper((string) ($header['format'] ?? 'TEXT'));
+    }
+
+    public function headerText(): ?string
+    {
+        $header = $this->component('HEADER');
+
+        return $this->headerFormat() === 'TEXT' ? ($header['text'] ?? null) : null;
+    }
+
+    public function bodyText(): ?string
+    {
+        return $this->component('BODY')['text'] ?? null;
+    }
+
+    public function footerText(): ?string
+    {
+        return $this->component('FOOTER')['text'] ?? null;
+    }
+
+    /**
+     * Button labels in order (quick-reply, URL, phone, …).
+     *
+     * @return list<string>
+     */
+    public function buttonLabels(): array
+    {
+        $buttons = $this->component('BUTTONS')['buttons'] ?? [];
+
+        return array_values(array_filter(array_map(
+            static fn ($b) => is_array($b) ? trim((string) ($b['text'] ?? '')) : '',
+            is_array($buttons) ? $buttons : [],
+        )));
+    }
+
+    /**
+     * Meta's example value for each body {{n}}, e.g. [1 => 'bhavi', 2 => 'ORD-42'].
+     *
+     * @return array<int, string>
+     */
+    public function bodyVariableExamples(): array
+    {
+        $example = $this->component('BODY')['example']['body_text'][0] ?? [];
+
+        if (! is_array($example)) {
+            return [];
+        }
+
+        $map = [];
+        foreach (array_values($example) as $i => $value) {
+            $map[$i + 1] = (string) $value;
+        }
+
+        return $map;
     }
 }

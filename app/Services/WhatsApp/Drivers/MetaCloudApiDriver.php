@@ -92,6 +92,37 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         $this->throwUnlessOk($response);
     }
 
+    /**
+     * Discover the WhatsApp Business Account id(s) the access token can manage,
+     * via debug_token's granular scopes. Used to auto-configure from just a
+     * token + phone number id.
+     *
+     * @return list<string>
+     */
+    public function discoverWabaIds(WabaCredentials $creds): array
+    {
+        $response = $this->http
+            ->baseUrl($creds->graphBase())
+            ->acceptJson()
+            ->timeout(20)
+            ->get('/debug_token', ['input_token' => $creds->accessToken, 'access_token' => $creds->accessToken]);
+
+        if ($response->failed()) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ((array) $response->json('data.granular_scopes', []) as $scope) {
+            if (in_array($scope['scope'] ?? '', ['whatsapp_business_management', 'whatsapp_business_messaging'], true)) {
+                foreach ((array) ($scope['target_ids'] ?? []) as $id) {
+                    $ids[] = (string) $id;
+                }
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
     public function uploadMedia(WabaCredentials $creds, string $contents, string $mimeType, string $filename): string
     {
         if (blank($creds->phoneNumberId)) {

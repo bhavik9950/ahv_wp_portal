@@ -14,6 +14,12 @@ document.addEventListener('submit', async (event) => {
 
     if (await window.confirmAction({ text, confirmButtonText: 'Yes, proceed' })) {
         form.dataset.confirmed = '1';
-        form.submit();
+        // requestSubmit (not submit) re-dispatches the submit event so other
+        // handlers — e.g. the data-loading busy state — still run.
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
     }
 });

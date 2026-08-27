@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Message;
 use App\Models\MessageStatusEvent;
 use App\Models\User;
+use App\Support\TenantContext;
 
 it('lists messages for a viewer and links to detail', function () {
     $org = makeOrganization();
@@ -38,14 +39,32 @@ it('shows a message with its status timeline', function () {
         ->assertSee('Read');
 });
 
+it('resolves route-model binding after the tenant is bound (not before)', function () {
+    $org = makeOrganization();
+    $viewer = makeMember($org, 'viewer');
+    $message = Message::factory()->for($org)->sent()->create();
+
+    // Simulate a fresh request: nothing is bound until the middleware runs.
+    app(TenantContext::class)->clear();
+
+    $this->actingAs($viewer)->get(route('whatsapp.messages.show', $message))->assertOk();
+});
+
 it('404s on another organization message', function () {
+    // Multi-tenant mode: the middleware binds the viewer's own org, so route-model
+    // binding for a message owned by a different org resolves to nothing.
+    config()->set('tenant.mode', 'multi');
+
     $orgA = makeOrganization();
     $message = Message::factory()->for($orgA)->create();
 
     $orgB = makeOrganization();
     $viewer = makeMember($orgB, 'viewer');
 
-    $this->actingAs($viewer)->get(route('whatsapp.messages.show', $message))->assertNotFound();
+    $this->actingAs($viewer)
+        ->withSession(['current_organization_id' => $orgB->getKey()])
+        ->get(route('whatsapp.messages.show', $message))
+        ->assertNotFound();
 });
 
 it('forbids an organization member with no role from viewing messages', function () {

@@ -78,6 +78,22 @@ it('runs connection checks and records the status snapshot', function () {
         ->and($account->token_last_checked_at)->not->toBeNull();
 });
 
+it('falls back to the .env bootstrap phone id for the connection check when no numbers are synced', function () {
+    config()->set('services.whatsapp.bootstrap.phone_number_id', '767513449786746');
+
+    $org = makeOrganization();
+    $admin = makeMember($org, 'org_admin');
+    WhatsappBusinessAccount::factory()->for($org)->create([
+        'access_token' => 'EAAvalidtoken000000000',
+        'webhook_verify_token' => 'verify',
+    ]);
+    // No WhatsappPhoneNumber rows for this account.
+
+    $this->actingAs($admin)->post(route('whatsapp.settings.check'))->assertRedirect();
+
+    expect(WhatsappBusinessAccount::sole()->connection_status)->toBe('connected');
+});
+
 it('syncs phone numbers from the driver', function () {
     $org = makeOrganization();
     $admin = makeMember($org, 'org_admin');
@@ -88,4 +104,29 @@ it('syncs phone numbers from the driver', function () {
     $this->actingAs($admin)->get(route('whatsapp.phone-numbers.index'))
         ->assertOk()
         ->assertSee('AH&amp;V Mock Business', false);
+});
+
+it('prefills the settings form and seeds secrets from .env bootstrap for a new account', function () {
+    config()->set('services.whatsapp.bootstrap.access_token', 'EAAbootstraptoken1234567');
+    config()->set('services.whatsapp.bootstrap.webhook_verify_token', 'boot-verify');
+    config()->set('services.whatsapp.bootstrap.business_account_id', '111222333444555');
+
+    $org = makeOrganization();
+    $admin = makeMember($org, 'org_admin');
+
+    // The form shows the bootstrap hint + prefilled WABA id.
+    $this->actingAs($admin)->get(route('whatsapp.settings.edit'))
+        ->assertOk()
+        ->assertSee('Bootstrap values were found')
+        ->assertSee('value="111222333444555"', false);
+
+    // Saving with blank secrets picks up the .env values.
+    $this->actingAs($admin)->put(route('whatsapp.settings.update'), [
+        'name' => 'Acme WABA',
+        'waba_id' => '111222333444555',
+    ])->assertRedirect();
+
+    $account = WhatsappBusinessAccount::sole();
+    expect($account->access_token)->toBe('EAAbootstraptoken1234567')
+        ->and($account->webhook_verify_token)->toBe('boot-verify');
 });

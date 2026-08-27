@@ -74,6 +74,44 @@ it('will not send an unapproved template', function () {
     expect(Message::count())->toBe(0);
 });
 
+it('renders the template structure + variable examples on the send page', function () {
+    $number = testSendNumber();
+    $agent = makeMember($number->organization, 'support_agent');
+    WhatsappTemplate::factory()->forAccount($number->businessAccount)->create([
+        'name' => 'order_ready',
+        'components' => [[
+            'type' => 'BODY',
+            'text' => 'Hi {{1}}, order {{2}} is ready.',
+            'example' => ['body_text' => [['Asha', 'ORD-42']]],
+        ]],
+    ]);
+
+    $this->actingAs($agent)->get(route('whatsapp.test-send.create'))
+        ->assertOk()
+        ->assertSee('Hi {{1}}, order {{2}} is ready.', false) // body text in the JSON blob
+        ->assertSee('ORD-42', false)                          // example value
+        ->assertSee('id="test-send-templates"', false);
+});
+
+it('rejects a template send with a blank variable', function () {
+    $number = testSendNumber();
+    $agent = makeMember($number->organization, 'support_agent');
+    $template = WhatsappTemplate::factory()->forAccount($number->businessAccount)->create();
+
+    $this->actingAs($agent)
+        ->from(route('whatsapp.test-send.create'))
+        ->post(route('whatsapp.test-send.store'), [
+            'whatsapp_phone_number_id' => $number->id,
+            'mode' => 'template',
+            'template_id' => $template->id,
+            'recipients' => '919876500001',
+            'variables' => ['Asha', ''],
+        ])
+        ->assertSessionHasErrors('variables.1');
+
+    expect(Message::count())->toBe(0);
+});
+
 it('is idempotent when the same message is retried by key', function () {
     $number = testSendNumber();
     bindTenant($number->organization);

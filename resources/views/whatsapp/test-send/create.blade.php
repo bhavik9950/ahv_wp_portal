@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="title">Send Test Message</x-slot>
 
-    <div class="max-w-xl space-y-4">
+    <div class="max-w-2xl space-y-4">
         @if (session('test_send_results'))
             <div class="card bg-base-100 border border-base-300">
                 <div class="card-body">
@@ -24,6 +24,7 @@
 
         <form method="POST" action="{{ route('whatsapp.test-send.store') }}"
               x-data="{ mode: '{{ old('mode', 'text') }}' }"
+              data-loading data-loading-text="Sending…"
               class="card bg-base-100 border border-base-300">
             @csrf
             <div class="card-body space-y-4">
@@ -58,20 +59,99 @@
                     <p class="text-xs opacity-60 mt-1">Free-text messages only reach users inside the 24-hour customer service window.</p>
                 </div>
 
-                <div x-show="mode === 'template'" x-data="{ tpl: null }">
-                    <label class="label"><span class="label-text">Approved template</span></label>
-                    <select name="template_id" class="select select-bordered w-full" x-on:change="tpl = $event.target.selectedOptions[0]?.dataset">
-                        <option value="">— select —</option>
-                        @foreach ($templates as $t)
-                            <option value="{{ $t->id }}" data-vars="{{ count($t->variablePlaceholders()) }}">{{ $t->name }} ({{ $t->language }})</option>
-                        @endforeach
-                    </select>
-                    @error('template_id')<p class="text-error text-xs mt-1">{{ $message }}</p>@enderror
-                    <template x-if="tpl && Number(tpl.vars) > 0">
-                        <div class="mt-2 space-y-2">
-                            <template x-for="i in Number(tpl.vars)" :key="i">
-                                <input :name="`variables[${i-1}]`" class="input input-bordered input-sm w-full" x-bind:placeholder="'Value for variable ' + i">
+                <div x-show="mode === 'template'" x-data="testSendTemplate" class="space-y-4">
+                    @php($oldVarsJson = json_encode(array_values((array) old('variables', [])), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP))
+                    <script type="application/json" id="test-send-templates"
+                            data-selected="{{ old('template_id') }}"
+                            data-old-values="{{ $oldVarsJson }}">{!! json_encode($templateData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!}</script>
+
+                    <div>
+                        <label class="label"><span class="label-text">Approved template</span></label>
+                        <select name="template_id" class="select select-bordered w-full"
+                                x-model="templateId" x-on:change="onSelect()">
+                            <option value="">— select —</option>
+                            @foreach ($templates as $t)
+                                <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->language }})</option>
+                            @endforeach
+                        </select>
+                        @error('template_id')<p class="text-error text-xs mt-1">{{ $message }}</p>@enderror
+                    </div>
+
+                    <template x-if="tpl">
+                        <div class="space-y-4">
+                            {{-- What the template says --}}
+                            <div class="rounded-box border border-base-300 bg-base-200/50 p-3 space-y-2">
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="badge badge-sm badge-ghost" x-text="tpl.category || 'TEMPLATE'"></span>
+                                    <span class="opacity-60" x-text="tpl.language"></span>
+                                </div>
+                                <div x-show="tpl.header && tpl.header.format === 'TEXT'" class="text-sm font-semibold" x-text="tpl.header?.text"></div>
+                                <div x-show="mediaHeader" class="flex items-center gap-1 text-xs opacity-70">
+                                    <i class="ti ti-photo"></i><span x-text="mediaHeader + ' header — attach the media in Meta; test send uses the sample'"></span>
+                                </div>
+                                <div class="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                                    <template x-for="(c, i) in chunks(tpl.body)" :key="i"><span
+                                        :class="c.isVar ? 'badge badge-sm badge-primary badge-outline mx-0.5 align-middle' : ''"
+                                        x-text="c.text"></span></template>
+                                </div>
+                                <div x-show="tpl.footer" class="text-xs opacity-60" x-text="tpl.footer"></div>
+                                <div x-show="tpl.buttons.length" class="flex flex-wrap gap-1 pt-1">
+                                    <template x-for="b in tpl.buttons" :key="b">
+                                        <span class="badge badge-sm badge-info badge-outline gap-1"><i class="ti ti-chevron-right"></i><span x-text="b"></span></span>
+                                    </template>
+                                </div>
+                            </div>
+
+                            {{-- Fill the variables --}}
+                            <template x-if="tpl.variables.length">
+                                <div class="space-y-2">
+                                    @php($nPlaceholder = '{{n}}')
+                                    <p class="text-xs opacity-60">Each <span class="badge badge-xs badge-primary badge-outline">{{ $nPlaceholder }}</span> is a placeholder the template fills in per recipient. Enter the value to use for this test.</p>
+                                    <template x-for="v in tpl.variables" :key="v.index">
+                                        <div>
+                                            <label class="label py-1">
+                                                <span class="label-text flex items-center gap-1">
+                                                    Variable <span class="badge badge-sm badge-primary badge-outline" x-text="varLabel(v.index)"></span>
+                                                </span>
+                                                <span class="label-text-alt opacity-60" x-show="v.example">sample: <span x-text="v.example"></span></span>
+                                            </label>
+                                            <input :name="'variables[' + (v.index - 1) + ']'" x-model="values[v.index]"
+                                                   class="input input-bordered input-sm w-full"
+                                                   :placeholder="v.example || ('Value for ' + varLabel(v.index))">
+                                        </div>
+                                    </template>
+                                    @foreach ($errors->get('variables.*') as $messages)
+                                        @foreach ($messages as $message)
+                                            <p class="text-error text-xs mt-1">{{ $message }}</p>
+                                        @endforeach
+                                    @endforeach
+                                </div>
                             </template>
+
+                            {{-- Live preview --}}
+                            <div>
+                                <label class="label py-1"><span class="label-text">Preview</span></label>
+                                <div class="rounded-box bg-base-200 p-3">
+                                    <div class="chat chat-start">
+                                        <div class="chat-bubble bg-base-100 text-base-content max-w-full">
+                                            <div x-show="tpl.header && tpl.header.format === 'TEXT'" class="font-semibold whitespace-pre-wrap break-words" x-text="render(tpl.header?.text)"></div>
+                                            <div x-show="mediaHeader" class="mb-1 flex h-24 items-center justify-center rounded bg-base-300 text-xs opacity-60">
+                                                <i class="ti ti-photo text-lg"></i>
+                                            </div>
+                                            <div class="whitespace-pre-wrap break-words" x-text="render(tpl.body)"></div>
+                                            <div x-show="tpl.footer" class="mt-1 text-xs opacity-50" x-text="tpl.footer"></div>
+                                        </div>
+                                    </div>
+                                    <template x-if="tpl.buttons.length">
+                                        <div class="mt-1 space-y-1">
+                                            <template x-for="b in tpl.buttons" :key="b">
+                                                <div class="rounded-box border border-base-300 bg-base-100 py-1.5 text-center text-sm font-medium text-info" x-text="b"></div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                                <p class="text-xs opacity-50 mt-1">Approximate — actual rendering, media and button behaviour are controlled by WhatsApp.</p>
+                            </div>
                         </div>
                     </template>
                 </div>

@@ -8,6 +8,7 @@ use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappPhoneNumber;
 use App\Services\Audit\AuditLogger;
 use App\Services\WhatsApp\Data\ConnectionCheck;
+use App\Services\WhatsApp\Data\WabaCredentials;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -39,10 +40,34 @@ final class WabaConfigurationService
         $account ??= new WhatsappBusinessAccount;
         $isNew = ! $account->exists;
 
+        // .env bootstrap keys, used to seed a brand-new account.
+        $bootstrapMap = [
+            'access_token' => 'access_token',
+            'app_secret' => 'app_secret',
+            'webhook_verify_token' => 'webhook_verify_token',
+        ];
+        $boot = (array) config('services.whatsapp.bootstrap');
+
         foreach (self::SECRET_FIELDS as $field) {
-            if (blank($data[$field] ?? null)) {
-                unset($data[$field]);
+            if (filled($data[$field] ?? null)) {
+                continue;
             }
+            // Blank on a NEW account → take the .env value if present.
+            if ($isNew && filled($boot[$bootstrapMap[$field]] ?? null)) {
+                $data[$field] = $boot[$bootstrapMap[$field]];
+            } else {
+                unset($data[$field]); // blank on update → keep the stored value
+            }
+        }
+
+        if ($isNew && blank($data['waba_id'] ?? null) && filled($boot['business_account_id'] ?? null)) {
+            $data['waba_id'] = $boot['business_account_id'];
+        }
+        if ($isNew && blank($data['app_id'] ?? null) && filled($boot['app_id'] ?? null)) {
+            $data['app_id'] = $boot['app_id'];
+        }
+        if ($isNew && blank($data['meta_business_account_id'] ?? null) && filled($boot['meta_business_id'] ?? null)) {
+            $data['meta_business_account_id'] = $boot['meta_business_id'];
         }
 
         $account->fill([
@@ -81,7 +106,16 @@ final class WabaConfigurationService
      */
     public function runConnectionChecks(WhatsappBusinessAccount $account): array
     {
-        $creds = $this->manager->credentialsFor($account, $account->phoneNumbers()->where('is_default', true)->first());
+        $defaultNumber = $account->phoneNumbers()->where('is_default', true)->first()
+            ?? $account->phoneNumbers()->first();
+
+        $creds = $this->manager->credentialsFor($account, $defaultNumber);
+
+        // Not synced any phone numbers yet? Fall back to the .env bootstrap phone
+        // id so the "Validate Phone Number" check can still run.
+        if ($defaultNumber === null && filled(config('services.whatsapp.bootstrap.phone_number_id'))) {
+            $creds = WabaCredentials::fromModel($account, (string) config('services.whatsapp.bootstrap.phone_number_id'));
+        }
 
         try {
             $checks = $this->manager->driver()->runConnectionChecks($creds);

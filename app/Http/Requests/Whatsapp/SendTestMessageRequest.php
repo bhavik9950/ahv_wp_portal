@@ -41,7 +41,9 @@ class SendTestMessageRequest extends FormRequest
 
             'template_id' => ['required_if:mode,template', 'nullable', 'string', 'exists:whatsapp_templates,id'],
             'variables' => ['nullable', 'array'],
-            'variables.*' => ['nullable', 'string', 'max:1024'],
+            // WhatsApp rejects empty template parameters — every supplied
+            // variable must have a value.
+            'variables.*' => ['required', 'string', 'max:1024'],
         ];
     }
 
@@ -50,6 +52,7 @@ class SendTestMessageRequest extends FormRequest
         return [
             'recipients.max' => 'Test sends are limited to 5 numbers at a time.',
             'recipients.*.regex' => 'Each recipient must be digits only in international format (e.g. 919876543210).',
+            'variables.*.required' => 'Fill in every template variable — WhatsApp does not accept empty values.',
         ];
     }
 }

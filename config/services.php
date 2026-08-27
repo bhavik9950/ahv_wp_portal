@@ -79,7 +79,8 @@ return [
         'bootstrap' => [
             'access_token' => env('WABA_ACCESS_TOKEN'),
             'phone_number_id' => env('WABA_PHONE_NUMBER_ID'),
-            'business_account_id' => env('WABA_BUSINESS_ACCOUNT_ID'),
+            'business_account_id' => env('WABA_BUSINESS_ACCOUNT_ID'), // the WABA id
+            'meta_business_id' => env('WABA_META_BUSINESS_ID'),       // portfolio / business manager id
             'app_id' => env('WABA_APP_ID'),
             'app_secret' => env('WABA_APP_SECRET'),
             'webhook_verify_token' => env('WABA_WEBHOOK_VERIFY_TOKEN'),

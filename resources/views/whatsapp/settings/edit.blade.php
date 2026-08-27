@@ -4,6 +4,20 @@
     @php($canManage = auth()->user()->can(\App\Enums\Permission::WabaManage->value))
 
     <div class="max-w-3xl space-y-6">
+        @if (! $account && $prefill && ($prefill['has_token'] ?? false))
+            <div class="alert alert-info text-sm">
+                <i class="ti ti-info-circle"></i>
+                <span>
+                    Bootstrap values were found in <code>.env</code> and pre-filled below.
+                    @if (blank($prefill['waba_id']))
+                        <strong>Add your WhatsApp Business Account ID</strong> (Meta ▸ App ▸ WhatsApp ▸ API Setup — the number above "Phone number ID"),
+                    @endif
+                    then <strong>Save</strong> to activate. Leave the secret fields blank to use the ones from <code>.env</code>.
+                    You can also run <code>php artisan waba:setup --waba-id=&lt;id&gt;</code>.
+                </span>
+            </div>
+        @endif
+
         {{-- Connection status --}}
         @if ($account)
             <div class="card bg-base-100 border border-base-300">
@@ -62,17 +76,17 @@
                         @php($field = fn($name, $label, $value = null, $type = 'text', $ph = null) => view('whatsapp.settings.field', compact('name','label','value','type','ph')))
 
                         {!! $field('name', 'Display name', old('name', $account->name ?? config('app.name').' WABA')) !!}
-                        {!! $field('waba_id', 'WhatsApp Business Account ID', old('waba_id', $account->waba_id ?? '')) !!}
-                        {!! $field('meta_business_account_id', 'Meta Business Account ID (optional)', old('meta_business_account_id', $account->meta_business_account_id ?? '')) !!}
-                        {!! $field('app_id', 'App ID (optional)', old('app_id', $account->app_id ?? '')) !!}
+                        {!! $field('waba_id', 'WhatsApp Business Account ID', old('waba_id', $account->waba_id ?? $prefill['waba_id'] ?? '')) !!}
+                        {!! $field('meta_business_account_id', 'Meta Business Account ID (optional)', old('meta_business_account_id', $account->meta_business_account_id ?? $prefill['meta_business_account_id'] ?? '')) !!}
+                        {!! $field('app_id', 'App ID (optional)', old('app_id', $account->app_id ?? $prefill['app_id'] ?? '')) !!}
                         {!! $field('api_version', 'Graph API version (optional)', old('api_version', $account->api_version ?? ''), 'text', config('services.whatsapp.api_version')) !!}
                         {!! $field('default_country_code', 'Default country code', old('default_country_code', $account->default_country_code ?? config('services.whatsapp.default_country_code'))) !!}
 
                         <div class="divider text-xs">Secrets</div>
 
-                        {!! $field('access_token', 'Access token', null, 'password', $account?->maskedAccessToken() ?? 'not set') !!}
-                        {!! $field('app_secret', 'App secret (for webhook signature)', null, 'password', $account?->maskedAppSecret() ?? 'not set') !!}
-                        {!! $field('webhook_verify_token', 'Webhook verify token', null, 'password', $account && $account->hasWebhookVerifyToken() ? 'set' : 'not set') !!}
+                        {!! $field('access_token', 'Access token', null, 'password', $account?->maskedAccessToken() ?? (($prefill['has_token'] ?? false) ? 'using .env value' : 'not set')) !!}
+                        {!! $field('app_secret', 'App secret (for webhook signature)', null, 'password', $account?->maskedAppSecret() ?? (($prefill['has_app_secret'] ?? false) ? 'using .env value' : 'not set')) !!}
+                        {!! $field('webhook_verify_token', 'Webhook verify token', null, 'password', ($account && $account->hasWebhookVerifyToken()) ? 'set' : (($prefill['has_verify_token'] ?? false) ? 'using .env value' : 'not set')) !!}
                     </fieldset>
 
                     @if ($canManage)
