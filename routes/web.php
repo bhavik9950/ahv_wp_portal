@@ -12,7 +12,9 @@ use App\Http\Controllers\Contacts\ContactExportController;
 use App\Http\Controllers\Contacts\ContactGroupController;
 use App\Http\Controllers\Contacts\ContactImportController;
 use App\Http\Controllers\Contacts\UnsubscribeController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\Whatsapp\MessageController;
 use App\Http\Controllers\Whatsapp\PhoneNumberController;
 use App\Http\Controllers\Whatsapp\TemplateController;
@@ -41,10 +43,12 @@ Route::middleware('auth')->group(function () {
 
 // Authenticated routes that operate on tenant-scoped data.
 Route::middleware(['auth', 'tenant'])->group(function () {
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
         Route::view('/', 'whatsapp.overview')->name('overview');
+
+        Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
 
         Route::get('settings', [WabaSettingsController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [WabaSettingsController::class, 'update'])->name('settings.update');

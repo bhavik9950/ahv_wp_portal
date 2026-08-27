@@ -3,6 +3,7 @@ import './alerts';
 import './datatables';
 import './confirm-forms';
 import './row-links';
+import './trend-chart';
 
 import Alpine from 'alpinejs';
 
