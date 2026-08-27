@@ -26,7 +26,7 @@ class SystemControlController extends Controller
     {
         return view('admin.controls', [
             'sendingEnabled' => $this->settings->sendingEnabledOverride(),
-            'configالسSendingEnabled' => (bool) config('services.whatsapp.sending_enabled', true),
+            'configSendingEnabled' => (bool) config('services.whatsapp.sending_enabled', true),
             'organization' => app(CurrentOrganization::class)->resolve(),
             'activeCampaigns' => Campaign::query()->where('status', CampaignStatus::Processing)->count(),
             'wabaAccounts' => WhatsappBusinessAccount::query()->get(),

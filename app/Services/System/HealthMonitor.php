@@ -6,6 +6,7 @@ namespace App\Services\System;
 
 use App\Models\WebhookEvent;
 use App\Models\WhatsappBusinessAccount;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -154,7 +155,7 @@ final class HealthMonitor
             return ComponentHealth::warning('webhook', 'Webhook', 'No events received yet');
         }
 
-        return \Illuminate\Support\Carbon::parse($last)->gt(now()->subDay())
+        return Carbon::parse($last)->gt(now()->subDay())
             ? ComponentHealth::ok('webhook', 'Webhook', 'Recent events received')
             : ComponentHealth::warning('webhook', 'Webhook', 'No events in the last 24h');
     }

@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Enums\Permission;
 use App\Models\User;
 use App\Models\WhatsappPhoneNumber;
+use App\Support\TenantContext;
 
 class WhatsappPhoneNumberPolicy
 {
@@ -27,7 +28,7 @@ class WhatsappPhoneNumberPolicy
 
     private function sameOrg(WhatsappPhoneNumber $number): bool
     {
-        $current = app(\App\Support\TenantContext::class)->id();
+        $current = app(TenantContext::class)->id();
 
         return $current !== null && (int) $number->organization_id === (int) $current;
     }

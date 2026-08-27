@@ -57,11 +57,13 @@ class WhatsappBusinessAccount extends Model
         ];
     }
 
+    /** @return HasMany<WhatsappPhoneNumber, $this> */
     public function phoneNumbers(): HasMany
     {
         return $this->hasMany(WhatsappPhoneNumber::class);
     }
 
+    /** @return HasMany<WhatsappTemplate, $this> */
     public function templates(): HasMany
     {
         return $this->hasMany(WhatsappTemplate::class);

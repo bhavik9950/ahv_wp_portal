@@ -27,7 +27,7 @@ final class SystemSettings
     {
         return $this->cache->rememberForever(
             self::CACHE_PREFIX.$key,
-            fn () => SystemSetting::query()->find($key)?->value ?? $default,
+            fn () => SystemSetting::query()->where('key', $key)->value('value') ?? $default,
         );
     }
 

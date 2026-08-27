@@ -6,11 +6,11 @@ namespace App\Services\WhatsApp;
 
 use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappPhoneNumber;
+use App\Services\System\SystemSettings;
 use App\Services\WhatsApp\Contracts\WhatsAppDriver;
 use App\Services\WhatsApp\Data\OutboundMessage;
 use App\Services\WhatsApp\Data\SendResult;
 use App\Services\WhatsApp\Data\WabaCredentials;
-use App\Services\System\SystemSettings;
 use Illuminate\Contracts\Container\Container;
 use RuntimeException;
 

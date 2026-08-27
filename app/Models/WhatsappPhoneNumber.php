@@ -10,7 +10,15 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $organization_id
+ * @property string $whatsapp_business_account_id
+ * @property string $status
+ * @property bool $is_default
+ * @property Carbon|null $last_synced_at
+ */
 class WhatsappPhoneNumber extends Model
 {
     use BelongsToOrganization;
@@ -37,6 +45,7 @@ class WhatsappPhoneNumber extends Model
         ];
     }
 
+    /** @return BelongsTo<WhatsappBusinessAccount, $this> */
     public function businessAccount(): BelongsTo
     {
         return $this->belongsTo(WhatsappBusinessAccount::class, 'whatsapp_business_account_id');

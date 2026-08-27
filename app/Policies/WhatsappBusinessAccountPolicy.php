@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Enums\Permission;
 use App\Models\User;
 use App\Models\WhatsappBusinessAccount;
+use App\Support\TenantContext;
 
 class WhatsappBusinessAccountPolicy
 {
@@ -40,7 +41,7 @@ class WhatsappBusinessAccountPolicy
     /** Belt-and-braces: the global scope already prevents cross-tenant loads. */
     private function sameOrg(User $user, WhatsappBusinessAccount $account): bool
     {
-        $current = app(\App\Support\TenantContext::class)->id();
+        $current = app(TenantContext::class)->id();
 
         return $current !== null && (int) $account->organization_id === (int) $current;
     }
