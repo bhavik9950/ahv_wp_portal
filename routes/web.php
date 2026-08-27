@@ -5,18 +5,31 @@ declare(strict_types=1);
 use App\Enums\Permission;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\SystemControlController;
+use App\Http\Controllers\Contacts\ContactController;
+use App\Http\Controllers\Contacts\ContactExportController;
+use App\Http\Controllers\Contacts\ContactGroupController;
+use App\Http\Controllers\Contacts\ContactImportController;
+use App\Http\Controllers\Contacts\UnsubscribeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Whatsapp\MessageController;
 use App\Http\Controllers\Whatsapp\PhoneNumberController;
 use App\Http\Controllers\Whatsapp\TemplateController;
 use App\Http\Controllers\Whatsapp\TestSendController;
 use App\Http\Controllers\Whatsapp\WabaSettingsController;
+use App\Models\Contact;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
 
 // Public health probe — no secrets, no auth.
 Route::get('/health', [HealthController::class, 'ping']);
+
+// Public, signed unsubscribe page (tenant scope bypassed for binding).
+Route::bind('publicContact', fn ($id) => Contact::query()->withoutGlobalScopes()->findOrFail($id));
+Route::middleware('signed')->group(function () {
+    Route::get('/unsubscribe/{publicContact}', [UnsubscribeController::class, 'show'])->name('unsubscribe');
+    Route::post('/unsubscribe/{publicContact}', [UnsubscribeController::class, 'update'])->name('unsubscribe.confirm');
+});
 
 // Authenticated, non-tenant routes (profile settings).
 Route::middleware('auth')->group(function () {
@@ -54,6 +67,32 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         // Messages / conversation viewer
         Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
         Route::get('messages/{message}', [MessageController::class, 'show'])->name('messages.show');
+
+        // Contacts
+        Route::get('contacts/export', ContactExportController::class)->name('contacts.export');
+        Route::get('contacts/import', [ContactImportController::class, 'create'])->name('contacts.import.create');
+        Route::post('contacts/import', [ContactImportController::class, 'store'])->name('contacts.import.store');
+        Route::get('contacts/import/{import}/map', [ContactImportController::class, 'map'])->name('contacts.import.map');
+        Route::post('contacts/import/{import}/analyze', [ContactImportController::class, 'analyze'])->name('contacts.import.analyze');
+        Route::get('contacts/import/{import}', [ContactImportController::class, 'show'])->name('contacts.import.show');
+        Route::post('contacts/import/{import}/commit', [ContactImportController::class, 'commit'])->name('contacts.import.commit');
+        Route::get('contacts/import/{import}/errors', [ContactImportController::class, 'errors'])->name('contacts.import.errors');
+
+        Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
+        Route::get('contacts/create', [ContactController::class, 'create'])->name('contacts.create');
+        Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
+        Route::get('contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
+        Route::put('contacts/{contact}', [ContactController::class, 'update'])->name('contacts.update');
+        Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+        Route::post('contacts/{contact}/opt-in', [ContactController::class, 'optIn'])->name('contacts.opt-in');
+        Route::post('contacts/{contact}/opt-out', [ContactController::class, 'optOut'])->name('contacts.opt-out');
+
+        // Groups
+        Route::get('groups', [ContactGroupController::class, 'index'])->name('groups.index');
+        Route::post('groups', [ContactGroupController::class, 'store'])->name('groups.store');
+        Route::put('groups/{group}', [ContactGroupController::class, 'update'])->name('groups.update');
+        Route::delete('groups/{group}', [ContactGroupController::class, 'destroy'])->name('groups.destroy');
+        Route::post('groups/assign', [ContactGroupController::class, 'assign'])->name('groups.assign');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {

@@ -17,7 +17,9 @@ class OptInRecord extends Model
 
     public const UPDATED_AT = null;
 
+    // Written only by OptInService / import jobs (trusted).
     protected $fillable = [
+        'organization_id',
         'contact_id',
         'phone_e164',
         'status',

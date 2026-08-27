@@ -11,6 +11,7 @@ use App\Models\WebhookEvent;
 use App\Models\WhatsappPhoneNumber;
 use App\Models\WhatsappTemplate;
 use App\Services\WhatsApp\MessageStatusUpdater;
+use App\Support\TenantContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -166,9 +167,36 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 'idempotency_key' => 'inbound:'.($wamid ?? Str::uuid()->toString()),
                 'status' => MessageStatus::Delivered->value,
             ])->save();
+
+            $this->maybeHandleStopKeyword($incoming, $from, $localNumber->organization_id);
         }
 
         return $organizationId;
+    }
+
+    /**
+     * A customer replying "STOP" / "UNSUBSCRIBE" (etc.) opts them out of
+     * marketing immediately.
+     *
+     * @param  array<string, mixed>  $incoming
+     */
+    private function maybeHandleStopKeyword(array $incoming, string $from, int $organizationId): void
+    {
+        $body = strtoupper(trim((string) data_get($incoming, 'text.body', '')));
+
+        if (! in_array($body, ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'OPTOUT', 'OPT OUT', 'STOP PROMOTIONS'], true)) {
+            return;
+        }
+
+        app(TenantContext::class)->set(
+            \App\Models\Organization::query()->find($organizationId)
+        );
+
+        app(\App\Services\Contacts\OptInService::class)->optOutByPhone($from, [
+            'source' => 'inbound_keyword',
+            'reference' => $incoming['id'] ?? null,
+            'note' => "Customer replied: {$body}",
+        ]);
     }
 
     /**

@@ -7,8 +7,10 @@ namespace App\Services\WhatsApp;
 use App\Enums\ErrorCategory;
 use App\Enums\MessageStatus;
 use App\Jobs\EmitMockStatusWebhookJob;
+use App\Models\Contact;
 use App\Models\Message;
 use App\Models\WhatsappPhoneNumber;
+use App\Models\WhatsappTemplate;
 use App\Services\WhatsApp\Data\OutboundMessage;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
@@ -44,6 +46,15 @@ final class OutboundMessageService
 
         if ($isReplay && $this->isResolved($message)) {
             return $message;
+        }
+
+        if ($this->blockedByOptOut($context)) {
+            $this->statusUpdater->apply($message, MessageStatus::Skipped, [
+                'error_code' => 'opted_out',
+                'error_message' => 'Recipient has opted out of marketing messages.',
+            ]);
+
+            return $message->refresh();
         }
 
         // Rate limiter — caller (job) should catch RateLimitedException and requeue.
@@ -135,6 +146,31 @@ final class OutboundMessageService
 
             return [$existing, true];
         }
+    }
+
+    /**
+     * MARKETING templates may not be sent to a contact who has opted out.
+     * UTILITY / AUTHENTICATION templates and free-text service replies are exempt.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    private function blockedByOptOut(array $context): bool
+    {
+        $contactId = $context['contact_id'] ?? null;
+        $templateId = $context['template_id'] ?? null;
+
+        if ($contactId === null || $templateId === null) {
+            return false;
+        }
+
+        $template = WhatsappTemplate::query()->withoutGlobalScopes()->find($templateId);
+        if ($template === null || strtoupper((string) $template->category) !== 'MARKETING') {
+            return false;
+        }
+
+        $contact = Contact::query()->withoutGlobalScopes()->find($contactId);
+
+        return $contact !== null && $contact->isOptedOut();
     }
 
     private function isResolved(Message $message): bool
