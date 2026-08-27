@@ -57,6 +57,8 @@ class User extends Authenticatable
 
     /**
      * Organizations this user belongs to.
+     *
+     * @return BelongsToMany<Organization, $this, OrganizationUser, 'pivot'>
      */
     public function organizations(): BelongsToMany
     {

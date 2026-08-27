@@ -52,9 +52,9 @@ final class WhatsAppManager
             throw new WhatsAppSendingDisabledException;
         }
 
-        $account = $phoneNumber->businessAccount;
+        $account = $phoneNumber->businessAccount()->first();
 
-        if ($account === null || ! $account->is_active) {
+        if (! $account instanceof WhatsappBusinessAccount || ! $account->is_active) {
             throw new RuntimeException('WhatsApp Business Account is not active.');
         }
 

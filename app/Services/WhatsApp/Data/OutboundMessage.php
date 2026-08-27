@@ -37,7 +37,7 @@ final readonly class OutboundMessage
         $template = ['name' => $name, 'language' => ['code' => $language]];
 
         if ($components !== []) {
-            $template['components'] = array_values($components);
+            $template['components'] = $components;
         }
 
         return new self($to, MessageType::Template, ['template' => $template]);

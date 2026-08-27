@@ -16,15 +16,19 @@ enum MessageStatus: string
     case Cancelled = 'cancelled';
     case Skipped = 'skipped';
 
-    /** Forward-only ordering for delivery progress; terminal states excluded. */
-    private const PROGRESS = [
-        'pending' => 0,
-        'queued' => 1,
-        'processing' => 2,
-        'sent' => 3,
-        'delivered' => 4,
-        'read' => 5,
-    ];
+    /** Forward-only ordering for delivery progress. Non-progress states rank -1. */
+    private function rank(): int
+    {
+        return match ($this) {
+            self::Pending => 0,
+            self::Queued => 1,
+            self::Processing => 2,
+            self::Sent => 3,
+            self::Delivered => 4,
+            self::Read => 5,
+            default => -1,
+        };
+    }
 
     public function isTerminal(): bool
     {
@@ -46,9 +50,6 @@ enum MessageStatus: string
             return true;
         }
 
-        $from = self::PROGRESS[$this->value] ?? -1;
-        $to = self::PROGRESS[$next->value] ?? -1;
-
-        return $to > $from;
+        return $next->rank() > $this->rank();
     }
 }

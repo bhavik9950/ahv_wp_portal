@@ -7,17 +7,23 @@ namespace App\Models;
 use App\Enums\MessageStatus;
 use App\Enums\MessageType;
 use App\Models\Concerns\BelongsToOrganization;
+use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property MessageStatus $status
+ * @property MessageType $type
+ * @property int $organization_id
+ */
 class Message extends Model
 {
     use BelongsToOrganization;
 
-    /** @use HasFactory<\Database\Factories\MessageFactory> */
+    /** @use HasFactory<MessageFactory> */
     use HasFactory;
 
     use HasUlids;
