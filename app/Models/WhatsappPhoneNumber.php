@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToOrganization;
+use Database\Factories\WhatsappPhoneNumberFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ class WhatsappPhoneNumber extends Model
 {
     use BelongsToOrganization;
 
-    /** @use HasFactory<\Database\Factories\WhatsappPhoneNumberFactory> */
+    /** @use HasFactory<WhatsappPhoneNumberFactory> */
     use HasFactory;
 
     use HasUlids;

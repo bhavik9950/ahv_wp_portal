@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\TemplateStatus;
 use App\Models\Concerns\BelongsToOrganization;
+use Database\Factories\WhatsappTemplateFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ class WhatsappTemplate extends Model
 {
     use BelongsToOrganization;
 
-    /** @use HasFactory<\Database\Factories\WhatsappTemplateFactory> */
+    /** @use HasFactory<WhatsappTemplateFactory> */
     use HasFactory;
 
     use HasUlids, SoftDeletes;

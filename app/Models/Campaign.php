@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\CampaignStatus;
 use App\Models\Concerns\BelongsToOrganization;
+use Database\Factories\CampaignFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ class Campaign extends Model
 {
     use BelongsToOrganization;
 
-    /** @use HasFactory<\Database\Factories\CampaignFactory> */
+    /** @use HasFactory<CampaignFactory> */
     use HasFactory;
 
     use HasUlids, SoftDeletes;
