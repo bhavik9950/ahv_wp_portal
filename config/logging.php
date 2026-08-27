@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\RedactSensitiveProcessor;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -125,6 +126,20 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+        ],
+
+        /*
+         | Dedicated WhatsApp channel. A processor strips access tokens, app
+         | secrets, authorization headers and verify tokens, and masks phone
+         | numbers to their last 4 digits before anything is written.
+         */
+        'whatsapp' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/whatsapp.log'),
+            'level' => env('WABA_LOG_LEVEL', 'info'),
+            'days' => env('WABA_LOG_DAYS', 30),
+            'replace_placeholders' => true,
+            'processors' => [RedactSensitiveProcessor::class],
         ],
 
     ],
