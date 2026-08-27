@@ -1,25 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
+use App\Enums\OrganizationRole;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Services\Organizations\OrganizationProvisioner;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(RolesAndPermissionsSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        if (! app()->environment('production')) {
+            $this->seedDevelopmentData();
+        }
+    }
+
+    private function seedDevelopmentData(): void
+    {
+        $provisioner = app(OrganizationProvisioner::class);
+
+        $superAdmin = User::factory()->superAdmin()->create([
+            'name' => 'Platform Admin',
+            'email' => 'admin@ahv.test',
         ]);
+
+        $orgAdmin = User::factory()->create([
+            'name' => 'Acme Admin',
+            'email' => 'owner@acme.test',
+        ]);
+
+        $organization = $provisioner->create(['name' => 'Acme Traders', 'timezone' => 'Asia/Kolkata'], $orgAdmin);
+        $provisioner->addMember($organization, $superAdmin, OrganizationRole::OrgAdmin);
     }
 }
