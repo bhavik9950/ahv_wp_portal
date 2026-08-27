@@ -52,7 +52,7 @@ window.confirmAction = async ({
 };
 
 /* Flash messages set server-side via session('flash_notify'). */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('turbo:load', () => {
     const el = document.getElementById('flash-notify');
     if (!el) return;
     try {
@@ -63,4 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
         /* ignore malformed flash payloads */
     }
+});
+
+/* Before Turbo caches the page: drop visible toasts and neutralise the flash
+   payload so navigating back doesn't replay an old message. */
+document.addEventListener('turbo:before-cache', () => {
+    document.getElementById('toast-container')?.remove();
+    const el = document.getElementById('flash-notify');
+    if (el) el.textContent = '{}';
 });

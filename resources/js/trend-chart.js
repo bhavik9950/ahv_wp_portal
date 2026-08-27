@@ -30,6 +30,7 @@ function initTrendChart(figure) {
 
     const ns = 'http://www.w3.org/2000/svg';
     const crosshair = document.createElementNS(ns, 'line');
+    crosshair.classList.add('js-trend-overlay');
     crosshair.setAttribute('stroke', 'currentColor');
     crosshair.setAttribute('stroke-width', '1');
     crosshair.setAttribute('opacity', '0.25');
@@ -40,6 +41,7 @@ function initTrendChart(figure) {
 
     const dots = series.map((s) => {
         const c = document.createElementNS(ns, 'circle');
+        c.classList.add('js-trend-overlay');
         c.setAttribute('r', '3.5');
         c.setAttribute('fill', s.color);
         c.setAttribute('stroke', 'var(--chart-surface, #fff)');
@@ -102,6 +104,18 @@ function initTrendChart(figure) {
     svg.addEventListener('pointerleave', leave);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initAllTrendCharts() {
     document.querySelectorAll('[data-trend-chart]').forEach(initTrendChart);
+}
+
+document.addEventListener('turbo:load', initAllTrendCharts);
+// Strip the JS-added overlay so the cached snapshot re-initialises cleanly.
+document.addEventListener('turbo:before-cache', () => {
+    document.querySelectorAll('[data-trend-chart]').forEach((f) => {
+        delete f.dataset.trendInit;
+        f.querySelectorAll('.js-trend-overlay').forEach((el) => el.remove());
+        const tip = f.querySelector('[data-trend-tooltip]');
+        if (tip) tip.hidden = true;
+    });
 });
+if (document.readyState !== 'loading') initAllTrendCharts();

@@ -47,7 +47,20 @@ it('renders the dashboard with tiles, the trend chart and date presets', functio
         ->assertSee('Delivery rate')
         ->assertSee('Message trend')
         ->assertSee('data-trend-chart', false)
-        ->assertSee('Last 30 days');
+        ->assertSee('Last 30 days')
+        // Turbo Drive: SPA navigation + permanent sidebar.
+        ->assertSee('name="view-transition"', false)
+        ->assertSee('id="app-sidebar" data-turbo-permanent', false);
+});
+
+it('uses a Turbo auto-refresh hook (not a full meta refresh) on the live dashboard', function () {
+    $org = makeOrganization();
+    $viewer = makeMember($org, 'viewer');
+
+    $this->actingAs($viewer)->get(route('dashboard', ['range' => 'today']))
+        ->assertOk()
+        ->assertSee('data-auto-refresh="60"', false)
+        ->assertDontSee('http-equiv="refresh"', false);
 });
 
 it('honours the date range on the dashboard', function () {

@@ -24,7 +24,7 @@
 
             <div class="flex gap-2">
                 @if ($canExport)
-                    <a href="{{ route('whatsapp.contacts.export') }}" class="btn btn-sm btn-outline"><i class="ti ti-download"></i> Export</a>
+                    <a href="{{ route('whatsapp.contacts.export') }}" data-turbo="false" class="btn btn-sm btn-outline"><i class="ti ti-download"></i> Export</a>
                 @endif
                 @if ($canImport)
                     <a href="{{ route('whatsapp.contacts.import.create') }}" class="btn btn-sm btn-outline"><i class="ti ti-file-upload"></i> Import CSV</a>

@@ -1,12 +1,9 @@
 <x-app-layout>
     <x-slot name="title">Dashboard</x-slot>
-    @if ($range->key === 'today')
-        <x-slot name="head"><meta http-equiv="refresh" content="60"></x-slot>
-    @endif
 
     @php($m = $metrics)
 
-    <div class="space-y-6">
+    <div class="space-y-6" @if ($range->key === 'today') data-auto-refresh="60" @endif>
         {{-- Date range --}}
         <div class="flex items-center gap-2 flex-wrap">
             @foreach ($presets as $p)

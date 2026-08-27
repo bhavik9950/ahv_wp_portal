@@ -1,11 +1,8 @@
 <x-app-layout>
     <x-slot name="title">Import Preview</x-slot>
 
-    @if (in_array($import->status, ['pending', 'analyzing', 'importing']))
-        <x-slot name="head"><meta http-equiv="refresh" content="3"></x-slot>
-    @endif
-
-    <div class="max-w-xl space-y-4">
+    <div class="max-w-xl space-y-4"
+         @if (in_array($import->status, ['pending', 'analyzing', 'importing'])) data-auto-refresh="3" @endif>
 
         <div class="card bg-base-100 border border-base-300">
             <div class="card-body">
@@ -45,7 +42,7 @@
 
                 <div class="flex gap-2 mt-4">
                     @if ($import->error_report_path)
-                        <a href="{{ route('whatsapp.contacts.import.errors', $import) }}" class="btn btn-sm btn-outline">
+                        <a href="{{ route('whatsapp.contacts.import.errors', $import) }}" data-turbo="false" class="btn btn-sm btn-outline">
                             <i class="ti ti-download"></i> Download invalid rows
                         </a>
                     @endif

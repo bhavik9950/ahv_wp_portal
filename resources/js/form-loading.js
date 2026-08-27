@@ -49,10 +49,8 @@ document.addEventListener('submit', (event) => {
     });
 });
 
-/* Restore the form if the page comes back from the bfcache (Back button). */
-window.addEventListener('pageshow', (event) => {
-    if (!event.persisted) return;
-
+/* Restore any form left in a busy state (Back button / bfcache / Turbo restore). */
+function resetBusyForms() {
     document.querySelectorAll('form[data-loading-active="1"]').forEach((form) => {
         delete form.dataset.loadingActive;
 
@@ -67,4 +65,10 @@ window.addEventListener('pageshow', (event) => {
             delete el.dataset.originalValue;
         });
     });
+}
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) resetBusyForms();
 });
+document.addEventListener('turbo:load', resetBusyForms);
+document.addEventListener('turbo:before-cache', resetBusyForms);

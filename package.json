@@ -18,7 +18,9 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@hotwired/turbo": "^8.0.23",
         "@tabler/icons-webfont": "^3.19.0",
+        "alpine-turbo-drive-adapter": "^2.2.0",
         "daisyui": "^4.12.10",
         "datatables.net-dt": "^2.1.8",
         "datatables.net-responsive-dt": "^3.0.3",

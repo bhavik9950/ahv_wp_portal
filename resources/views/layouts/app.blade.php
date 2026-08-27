@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    {{-- Turbo Drive: cross-fade between pages (Chrome View Transitions API). --}}
+    <meta name="view-transition" content="same-origin">
     <title>{{ $title ?? '' }}{{ isset($title) ? ' · ' : '' }}{{ config('app.name') }}</title>
     {{ $head ?? '' }}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -53,7 +55,8 @@
 
         <div class="drawer-side z-40">
             <label for="app-drawer" aria-label="Close menu" class="drawer-overlay"></label>
-            <aside class="bg-base-100 border-r border-base-300 w-72 min-h-full flex flex-col">
+            <aside id="app-sidebar" data-turbo-permanent
+                   class="bg-base-100 border-r border-base-300 w-72 min-h-full flex flex-col">
                 <div class="px-4 py-4 border-b border-base-300">
                     <a href="{{ url('/dashboard') }}" class="flex items-center gap-2">
                         <i class="ti ti-brand-whatsapp text-2xl text-success"></i>

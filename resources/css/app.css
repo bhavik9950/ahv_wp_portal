@@ -9,6 +9,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Turbo Drive top progress bar — match the brand primary. */
+.turbo-progress-bar {
+    height: 3px;
+    background-color: hsl(var(--p));
+}
+
+/* Cross-fade between pages (Chrome View Transitions); the permanent sidebar
+   is excluded so only the content area animates. */
+@media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation-duration: 140ms;
+    }
+}
+#app-sidebar {
+    view-transition-name: app-sidebar;
+}
+
 /* Make DataTables (v2 "dt" styling) blend into daisyUI. */
 @layer components {
     .dt-container {

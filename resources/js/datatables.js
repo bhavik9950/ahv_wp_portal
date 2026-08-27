@@ -124,4 +124,23 @@ window.initDataTables = () => {
     });
 };
 
-document.addEventListener('DOMContentLoaded', () => window.initDataTables());
+/** Tear every DataTable back down to plain HTML (before Turbo caches / leaves). */
+function destroyDataTables() {
+    registry.forEach((dt, table) => {
+        try {
+            dt.destroy();
+        } catch (e) {
+            /* ignore */
+        }
+        delete table.dataset.dtInitialised;
+    });
+    registry.clear();
+    document.querySelectorAll('[data-dt-filter]').forEach((c) => delete c.dataset.dtWired);
+}
+
+document.addEventListener('turbo:load', () => window.initDataTables());
+document.addEventListener('turbo:before-cache', destroyDataTables);
+// Also runs for a non-Turbo first paint / when Turbo is disabled.
+if (document.readyState !== 'loading') {
+    window.initDataTables();
+}

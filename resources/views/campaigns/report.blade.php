@@ -1,13 +1,10 @@
 <x-app-layout>
     <x-slot name="title">{{ $campaign->name }} · Report</x-slot>
-    @if ($live)
-        <x-slot name="head"><meta http-equiv="refresh" content="10"></x-slot>
-    @endif
 
     @php($canLaunch = auth()->user()->can(\App\Enums\Permission::CampaignLaunch->value))
     @php($canExport = auth()->user()->can(\App\Enums\Permission::ReportExport->value))
 
-    <div class="space-y-4">
+    <div class="space-y-4" @if ($live) data-auto-refresh="10" @endif>
         <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
                 <h1 class="text-xl font-semibold">{{ $campaign->name }}</h1>
@@ -33,7 +30,7 @@
                     @endif
                 @endif
                 @if ($canExport)
-                    <a href="{{ route('whatsapp.campaigns.report.export', $campaign) }}" class="btn btn-xs btn-outline"><i class="ti ti-download"></i> CSV</a>
+                    <a href="{{ route('whatsapp.campaigns.report.export', $campaign) }}" data-turbo="false" class="btn btn-xs btn-outline"><i class="ti ti-download"></i> CSV</a>
                 @endif
             </div>
         </div>

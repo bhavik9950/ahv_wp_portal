@@ -50,7 +50,7 @@
                             <td class="tabular-nums" data-order="{{ $row['failed'] }}">{{ number_format($row['failed']) }}</td>
                             <td class="text-right">
                                 @if ($canExport)
-                                    <a href="{{ route('whatsapp.campaigns.report.export', $c) }}" class="btn btn-xs btn-ghost"><i class="ti ti-download"></i></a>
+                                    <a href="{{ route('whatsapp.campaigns.report.export', $c) }}" data-turbo="false" class="btn btn-xs btn-ghost"><i class="ti ti-download"></i></a>
                                 @endif
                             </td>
                         </tr>
@@ -61,7 +61,7 @@
 
         @if ($canExport)
             <div class="text-sm">
-                <a href="{{ route('whatsapp.contacts.export') }}" class="link"><i class="ti ti-download"></i> Export all contacts (CSV)</a>
+                <a href="{{ route('whatsapp.contacts.export') }}" data-turbo="false" class="link"><i class="ti ti-download"></i> Export all contacts (CSV)</a>
             </div>
         @endif
     </div>
