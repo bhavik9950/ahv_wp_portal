@@ -10,8 +10,10 @@ use App\Enums\MessageStatus;
 use App\Jobs\Concerns\BindsTenant;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Models\WhatsappBusinessAccount;
 use App\Services\WhatsApp\Data\OutboundMessage;
 use App\Services\WhatsApp\Data\Recipient;
+use App\Services\WhatsApp\MediaLibrary;
 use App\Services\WhatsApp\OutboundMessageService;
 use App\Services\WhatsApp\RateLimitedException;
 use App\Services\WhatsApp\TransientSendException;
@@ -198,13 +200,19 @@ class SendCampaignMessageJob implements ShouldBeUnique, ShouldQueue
     private function headerParam(Campaign $campaign): ?array
     {
         $media = $campaign->media()->first();
-        if ($media === null || $media->meta_media_id === null) {
+        if ($media === null) {
             return null;
         }
 
-        $type = str_starts_with($media->mime_type, 'image/') ? 'image'
-            : (str_starts_with($media->mime_type, 'video/') ? 'video' : 'document');
+        $account = $campaign->phoneNumber()->first()?->businessAccount()->first();
+        if (! $account instanceof WhatsappBusinessAccount) {
+            return null;
+        }
 
-        return ['type' => $type, $type => ['id' => $media->meta_media_id]];
+        // Uploads to Meta on first use / after the media id expires.
+        $metaId = app(MediaLibrary::class)->ensureMetaId($media, $account);
+        $type = $media->category() === 'video' ? 'video' : ($media->category() === 'image' ? 'image' : 'document');
+
+        return ['type' => $type, $type => ['id' => $metaId]];
     }
 }

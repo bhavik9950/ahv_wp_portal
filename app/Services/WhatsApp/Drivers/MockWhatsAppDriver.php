@@ -86,6 +86,11 @@ final class MockWhatsAppDriver implements WhatsAppDriver
         // no-op
     }
 
+    public function uploadMedia(WabaCredentials $creds, string $contents, string $mimeType, string $filename): string
+    {
+        return 'mock-media-'.Str::upper(Str::random(20));
+    }
+
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array
     {
         return [

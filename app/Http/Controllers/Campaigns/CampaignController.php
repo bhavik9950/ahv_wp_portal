@@ -10,6 +10,7 @@ use App\Http\Requests\Campaigns\UpdateCampaignRequest;
 use App\Models\Campaign;
 use App\Models\Contact;
 use App\Models\ContactGroup;
+use App\Models\Media;
 use App\Models\WhatsappPhoneNumber;
 use App\Models\WhatsappTemplate;
 use App\Services\Campaigns\CampaignAudienceResolver;
@@ -71,6 +72,7 @@ class CampaignController extends Controller
             'numbers' => WhatsappPhoneNumber::query()->orderByDesc('is_default')->get(),
             'templates' => WhatsappTemplate::query()->where('status', TemplateStatus::Approved->value)->orderBy('name')->get(),
             'groups' => ContactGroup::query()->withCount('contacts')->orderBy('name')->get(),
+            'media' => Media::query()->latest()->get(),
             'audienceCount' => $campaign->template_id ? $this->audience->count($campaign) : 0,
             'placeholders' => count($this->renderer->render($campaign, null)),
             'preview' => $this->buildPreview($campaign, $sampleContact),

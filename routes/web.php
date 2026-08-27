@@ -15,6 +15,7 @@ use App\Http\Controllers\Contacts\UnsubscribeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\Whatsapp\MediaController;
 use App\Http\Controllers\Whatsapp\MessageController;
 use App\Http\Controllers\Whatsapp\PhoneNumberController;
 use App\Http\Controllers\Whatsapp\TemplateController;
@@ -73,6 +74,12 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         // Messages / conversation viewer
         Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
         Route::get('messages/{message}', [MessageController::class, 'show'])->name('messages.show');
+
+        // Media library
+        Route::get('media', [MediaController::class, 'index'])->name('media.index');
+        Route::post('media', [MediaController::class, 'store'])->name('media.store');
+        Route::get('media/{media}', [MediaController::class, 'show'])->name('media.show');
+        Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
         // Contacts
         Route::get('contacts/export', ContactExportController::class)->name('contacts.export');

@@ -79,6 +79,22 @@
                             </div>
                         @endfor
                     @endif
+
+                    <div class="mt-2">
+                        <label class="label"><span class="label-text">Media header (if the template has one)</span></label>
+                        <select name="media_id" class="select select-bordered select-sm w-full">
+                            <option value="">— none —</option>
+                            @foreach ($media as $file)
+                                <option value="{{ $file->id }}" @selected($campaign->media_id === $file->id)>
+                                    {{ $file->original_name }} ({{ $file->category() }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs opacity-60 mt-1">
+                            Upload files under <a class="link" href="{{ route('whatsapp.media.index') }}">Media</a>.
+                        </p>
+                    </div>
+
                     <button class="btn btn-sm btn-primary w-fit">Save</button>
                 </div>
             </form>

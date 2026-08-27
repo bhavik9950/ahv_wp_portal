@@ -92,6 +92,26 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         $this->throwUnlessOk($response);
     }
 
+    public function uploadMedia(WabaCredentials $creds, string $contents, string $mimeType, string $filename): string
+    {
+        if (blank($creds->phoneNumberId)) {
+            throw new RuntimeException('Cannot upload media: no phone number id for this WABA.');
+        }
+
+        $response = $this->client($creds)
+            ->attach('file', $contents, $filename, ['Content-Type' => $mimeType])
+            ->post("/{$creds->phoneNumberId}/media", ['messaging_product' => 'whatsapp', 'type' => $mimeType]);
+
+        $this->throwUnlessOk($response);
+
+        $id = $response->json('id');
+        if (! is_string($id) || $id === '') {
+            throw new RuntimeException('Meta media upload returned no id.');
+        }
+
+        return $id;
+    }
+
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array
     {
         $response = $this->client($creds)->get("/{$phoneNumberId}", [

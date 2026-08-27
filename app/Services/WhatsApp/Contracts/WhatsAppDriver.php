@@ -37,6 +37,14 @@ interface WhatsAppDriver
     public function deleteTemplate(WabaCredentials $creds, string $name): void;
 
     /**
+     * Upload media to Meta for use as a template/message header.
+     * POST /{phone_number_id}/media
+     *
+     * @return string the Meta media id
+     */
+    public function uploadMedia(WabaCredentials $creds, string $contents, string $mimeType, string $filename): string;
+
+    /**
      * @return array<string, mixed> raw Meta phone number object
      */
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array;
