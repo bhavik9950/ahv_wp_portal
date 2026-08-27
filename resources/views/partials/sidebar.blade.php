@@ -22,6 +22,7 @@
     {!! $nav('Templates', 'ti-template', 'whatsapp.templates.index', \App\Enums\Permission::TemplateView->value) !!}
     {!! $nav('Contacts', 'ti-address-book', 'whatsapp.contacts.index', \App\Enums\Permission::ContactView->value) !!}
     {!! $nav('Groups', 'ti-users-group', 'whatsapp.groups.index', \App\Enums\Permission::ContactView->value) !!}
+    {!! $nav('Import Contacts', 'ti-file-import', 'whatsapp.contacts.import.create', \App\Enums\Permission::ContactImport->value) !!}
     {!! $nav('Test Send', 'ti-send-2', 'whatsapp.test-send.create', \App\Enums\Permission::MessageSend->value) !!}
     {!! $nav('Campaigns', 'ti-send', 'whatsapp.campaigns.index', \App\Enums\Permission::CampaignView->value) !!}
     {!! $nav('Messages', 'ti-messages', 'whatsapp.messages.index', \App\Enums\Permission::MessageView->value) !!}

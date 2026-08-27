@@ -45,7 +45,7 @@ return new class extends Migration
         });
 
         Schema::create('contact_group_contact', function (Blueprint $table) {
-            $table->ulid('id')->primary();
+            $table->id();
             $table->foreignUlid('contact_group_id')->constrained()->cascadeOnDelete();
             $table->foreignUlid('contact_id')->constrained()->cascadeOnDelete();
             $table->timestamps();

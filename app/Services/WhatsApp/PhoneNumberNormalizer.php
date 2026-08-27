@@ -20,7 +20,7 @@ final class PhoneNumberNormalizer
     }
 
     /**
-     * @return array{e164: string, country_code: string|null}|null  null if it can't be a valid number
+     * @return array{e164: string, country_code: string|null}|null null if it can't be a valid number
      */
     public function parse(?string $input, ?string $countryCode = null): ?array
     {
@@ -37,14 +37,18 @@ final class PhoneNumberNormalizer
             return null;
         }
 
-        $cc = $countryCode !== null ? preg_replace('/\D/', '', $countryCode) : null;
+        $cc = ($countryCode !== null && $countryCode !== '')
+            ? ((preg_replace('/\D/', '', $countryCode) ?: null))
+            : null;
 
-        if (! $hasPlus && $cc === null) {
-            // Assume a national number for the org's default country.
-            $digits = $this->defaultCountryCode.$digits;
-            $cc = $this->defaultCountryCode;
-        } elseif (! $hasPlus && $cc !== null && ! str_starts_with($digits, (string) $cc)) {
-            $digits = $cc.$digits;
+        if (! $hasPlus) {
+            if ($cc === null) {
+                // Assume a national number for the org's default country.
+                $digits = $this->defaultCountryCode.$digits;
+                $cc = $this->defaultCountryCode;
+            } elseif (! str_starts_with($digits, $cc)) {
+                $digits = $cc.$digits;
+            }
         }
 
         if (strlen($digits) < 8 || strlen($digits) > 15) {

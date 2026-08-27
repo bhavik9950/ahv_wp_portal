@@ -20,13 +20,8 @@ class ContactImport extends Model
 {
     use BelongsToOrganization, HasUlids;
 
-    protected $fillable = [
-        'original_filename',
-        'disk',
-        'path',
-        'column_map',
-        'options',
-    ];
+    // Internal model — written only by the import controller/service/jobs.
+    protected $guarded = ['id'];
 
     protected function casts(): array
     {

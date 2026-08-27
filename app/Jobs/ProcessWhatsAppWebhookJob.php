@@ -7,9 +7,11 @@ namespace App\Jobs;
 use App\Enums\MessageStatus;
 use App\Enums\TemplateStatus;
 use App\Models\Message;
+use App\Models\Organization;
 use App\Models\WebhookEvent;
 use App\Models\WhatsappPhoneNumber;
 use App\Models\WhatsappTemplate;
+use App\Services\Contacts\OptInService;
 use App\Services\WhatsApp\MessageStatusUpdater;
 use App\Support\TenantContext;
 use Illuminate\Bus\Queueable;
@@ -189,10 +191,10 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
         }
 
         app(TenantContext::class)->set(
-            \App\Models\Organization::query()->find($organizationId)
+            Organization::query()->find($organizationId)
         );
 
-        app(\App\Services\Contacts\OptInService::class)->optOutByPhone($from, [
+        app(OptInService::class)->optOutByPhone($from, [
             'source' => 'inbound_keyword',
             'reference' => $incoming['id'] ?? null,
             'note' => "Customer replied: {$body}",

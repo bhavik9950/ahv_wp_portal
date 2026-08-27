@@ -14,12 +14,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use League\Csv\Reader;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ContactImportController extends Controller
 {
-    public function create(): \Illuminate\View\View
+    public function create(): View
     {
         $this->authorize('import', Contact::class);
 
@@ -52,7 +53,7 @@ class ContactImportController extends Controller
         return redirect()->route('whatsapp.contacts.import.map', [$import, 'headers' => implode(',', $headers)]);
     }
 
-    public function map(ContactImport $import): \Illuminate\View\View
+    public function map(ContactImport $import): View
     {
         $this->authorize('import', Contact::class);
 
@@ -97,7 +98,7 @@ class ContactImportController extends Controller
         return redirect()->route('whatsapp.contacts.import.show', $import);
     }
 
-    public function show(ContactImport $import): \Illuminate\View\View
+    public function show(ContactImport $import): View
     {
         $this->authorize('import', Contact::class);
 

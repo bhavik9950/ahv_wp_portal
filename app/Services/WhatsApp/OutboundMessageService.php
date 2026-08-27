@@ -49,6 +49,13 @@ final class OutboundMessageService
         }
 
         if ($this->blockedByOptOut($context)) {
+            $message->forceFill([
+                'status' => MessageStatus::Skipped,
+                'error_code' => 'opted_out',
+                'error_category' => 'opted_out',
+                'error_message' => 'Recipient has opted out of marketing messages.',
+            ])->save();
+
             $this->statusUpdater->apply($message, MessageStatus::Skipped, [
                 'error_code' => 'opted_out',
                 'error_message' => 'Recipient has opted out of marketing messages.',

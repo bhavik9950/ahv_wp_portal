@@ -13,6 +13,7 @@ use App\Support\CurrentOrganization;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use League\Csv\Reader;
 use League\Csv\Writer;
 
@@ -129,7 +130,7 @@ final class ContactImportService
             $seen[$e164] = true;
 
             $batch[] = [
-                'id' => (string) \Illuminate\Support\Str::ulid(),
+                'id' => (string) Str::ulid(),
                 'organization_id' => $this->tenant->id(),
                 'name' => $row['name'] ?? null,
                 'email' => $row['email'] ?? null,
@@ -172,7 +173,6 @@ final class ContactImportService
 
             if ($groupId !== null) {
                 DB::table('contact_group_contact')->insert(array_map(fn ($row) => [
-                    'id' => (string) \Illuminate\Support\Str::ulid(),
                     'contact_group_id' => $groupId,
                     'contact_id' => $row['id'],
                     'created_at' => now(),

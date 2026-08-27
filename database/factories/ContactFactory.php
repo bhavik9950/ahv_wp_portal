@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\OptInStatus;
 use App\Models\Contact;
 use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -27,7 +28,7 @@ class ContactFactory extends Factory
             'phone_hash' => hash('sha256', $phone),
             'email' => fake()->optional()->safeEmail(),
             'custom_fields' => [],
-            'opt_in_status' => 'opted_in',
+            'opt_in_status' => OptInStatus::OptedIn->value,
             'opted_in_at' => now(),
             'opt_in_source' => 'seed',
         ];
@@ -36,8 +37,17 @@ class ContactFactory extends Factory
     public function optedOut(): static
     {
         return $this->state(fn () => [
-            'opt_in_status' => 'opted_out',
+            'opt_in_status' => OptInStatus::OptedOut->value,
             'opted_out_at' => now(),
+        ]);
+    }
+
+    public function optInUnknown(): static
+    {
+        return $this->state(fn () => [
+            'opt_in_status' => OptInStatus::Unknown->value,
+            'opted_in_at' => null,
+            'opt_in_source' => null,
         ]);
     }
 }
