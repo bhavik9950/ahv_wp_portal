@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\CurrentOrganization;
 use App\Support\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
@@ -13,14 +14,18 @@ use Spatie\Permission\PermissionRegistrar;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Resolves the active organization for the request from the session and makes
- * it available to the tenant global scope. Redirects to org selection if the
- * user has no usable organization context.
+ * Binds the active organization to the tenant scope and the spatie permission
+ * team for the request.
+ *
+ * Single-tenant mode: the one organization is resolved automatically — there is
+ * no org switcher. Multi-tenant mode (future): the preferred org id comes from
+ * the session and membership is enforced here.
  */
 final class EnsureTenantContext
 {
     public function __construct(
         private readonly TenantContext $tenant,
+        private readonly CurrentOrganization $current,
         private readonly PermissionRegistrar $permissions,
     ) {}
 
@@ -33,28 +38,26 @@ final class EnsureTenantContext
             return $next($request);
         }
 
-        $organizationId = $request->session()->get('current_organization_id');
+        $preferredId = $this->current->isSingleTenant()
+            ? null
+            : $request->session()->get('current_organization_id');
 
-        $organization = $organizationId
-            ? $user->organizations()->whereKey($organizationId)->first()
-            : null;
-
-        $organization ??= $user->organizations()->orderBy('name')->first();
+        $organization = $this->current->resolve($preferredId);
 
         if ($organization === null) {
-            // Super admins can operate without an org membership (platform admin area).
-            if ($user->isSuperAdmin()) {
-                return $next($request);
-            }
+            abort(503, 'No organization has been configured for this portal.');
+        }
 
-            abort(403, 'Your account is not linked to any organization.');
+        // In multi-tenant mode, non-super-admins must be members of the org.
+        if (! $this->current->isSingleTenant()
+            && ! $user->isSuperAdmin()
+            && ! $user->belongsToOrganization($organization)) {
+            abort(403, 'Your account is not linked to this organization.');
         }
 
         $request->session()->put('current_organization_id', $organization->getKey());
 
         $this->tenant->set($organization);
-
-        // Scope spatie team-based roles/permissions to this organization.
         $this->permissions->setPermissionsTeamId($organization->getKey());
 
         return $next($request);

@@ -15,9 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             SecurityHeaders::class,
-            EnsureTenantContext::class,
         ]);
 
+        // Applied explicitly to routes that operate on tenant-scoped data.
         $middleware->alias([
             'tenant' => EnsureTenantContext::class,
         ]);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Support\CurrentOrganization;
 use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(TenantContext::class);
+        $this->app->scoped(CurrentOrganization::class);
     }
 
     public function boot(): void
@@ -30,7 +32,11 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        Password::defaults(fn () => Password::min(12)->letters()->mixedCase()->numbers()->uncompromised());
+        Password::defaults(function () {
+            $rule = Password::min(12)->letters()->mixedCase()->numbers();
+
+            return $this->app->isProduction() ? $rule->uncompromised() : $rule;
+        });
 
         // Platform-wide super admin bypasses every ability check.
         Gate::before(function ($user, string $ability) {

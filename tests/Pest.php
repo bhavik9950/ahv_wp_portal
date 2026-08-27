@@ -1,50 +1,50 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+declare(strict_types=1);
 
-/*
-|--------------------------------------------------------------------------
-| Test Case
-|--------------------------------------------------------------------------
-|
-| The closure you provide to your test functions is always bound to a specific PHPUnit test
-| case class. By default, that class is "PHPUnit\Framework\TestCase". Of course, you may
-| need to change it using the "pest()" function to bind a different classes or traits.
-|
-*/
+use App\Enums\OrganizationRole;
+use App\Models\Organization;
+use App\Models\User;
+use App\Services\Organizations\OrganizationProvisioner;
+use App\Support\TenantContext;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\PermissionRegistrar;
+use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Unit');
 
-/*
-|--------------------------------------------------------------------------
-| Expectations
-|--------------------------------------------------------------------------
-|
-| When you're writing tests, you often need to check that values meet certain conditions. The
-| "expect()" function gives you access to a set of "expectations" methods that you can use
-| to assert different things. Of course, you may extend the Expectation API at any time.
-|
-*/
+expect()->extend('toBeOne', fn () => $this->toBe(1));
 
-expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Functions
-|--------------------------------------------------------------------------
-|
-| While Pest is very powerful out-of-the-box, you may have some testing code specific to your
-| project that you don't want to repeat in every file. Here you can also expose helpers as
-| global functions to help you to reduce the number of lines of code in your test files.
-|
-*/
-
-function something()
+/**
+ * Create an organization (with RBAC roles provisioned) and bind it as the
+ * active tenant for the current test. Returns the Organization.
+ */
+function makeOrganization(array $attributes = []): Organization
 {
-    // ..
+    $org = app(OrganizationProvisioner::class)->create([
+        'name' => $attributes['name'] ?? fake()->unique()->company(),
+        'timezone' => $attributes['timezone'] ?? 'UTC',
+    ]);
+
+    bindTenant($org);
+
+    return $org;
+}
+
+/** Bind an organization as the active tenant + permission team for this test. */
+function bindTenant(Organization $org): void
+{
+    app(TenantContext::class)->set($org);
+    app(PermissionRegistrar::class)->setPermissionsTeamId($org->getKey());
+}
+
+/** Create a user that is a member of $org with the given role. */
+function makeMember(Organization $org, string $role = 'org_admin'): User
+{
+    $user = User::factory()->create();
+    app(OrganizationProvisioner::class)->addMember($org, $user, OrganizationRole::from($role));
+
+    return $user;
 }

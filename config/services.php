@@ -63,6 +63,10 @@ return [
         // Dedicated log channel; never records tokens/secrets/authorization headers.
         'log_channel' => env('WABA_LOG_CHANNEL', 'whatsapp'),
 
+        // Disk for stored media (local for dev, 'r2' for production).
+        'media_disk' => env('WABA_MEDIA_DISK', 'local'),
+        'media_url_ttl' => (int) env('WABA_MEDIA_URL_TTL', 300), // signed URL lifetime (seconds)
+
         // HTTP client hardening for outbound Graph API + media downloads.
         'http' => [
             'connect_timeout' => (int) env('WABA_HTTP_CONNECT_TIMEOUT', 10),

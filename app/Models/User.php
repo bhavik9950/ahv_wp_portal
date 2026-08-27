@@ -69,7 +69,7 @@ class User extends Authenticatable
 
     public function isSuperAdmin(): bool
     {
-        return (bool) $this->is_super_admin;
+        return (bool) ($this->attributes['is_super_admin'] ?? false);
     }
 
     public function belongsToOrganization(Organization|int|string $organization): bool
