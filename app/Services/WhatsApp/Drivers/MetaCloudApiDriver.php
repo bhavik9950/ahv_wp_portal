@@ -102,6 +102,16 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         return $response->json() ?? [];
     }
 
+    public function listPhoneNumbers(WabaCredentials $creds): array
+    {
+        $response = $this->client($creds)->get("/{$creds->wabaId}/phone_numbers", [
+            'fields' => 'id,display_phone_number,verified_name,quality_rating,messaging_limit_tier',
+        ]);
+        $this->throwUnlessOk($response);
+
+        return $response->json('data') ?? [];
+    }
+
     public function runConnectionChecks(WabaCredentials $creds): array
     {
         $checks = [];

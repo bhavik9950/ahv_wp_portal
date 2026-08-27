@@ -97,6 +97,13 @@ final class MockWhatsAppDriver implements WhatsAppDriver
         ];
     }
 
+    public function listPhoneNumbers(WabaCredentials $creds): array
+    {
+        return [
+            $this->getPhoneNumber($creds, $creds->phoneNumberId ?: 'mock-phone-1'),
+        ];
+    }
+
     public function runConnectionChecks(WabaCredentials $creds): array
     {
         $hasToken = $creds->accessToken !== '';

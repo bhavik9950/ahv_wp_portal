@@ -42,6 +42,13 @@ interface WhatsAppDriver
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array;
 
     /**
+     * All phone numbers registered on the WABA.
+     *
+     * @return array<int, array<string, mixed>> raw Meta phone number objects
+     */
+    public function listPhoneNumbers(WabaCredentials $creds): array;
+
+    /**
      * Run the connection validators for the WABA settings screen.
      *
      * @return list<ConnectionCheck>

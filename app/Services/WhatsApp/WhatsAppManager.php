@@ -10,6 +10,7 @@ use App\Services\WhatsApp\Contracts\WhatsAppDriver;
 use App\Services\WhatsApp\Data\OutboundMessage;
 use App\Services\WhatsApp\Data\SendResult;
 use App\Services\WhatsApp\Data\WabaCredentials;
+use App\Services\System\SystemSettings;
 use Illuminate\Contracts\Container\Container;
 use RuntimeException;
 
@@ -20,7 +21,10 @@ use RuntimeException;
  */
 final class WhatsAppManager
 {
-    public function __construct(private readonly Container $container) {}
+    public function __construct(
+        private readonly Container $container,
+        private readonly SystemSettings $settings,
+    ) {}
 
     public function driver(?string $name = null): WhatsAppDriver
     {
@@ -33,9 +37,14 @@ final class WhatsAppManager
         };
     }
 
+    /**
+     * Sending is ON only when BOTH the config default and the runtime override
+     * are true. Either can be flipped to pause all outbound traffic.
+     */
     public function sendingEnabled(): bool
     {
-        return (bool) config('services.whatsapp.sending_enabled', true);
+        return (bool) config('services.whatsapp.sending_enabled', true)
+            && $this->settings->sendingEnabledOverride();
     }
 
     public function credentialsFor(WhatsappBusinessAccount $account, ?WhatsappPhoneNumber $phoneNumber = null): WabaCredentials
@@ -52,10 +61,20 @@ final class WhatsAppManager
             throw new WhatsAppSendingDisabledException;
         }
 
+        if (! $phoneNumber->isSendable()) {
+            throw new RuntimeException('This WhatsApp phone number is disabled.');
+        }
+
         $account = $phoneNumber->businessAccount()->first();
 
         if (! $account instanceof WhatsappBusinessAccount || ! $account->is_active) {
             throw new RuntimeException('WhatsApp Business Account is not active.');
+        }
+
+        $organization = $account->organization()->first();
+
+        if ($organization !== null && $organization->isSuspended()) {
+            throw new RuntimeException('This organization is suspended.');
         }
 
         $creds = $this->credentialsFor($account, $phoneNumber);
