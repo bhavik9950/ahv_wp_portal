@@ -6,6 +6,7 @@ use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -20,6 +21,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SecurityHeaders::class,
         ]);
+
+        // Behind a reverse proxy / tunnel (Cloudflare Tunnel, ngrok, a prod LB)
+        // trust its X-Forwarded-* headers so the app knows the real scheme, host
+        // and client IP. TRUSTED_PROXIES: "*" for a dev tunnel, a comma list of
+        // proxy IPs/CIDRs for production, or empty to trust none (default).
+        $proxies = trim((string) env('TRUSTED_PROXIES', ''));
+        $middleware->trustProxies(
+            at: $proxies === '*' ? '*' : array_values(array_filter(array_map('trim', explode(',', $proxies)))),
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
 
         // Applied explicitly to routes that operate on tenant-scoped data.
         $middleware->alias([

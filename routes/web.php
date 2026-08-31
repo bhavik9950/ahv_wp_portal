@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Permission;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\SystemControlController;
+use App\Http\Controllers\Admin\WebhookEventController;
 use App\Http\Controllers\Campaigns\CampaignController;
 use App\Http\Controllers\Campaigns\CampaignReportController;
 use App\Http\Controllers\Contacts\ContactController;
@@ -132,6 +133,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
             Route::get('controls', [SystemControlController::class, 'index'])->name('controls');
             Route::post('controls/sending', [SystemControlController::class, 'toggleSending'])->name('controls.sending');
             Route::post('controls/pause-campaigns', [SystemControlController::class, 'pauseAllCampaigns'])->name('controls.pause-campaigns');
+        });
+
+        Route::middleware('can:'.Permission::AuditView->value)->group(function () {
+            Route::get('webhook-events', [WebhookEventController::class, 'index'])->name('webhook-events.index');
+            Route::get('webhook-events/{webhookEvent}', [WebhookEventController::class, 'show'])->name('webhook-events.show');
         });
 
         // Platform-level destructive action.

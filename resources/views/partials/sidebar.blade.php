@@ -35,6 +35,7 @@
     {!! $nav('Users', 'ti-user-cog', 'admin.users.index', \App\Enums\Permission::OrgManage->value) !!}
     {!! $nav('Roles &amp; Permissions', 'ti-shield-lock', 'admin.roles.index', \App\Enums\Permission::OrgManage->value) !!}
     {!! $nav('Audit Logs', 'ti-history', 'admin.audit.index', \App\Enums\Permission::AuditView->value) !!}
+    {!! $nav('Webhook Events', 'ti-webhook', 'admin.webhook-events.index', \App\Enums\Permission::AuditView->value) !!}
     {!! $nav('System Health', 'ti-heartbeat', 'admin.health', \App\Enums\Permission::OrgManage->value) !!}
     {!! $nav('Emergency Controls', 'ti-alert-triangle', 'admin.controls', \App\Enums\Permission::OrgManage->value) !!}
 </ul>
