@@ -77,6 +77,13 @@ k6/Artillery load scripts for 10k/50k/100k with a results template, Horizon
 monitoring + alerts, `/health`, deployment docs (Nginx/PHP-FPM/Supervisor/
 Horizon/Scheduler/SSL), monitoring/alerting runbook.
 
+## Phase 7 — WhatsApp AI auto-reply bot  (planned)
+
+AI assistant replies to inbound customer messages (text / image / voice),
+grounded in an AH&V knowledge base, with human handoff and full portal control.
+Full breakdown (stages 7.1–7.6, data model, deployment, cost) in
+`docs/whatsapp-chatbot-plan.md`. Needs the webhook live on a public URL first.
+
 ## Acceptance tracking
 
 `plan.md` §57 items are tracked as a checklist in `docs/acceptance.md`, updated
