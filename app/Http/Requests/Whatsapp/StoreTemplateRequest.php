@@ -28,6 +28,15 @@ class StoreTemplateRequest extends FormRequest
 
             'header_type' => ['nullable', 'in:none,text,image,video,document'],
             'header_text' => ['nullable', 'required_if:header_type,text', 'string', 'max:60'],
+            // A sample file Meta uses for review (not sent to customers). Caps:
+            // image 5 MB, video 16 MB, document 100 MB.
+            'sample_media' => [
+                'nullable',
+                'required_if:header_type,image,video,document',
+                'file',
+                'max:102400',
+                'mimes:jpg,jpeg,png,mp4,3gp,pdf',
+            ],
 
             'body' => ['required', 'string', 'max:1024'],
             'footer' => ['nullable', 'string', 'max:60'],
@@ -46,6 +55,18 @@ class StoreTemplateRequest extends FormRequest
             $errors = app(TemplateComposer::class)->structuralErrors((string) $this->input('body', ''));
             foreach ($errors as $message) {
                 $v->errors()->add('body', $message);
+            }
+
+            $sample = $this->file('sample_media');
+            if ($sample !== null) {
+                $capKb = match ($this->input('header_type')) {
+                    'image' => 5 * 1024,
+                    'video' => 16 * 1024,
+                    default => 100 * 1024,
+                };
+                if ($sample->getSize() / 1024 > $capKb) {
+                    $v->errors()->add('sample_media', 'The sample file is larger than Meta allows for this header type.');
+                }
             }
         });
     }

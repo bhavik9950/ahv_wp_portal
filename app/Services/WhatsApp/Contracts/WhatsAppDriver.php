@@ -45,6 +45,14 @@ interface WhatsAppDriver
     public function uploadMedia(WabaCredentials $creds, string $contents, string $mimeType, string $filename): string;
 
     /**
+     * Upload a sample header file via the resumable upload API and return the
+     * opaque file handle Meta needs in a media-header template's
+     * `example.header_handle` when submitting it for review.
+     * POST /{app_id}/uploads  →  POST /{upload_session_id}
+     */
+    public function uploadTemplateSample(WabaCredentials $creds, string $appId, string $contents, string $mimeType, string $filename): string;
+
+    /**
      * @return array<string, mixed> raw Meta phone number object
      */
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array;

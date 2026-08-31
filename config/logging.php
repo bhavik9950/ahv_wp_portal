@@ -1,6 +1,7 @@
 <?php
 
 use App\Logging\RedactSensitiveProcessor;
+use App\Logging\UseDisplayTimezone;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -20,6 +21,19 @@ return [
     */
 
     'default' => env('LOG_CHANNEL', 'stack'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Log Display Timezone
+    |--------------------------------------------------------------------------
+    |
+    | App timestamps stay in UTC (see config/app.php) so storage and campaign
+    | scheduling stay correct. Log lines, however, are read by people — this
+    | timezone is applied to any channel tapped with App\Logging\UseDisplayTimezone.
+    |
+    */
+
+    'display_timezone' => env('LOG_TIMEZONE', 'Asia/Kolkata'),
 
     /*
     |--------------------------------------------------------------------------
@@ -64,6 +78,7 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
+            'tap' => [UseDisplayTimezone::class],
         ],
 
         'daily' => [
@@ -72,6 +87,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'tap' => [UseDisplayTimezone::class],
         ],
 
         'slack' => [
@@ -139,6 +155,7 @@ return [
             'level' => env('WABA_LOG_LEVEL', 'info'),
             'days' => env('WABA_LOG_DAYS', 30),
             'replace_placeholders' => true,
+            'tap' => [UseDisplayTimezone::class],
             'processors' => [RedactSensitiveProcessor::class],
         ],
 

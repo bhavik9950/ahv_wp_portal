@@ -13,6 +13,7 @@ use App\Services\WhatsApp\MetaErrorMapper;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -143,6 +144,48 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         return $id;
     }
 
+    public function uploadTemplateSample(WabaCredentials $creds, string $appId, string $contents, string $mimeType, string $filename): string
+    {
+        if ($appId === '') {
+            throw new RuntimeException('Cannot upload a template sample: no Meta App ID is configured for this WABA.');
+        }
+
+        // 1. Start a resumable upload session (params go on the query string).
+        $start = $this->http
+            ->baseUrl($creds->graphBase())
+            ->withToken($creds->accessToken, 'OAuth')
+            ->acceptJson()
+            ->timeout(30)
+            ->post("/{$appId}/uploads?".http_build_query([
+                'file_name' => $filename,
+                'file_length' => strlen($contents),
+                'file_type' => $mimeType,
+            ]));
+        $this->throwUnlessOk($start);
+
+        $sessionId = $start->json('id');
+        if (! is_string($sessionId) || $sessionId === '') {
+            throw new RuntimeException('Meta did not return an upload session id.');
+        }
+
+        // 2. Upload the bytes; the response carries the handle in "h".
+        $upload = $this->http
+            ->baseUrl($creds->graphBase())
+            ->withToken($creds->accessToken, 'OAuth')
+            ->withHeaders(['file_offset' => '0'])
+            ->withBody($contents, $mimeType)
+            ->timeout(60)
+            ->post("/{$sessionId}");
+        $this->throwUnlessOk($upload);
+
+        $handle = $upload->json('h');
+        if (! is_string($handle) || $handle === '') {
+            throw new RuntimeException('Meta upload did not return a file handle.');
+        }
+
+        return $handle;
+    }
+
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array
     {
         $response = $this->client($creds)->get("/{$phoneNumberId}", [
@@ -245,6 +288,13 @@ final class MetaCloudApiDriver implements WhatsAppDriver
     {
         if ($response->failed()) {
             $err = $this->errors->fromHttp($response->status(), $response->json() ?? [], $response->headers());
+
+            Log::channel((string) config('services.whatsapp.log_channel'))
+                ->warning('Meta API error', [
+                    'status' => $response->status(),
+                    'error' => data_get($response->json(), 'error'),
+                ]);
+
             throw new RuntimeException($err->adminMessage);
         }
     }

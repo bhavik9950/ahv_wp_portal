@@ -10,8 +10,9 @@
                 Only APPROVED templates become available for campaigns.</span>
         </div>
 
-        <form method="POST" action="{{ route('whatsapp.templates.store') }}"
+        <form method="POST" action="{{ route('whatsapp.templates.store') }}" enctype="multipart/form-data"
               x-data="{ header: '{{ old('header_type', 'none') }}', buttons: {{ old('buttons') ? count(old('buttons')) : 0 }} }"
+              data-loading data-loading-text="Submitting…"
               class="card bg-base-100 border border-base-300">
             @csrf
             <div class="card-body space-y-4">
@@ -50,6 +51,17 @@
                     <input x-show="header === 'text'" name="header_text" value="{{ old('header_text') }}"
                            class="input input-bordered w-full mt-2" placeholder="Header text (max 60)" maxlength="60">
                     @error('header_text')<p class="text-error text-xs mt-1">{{ $message }}</p>@enderror
+
+                    <div x-show="['image','video','document'].includes(header)" class="mt-2 space-y-1">
+                        <input type="file" name="sample_media"
+                               class="file-input file-input-bordered file-input-sm w-full"
+                               accept="image/jpeg,image/png,video/mp4,video/3gpp,application/pdf">
+                        <p class="text-xs opacity-60">
+                            A sample file Meta uses for review — <span class="opacity-100">not sent to customers</span>.
+                            Image ≤ 5 MB, video ≤ 16 MB, PDF ≤ 100 MB.
+                        </p>
+                        @error('sample_media')<p class="text-error text-xs">{{ $message }}</p>@enderror
+                    </div>
                 </div>
 
                 <div>

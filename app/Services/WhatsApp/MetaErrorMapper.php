@@ -34,8 +34,17 @@ final class MetaErrorMapper
         $error = $body['error'] ?? [];
         $code = isset($error['code']) ? (int) $error['code'] : null;
         $subcode = isset($error['error_subcode']) ? (int) $error['error_subcode'] : null;
-        $metaMessage = (string) ($error['message'] ?? $error['error_user_msg'] ?? 'Unknown WhatsApp API error');
         $retryAfter = $this->retryAfter($headers);
+
+        // Meta's `message` is often generic ("Invalid parameter"); the real
+        // reason (e.g. why a template was rejected) is in these fields.
+        $metaMessage = implode(' — ', array_values(array_filter([
+            (string) ($error['message'] ?? ''),
+            (string) ($error['error_user_title'] ?? ''),
+            (string) ($error['error_user_msg'] ?? ''),
+            (string) data_get($error, 'error_data.details', ''),
+        ], fn ($s) => $s !== '' && $s !== 'Invalid parameter')))
+            ?: (string) ($error['message'] ?? 'Unknown WhatsApp API error');
 
         $category = match (true) {
             $httpStatus === 429 || $this->in($code, self::RATE_LIMITED) => ErrorCategory::RateLimited,

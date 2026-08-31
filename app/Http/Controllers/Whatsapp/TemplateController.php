@@ -47,7 +47,15 @@ class TemplateController extends Controller
 
         $account = WhatsappBusinessAccount::query()->orderBy('created_at')->firstOrFail();
 
-        $template = $this->submissions->submit($account, $request->validated());
+        try {
+            $template = $this->submissions->submit(
+                $account,
+                $request->safe()->except('sample_media'),
+                $request->file('sample_media'),
+            );
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['body' => $e->getMessage()]);
+        }
 
         return redirect()
             ->route('whatsapp.templates.show', $template)

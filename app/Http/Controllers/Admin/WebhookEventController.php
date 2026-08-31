@@ -23,6 +23,13 @@ class WebhookEventController extends Controller
 
         return view('admin.webhook-events.index', [
             'events' => $events,
+            'stats' => [
+                'total' => $events->count(),
+                'inbound' => $events->filter(fn ($e) => str_starts_with($e->kind(), 'inbound'))->count(),
+                'statuses' => $events->filter(fn ($e) => str_starts_with($e->kind(), 'status'))->count(),
+                'failed' => $events->where('status', 'failed')->count(),
+                'bad_signature' => $events->where('signature_valid', false)->count(),
+            ],
             'pending' => $events->whereNotIn('status', ['processed', 'ignored'])->count(),
             'lastAt' => $events->max('received_at'),
         ]);

@@ -25,7 +25,13 @@ final class TemplateComposer
         if ($headerType === 'text' && filled($data['header_text'] ?? null)) {
             $components[] = ['type' => 'HEADER', 'format' => 'TEXT', 'text' => $data['header_text']];
         } elseif (in_array($headerType, ['image', 'video', 'document'], true)) {
-            $components[] = ['type' => 'HEADER', 'format' => strtoupper($headerType)];
+            $header = ['type' => 'HEADER', 'format' => strtoupper($headerType)];
+            // Meta requires a sample file handle when submitting a media-header
+            // template for review (obtained from the resumable upload API).
+            if (filled($data['header_handle'] ?? null)) {
+                $header['example'] = ['header_handle' => [(string) $data['header_handle']]];
+            }
+            $components[] = $header;
         }
 
         $components[] = ['type' => 'BODY', 'text' => (string) ($data['body'] ?? '')];
