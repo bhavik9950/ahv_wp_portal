@@ -29,3 +29,5 @@ Thumbs.db
 /database/*.sqlite
 /database/*.sqlite-journal
 /.claude
+/csv
+
