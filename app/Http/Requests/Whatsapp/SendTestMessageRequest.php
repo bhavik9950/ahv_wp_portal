@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Whatsapp;
 
 use App\Enums\Permission;
+use App\Support\Scoped;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendTestMessageRequest extends FormRequest
@@ -32,14 +33,14 @@ class SendTestMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'whatsapp_phone_number_id' => ['required', 'string', 'exists:whatsapp_phone_numbers,id'],
+            'whatsapp_phone_number_id' => ['required', 'string', Scoped::exists('whatsapp_phone_numbers')],
             'mode' => ['required', 'in:text,template'],
             'recipients' => ['required', 'array', 'min:1', 'max:5'],
             'recipients.*' => ['string', 'regex:/^[0-9]{8,15}$/'],
 
             'body' => ['required_if:mode,text', 'nullable', 'string', 'max:4096'],
 
-            'template_id' => ['required_if:mode,template', 'nullable', 'string', 'exists:whatsapp_templates,id'],
+            'template_id' => ['required_if:mode,template', 'nullable', 'string', Scoped::exists('whatsapp_templates')],
             'variables' => ['nullable', 'array'],
             // WhatsApp rejects empty template parameters — every supplied
             // variable must have a value.

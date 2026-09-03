@@ -10,6 +10,7 @@ use App\Jobs\CommitContactImportJob;
 use App\Models\Contact;
 use App\Models\ContactGroup;
 use App\Models\ContactImport;
+use App\Support\Scoped;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -75,7 +76,7 @@ class ContactImportController extends Controller
 
         $data = $request->validate([
             'column_map' => ['required', 'array'],
-            'group_id' => ['nullable', 'string', 'exists:contact_groups,id'],
+            'group_id' => ['nullable', 'string', Scoped::exists('contact_groups')],
             'opt_in_source' => ['nullable', 'string', 'max:80'],
             'mark_opted_in' => ['nullable', 'boolean'],
         ]);

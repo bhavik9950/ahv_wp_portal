@@ -8,6 +8,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\ContactGroup;
+use App\Support\Scoped;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -67,9 +68,9 @@ class ContactGroupController extends Controller
         $this->authorizePermission(Permission::ContactManage);
 
         $data = $request->validate([
-            'group_id' => ['required', 'string', 'exists:contact_groups,id'],
+            'group_id' => ['required', 'string', Scoped::exists('contact_groups')],
             'contact_ids' => ['required', 'array', 'min:1'],
-            'contact_ids.*' => ['string', 'exists:contacts,id'],
+            'contact_ids.*' => ['string', Scoped::exists('contacts')],
             'action' => ['required', 'in:add,remove'],
         ]);
 

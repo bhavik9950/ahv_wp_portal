@@ -146,6 +146,31 @@ it('blocks an image-header template send when no sample file is stored', functio
     expect(Message::count())->toBe(0);
 });
 
+it('rejects a test send that references another organization\'s phone number', function () {
+    // Only meaningful in multi-tenant mode (single-tenant = one org).
+    config()->set('tenant.mode', 'multi');
+
+    $otherOrg = makeOrganization();
+    $otherAccount = WhatsappBusinessAccount::factory()->for($otherOrg)->create();
+    $foreignNumber = WhatsappPhoneNumber::factory()->forAccount($otherAccount)->create();
+
+    $number = testSendNumber(); // switches tenant to a fresh org
+    $agent = makeMember($number->organization, 'support_agent');
+
+    $this->actingAs($agent)
+        ->withSession(['current_organization_id' => $number->organization_id])
+        ->from(route('whatsapp.test-send.create'))
+        ->post(route('whatsapp.test-send.store'), [
+            'whatsapp_phone_number_id' => $foreignNumber->id,
+            'mode' => 'text',
+            'recipients' => '919876500001',
+            'body' => 'x',
+        ])
+        ->assertSessionHasErrors('whatsapp_phone_number_id');
+
+    expect(Message::count())->toBe(0);
+});
+
 it('rejects a template send with a blank variable', function () {
     $number = testSendNumber();
     $agent = makeMember($number->organization, 'support_agent');

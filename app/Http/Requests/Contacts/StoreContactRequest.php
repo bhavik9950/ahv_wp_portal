@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Contacts;
 
 use App\Enums\Permission;
+use App\Support\Scoped;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreContactRequest extends FormRequest
@@ -27,7 +28,7 @@ class StoreContactRequest extends FormRequest
             'custom_fields' => ['nullable', 'array'],
             'custom_fields.*' => ['nullable', 'string', 'max:500'],
             'groups' => ['nullable', 'array'],
-            'groups.*' => ['string', 'exists:contact_groups,id'],
+            'groups.*' => ['string', Scoped::exists('contact_groups')],
         ];
     }
 }
