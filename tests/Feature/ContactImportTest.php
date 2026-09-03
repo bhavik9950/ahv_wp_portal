@@ -116,6 +116,26 @@ it('drives the full HTTP flow: upload → map → analyze → commit', function 
     expect(Contact::where('phone_e164', '919811111111')->value('custom_fields'))->toMatchArray(['city' => 'Delhi']);
 });
 
+it('tracks live progress: imported_rows climbs across chunks', function () {
+    // 250 valid rows → CHUNK=100 → progress updates at 100, 200, then 250.
+    $rows = collect(range(1, 250))
+        ->map(fn ($i) => 'User'.$i.',98'.str_pad((string) (10000000 + $i), 8, '0', STR_PAD_LEFT))
+        ->implode("\n");
+    $import = makeImport("name,phone\n{$rows}\n");
+
+    $service = app(ContactImportService::class);
+    $service->analyze($import->fresh());
+    expect($import->fresh()->valid_rows)->toBe(250);
+
+    $service->commit($import->fresh());
+
+    $import->refresh();
+    expect($import->status)->toBe('completed')
+        ->and($import->imported_rows)->toBe(250)
+        ->and($import->progressPercent())->toBe(100)
+        ->and(Contact::count())->toBe(250);
+});
+
 it('runs the async import pipeline end to end via jobs', function () {
     $import = makeImport("name,phone\nAsha,9998887770\n");
 

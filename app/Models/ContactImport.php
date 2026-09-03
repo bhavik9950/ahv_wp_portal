@@ -36,8 +36,30 @@ class ContactImport extends Model
         return $this->status === 'analyzed';
     }
 
+    public function isImporting(): bool
+    {
+        return $this->status === 'importing';
+    }
+
+    public function isBusy(): bool
+    {
+        return in_array($this->status, ['pending', 'analyzing', 'importing'], true);
+    }
+
     public function isFinished(): bool
     {
         return in_array($this->status, ['completed', 'failed'], true);
+    }
+
+    /** 0–100 — rows inserted so far vs the valid rows to import. */
+    public function progressPercent(): int
+    {
+        $target = (int) ($this->valid_rows ?? 0);
+
+        if ($target < 1) {
+            return $this->status === 'completed' ? 100 : 0;
+        }
+
+        return (int) min(100, round(((int) ($this->imported_rows ?? 0)) / $target * 100));
     }
 }

@@ -28,7 +28,8 @@ use League\Csv\Writer;
  */
 final class ContactImportService
 {
-    private const CHUNK = 500;
+    /** Insert batch size — also how often the "imported so far" count updates. */
+    private const CHUNK = 100;
 
     public function __construct(
         private readonly TenantContext $tenant,
@@ -55,6 +56,14 @@ final class ContactImportService
         foreach ($reader->getRecords() as $record) {
             $total++;
             $row = $this->mapRow($record, $map);
+
+            // Let the preview page show the row count climbing while a big file scans.
+            if ($total % self::CHUNK === 0) {
+                ContactImport::query()->whereKey($import->getKey())->update([
+                    'total_rows' => $total, 'valid_rows' => $valid,
+                    'invalid_rows' => $invalid, 'duplicate_rows' => $duplicate,
+                ]);
+            }
 
             $parsed = $normalizer->parse($row['phone'] ?? null, $row['country_code'] ?? null);
 
@@ -104,7 +113,7 @@ final class ContactImportService
             return;
         }
 
-        $import->update(['status' => 'importing']);
+        $import->update(['status' => 'importing', 'imported_rows' => 0]);
 
         $normalizer = $this->normalizer();
         $map = $import->column_map ?? [];
@@ -150,6 +159,8 @@ final class ContactImportService
             if (count($batch) >= self::CHUNK) {
                 $imported += $this->flush($batch, $groupId);
                 $batch = [];
+                // Live progress for the auto-refreshing preview page.
+                ContactImport::query()->whereKey($import->getKey())->update(['imported_rows' => $imported]);
             }
         }
 
