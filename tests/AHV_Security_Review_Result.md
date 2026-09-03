@@ -8,6 +8,26 @@
 
 ---
 
+## Remediation status (2026‑09‑03)
+
+| ID | Status | Where |
+|----|--------|-------|
+| **H‑1** APP_KEY in `.env.example` | **FIXED** — placeholder key; deploy generates fresh (commit `security: fix H-1…`) | `.env.example`, `docs/deployment.md` §4 |
+| **M‑1** `TRUSTED_PROXIES=*` in prod | **FIXED** — `*` ignored when `APP_ENV=production` (falls back to `127.0.0.1`) | `bootstrap/app.php` |
+| **M‑2** tenant‑unscoped `exists:` | **FIXED** — `App\Support\Scoped::exists()` on all 6 rule sites + test | requests/controllers |
+| **M‑3** webhook viewer not scoped | **FIXED** — non‑super‑admin sees only own org; `show()` 404s foreign event | `WebhookEventController` |
+| **L‑1** CSV formula injection | **FIXED** — `App\Support\Csv::row()` / `EscapeFormula` on 3 export paths | export controllers, `ContactImportService` |
+| **L‑2** production config | **DOCUMENTED** — deploy checklist enforces `APP_DEBUG=false` etc. | `docs/deployment.md` §4/§14 |
+| **L‑3** password throttle | **FIXED** — `throttle:6,1` on `password.store` + `password.update` | `routes/auth.php` |
+| **L‑4** CORS wildcard | **FIXED** — `config/cors.php` published, origins from `CORS_ALLOWED_ORIGINS` (empty) | `config/cors.php` |
+| **L‑5** no `Cache-Control` on auth HTML | **FIXED** — `no-store, private` on authenticated `text/html` | `SecurityHeaders` |
+| **L‑6** `unsafe-eval` CSP | **ACCEPTED** — required by Alpine; no injection sink found | — |
+| WABA token rotation | **OUTSTANDING** — owner action in Meta before go‑live | — |
+
+The per‑finding sections below are the original report and record the pre‑fix state.
+
+---
+
 ## A. Executive summary
 
 The application is **well‑built for its threat model**. Multi‑tenancy, webhook authenticity, secret handling, authorization, injection safety and file‑upload validation are all implemented deliberately and hold up under review. Dependencies are clean. There are **no Critical findings and one High finding**, which is a configuration/hygiene issue (a real `APP_KEY` committed to `.env.example`) made materially worse by the project's known git‑history token leak.
@@ -277,12 +297,20 @@ Status:            ACCEPTED
 
 ## G. Security release recommendation
 
-**CONDITIONAL GO — single‑tenant production.**
-Ship once **H‑1**, **M‑1** and the **L‑2** deploy checklist are complete. L‑1 strongly recommended in the same release.
+**GO — single‑tenant production**, once the two owner actions are done:
+1. **Rotate the WABA access token** in Meta (still outstanding from the earlier leak).
+2. **Change the seeded admin password** on first login.
+Plus the deploy‑time `.env` checklist (`docs/deployment.md` §4/§14): `APP_DEBUG=false`,
+`APP_ENV=production`, `SESSION_SECURE_COOKIE=true`, fresh `APP_KEY`, `TRUSTED_PROXIES`
+set to the real proxy.
 
-**NO‑GO for `TENANT_MODE=multi`** until **M‑2** and **M‑3** are fixed and IDOR is manually re‑verified across two organizations.
+**`TENANT_MODE=multi`:** M‑2 and M‑3 are now fixed in code; before flipping the flag,
+still run a live IDOR pass across two real organizations *(manual, section I)*.
 
-No Critical vulnerabilities were found. The absence of findings in an area of this report does **not** by itself certify that area — see section I.
+All H/M/L code findings are remediated (see the status table at the top). L‑6 is a
+documented accepted risk. No Critical vulnerabilities were found. The absence of
+findings in an area of this report does **not** by itself certify that area — see
+section I.
 
 ---
 
