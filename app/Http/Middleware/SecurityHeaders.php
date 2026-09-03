@@ -34,6 +34,14 @@ final class SecurityHeaders
             }
         }
 
+        // Authenticated HTML must never sit in a shared or browser cache
+        // (finding L-5). File downloads set their own Cache-Control and are not
+        // text/html, so they are left untouched.
+        if ($request->user() !== null
+            && str_contains((string) $response->headers->get('Content-Type'), 'text/html')) {
+            $response->headers->set('Cache-Control', 'no-store, private');
+        }
+
         return $response;
     }
 

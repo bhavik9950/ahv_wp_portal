@@ -12,7 +12,8 @@ it('renders the dashboard for an organization member with security headers', fun
     $response->assertOk()
         ->assertSee('Dashboard')
         ->assertHeader('X-Frame-Options', 'DENY')
-        ->assertHeader('X-Content-Type-Options', 'nosniff');
+        ->assertHeader('X-Content-Type-Options', 'nosniff')
+        ->assertHeader('Cache-Control', 'no-store, private'); // authenticated HTML is never cached
 
     expect($response->headers->get('Content-Security-Policy'))
         ->toContain("default-src 'self'")
