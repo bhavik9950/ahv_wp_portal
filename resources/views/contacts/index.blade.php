@@ -35,16 +35,16 @@
             </div>
         </div>
 
-        {{-- Bulk group assignment — bulk-select.js fills contact_ids[] on submit --}}
+        {{-- Bulk actions — bulk-select.js fills contact_ids[] on every data-bulk-ids form --}}
         @if ($canManage)
             <div data-bulk-bar hidden
-                 class="flex flex-wrap items-center gap-2 rounded-box border border-primary/30 bg-primary/5 p-3">
-                <span class="text-sm font-medium">
+                 class="rounded-box border border-primary/30 bg-primary/5 p-3 space-y-3">
+                <div class="text-sm font-medium">
                     <span data-bulk-count>0</span> contact(s) selected
-                </span>
+                </div>
 
-                <form method="POST" action="{{ route('whatsapp.groups.assign') }}"
-                      id="contact-bulk-form" data-bulk-ids
+                {{-- Group --}}
+                <form method="POST" action="{{ route('whatsapp.groups.assign') }}" data-bulk-ids
                       class="flex flex-wrap items-center gap-2">
                     @csrf
                     <select name="group_id" class="select select-bordered select-sm">
@@ -59,6 +59,20 @@
                     </button>
                     <button name="action" value="remove" class="btn btn-sm btn-ghost">Remove from group</button>
                 </form>
+
+                {{-- Consent --}}
+                <form method="POST" action="{{ route('whatsapp.contacts.bulk-opt-in') }}" data-bulk-ids
+                      class="flex flex-wrap items-center gap-2"
+                      data-confirm="Only mark contacts opted in if you actually hold their consent — WhatsApp bans numbers that send marketing to people who didn't opt in. Continue?">
+                    @csrf
+                    <button name="action" value="opt_in" class="btn btn-sm btn-outline btn-success">
+                        <i class="ti ti-user-check"></i> Mark opted in
+                    </button>
+                    <button name="action" value="opt_out" class="btn btn-sm btn-outline btn-error">
+                        <i class="ti ti-user-x"></i> Mark opted out
+                    </button>
+                    <span class="text-xs opacity-50">consent record — needed before a MARKETING campaign can reach them</span>
+                </form>
             </div>
             @error('contact_ids')<p class="text-error text-xs">{{ $message }}</p>@enderror
             @error('group_id')<p class="text-error text-xs">{{ $message }}</p>@enderror
@@ -70,7 +84,7 @@
 
         <div class="card bg-base-100 border border-base-300 overflow-x-auto">
             <table class="table" id="contacts-table" data-datatable
-                   @if ($canManage) data-bulk="#contact-bulk-form" @endif
+                   @if ($canManage) data-bulk @endif
                    data-order='[[{{ $canManage ? 5 : 4 }},"desc"]]' data-no-sort="{{ $canManage ? '0' : '' }}">
                 <thead><tr>
                     @if ($canManage)<th class="w-8"><input type="checkbox" class="checkbox checkbox-sm js-bulk-all" title="Select all (every page)"></th>@endif

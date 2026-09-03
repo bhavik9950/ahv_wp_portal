@@ -104,6 +104,22 @@ it('bulk-assigns contacts to a brand-new group by name', function () {
         ->and($group->contacts()->count())->toBe(4);
 });
 
+it('bulk-records opt-in for many contacts', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    $contacts = Contact::factory()->for($org)->count(5)->create(['opt_in_status' => OptInStatus::Unknown]);
+
+    $this->actingAs($manager)->post(route('whatsapp.contacts.bulk-opt-in'), [
+        'contact_ids' => $contacts->pluck('id')->all(),
+        'action' => 'opt_in',
+        'source' => 'offline_consent_form',
+    ])->assertRedirect();
+
+    expect(Contact::where('opt_in_status', OptInStatus::OptedIn->value)->count())->toBe(5)
+        ->and(OptInRecord::where('status', 'opt_in')->count())->toBe(5)
+        ->and(OptInRecord::first()->source)->toBe('offline_consent_form');
+});
+
 it('bulk assign needs either an existing group or a new name', function () {
     $org = makeOrganization();
     $manager = makeMember($org, 'campaign_manager');
