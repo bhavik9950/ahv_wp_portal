@@ -32,10 +32,26 @@
                     </div>
                 @endif
 
-                @if ($import->status === 'analyzing' || $import->status === 'pending')
+                @if (in_array($import->status, ['analyzing', 'pending', 'queued']))
                     <div class="flex items-center gap-2 text-sm opacity-70 mt-3">
                         <span class="loading loading-spinner loading-sm"></span>
-                        Reading and validating the file… {{ $import->total_rows > 0 ? number_format((int) $import->total_rows).' rows so far' : '' }}
+                        @if ($import->status === 'queued')
+                            Queued — waiting for the background worker to pick it up…
+                        @else
+                            Reading and validating the file… {{ $import->total_rows > 0 ? number_format((int) $import->total_rows).' rows so far' : '' }}
+                        @endif
+                    </div>
+                @endif
+
+                @if ($import->looksStuck())
+                    <div class="alert alert-warning text-sm mt-3">
+                        <i class="ti ti-alert-triangle"></i>
+                        <span>
+                            No progress for 2+ minutes — the background queue worker isn't running.
+                            On the server: <code class="bg-base-300 px-1 rounded">supervisorctl status</code> and
+                            <code class="bg-base-300 px-1 rounded">supervisorctl restart ahv-queue:*</code>,
+                            or check <strong>Admin → System Health</strong>. The import resumes automatically once the worker is back.
+                        </span>
                     </div>
                 @endif
 

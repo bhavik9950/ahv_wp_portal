@@ -43,7 +43,18 @@ class ContactImport extends Model
 
     public function isBusy(): bool
     {
-        return in_array($this->status, ['pending', 'analyzing', 'importing'], true);
+        return in_array($this->status, ['pending', 'queued', 'analyzing', 'importing'], true);
+    }
+
+    /**
+     * Busy but nothing has changed for a while — the queue worker is probably
+     * not running.
+     */
+    public function looksStuck(): bool
+    {
+        return $this->isBusy()
+            && $this->updated_at !== null
+            && $this->updated_at->lt(now()->subMinutes(2));
     }
 
     public function isFinished(): bool

@@ -109,7 +109,9 @@ final class ContactImportService
 
     public function commit(ContactImport $import): void
     {
-        if ($import->status !== 'analyzed') {
+        // The controller flips 'analyzed' → 'importing' when it dispatches, so
+        // accept both; anything else (already completed / failed) is a no-op.
+        if (! in_array($import->status, ['analyzed', 'importing'], true)) {
             return;
         }
 

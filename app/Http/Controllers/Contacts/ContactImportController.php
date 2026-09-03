@@ -86,6 +86,7 @@ class ContactImportController extends Controller
         }
 
         $import->update([
+            'status' => 'queued',
             'column_map' => array_filter($data['column_map']),
             'options' => [
                 'group_id' => $data['group_id'] ?? null,
@@ -112,6 +113,7 @@ class ContactImportController extends Controller
 
         abort_unless($import->isAnalyzed(), 409, 'Import is not ready to commit.');
 
+        $import->update(['status' => 'importing', 'imported_rows' => 0]);
         CommitContactImportJob::dispatch($import->getKey())->onQueue('whatsapp-media');
 
         return redirect()->route('whatsapp.contacts.import.show', $import)
