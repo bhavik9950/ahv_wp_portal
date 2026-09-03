@@ -88,6 +88,36 @@ it('bulk-assigns contacts to a group', function () {
     expect($group->contacts()->count())->toBe(3);
 });
 
+it('bulk-assigns contacts to a brand-new group by name', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    $contacts = Contact::factory()->for($org)->count(4)->create();
+
+    $this->actingAs($manager)->post(route('whatsapp.groups.assign'), [
+        'new_group_name' => 'Parshad — Sri Ganganagar',
+        'contact_ids' => $contacts->pluck('id')->all(),
+        'action' => 'add',
+    ])->assertRedirect();
+
+    $group = ContactGroup::where('name', 'Parshad — Sri Ganganagar')->sole();
+    expect($group->organization_id)->toBe($org->getKey())
+        ->and($group->contacts()->count())->toBe(4);
+});
+
+it('bulk assign needs either an existing group or a new name', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    $contacts = Contact::factory()->for($org)->count(2)->create();
+
+    $this->actingAs($manager)
+        ->from(route('whatsapp.contacts.index'))
+        ->post(route('whatsapp.groups.assign'), [
+            'contact_ids' => $contacts->pluck('id')->all(),
+            'action' => 'add',
+        ])
+        ->assertSessionHasErrors('group_id');
+});
+
 it('exports contacts as CSV for an authorized user', function () {
     $org = makeOrganization();
     $manager = makeMember($org, 'campaign_manager');

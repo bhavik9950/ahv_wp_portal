@@ -115,6 +115,8 @@ window.initDataTables = () => {
         });
 
         registry.set(table, dt);
+        table.dtInstance = dt; // consumed by bulk-select.js
+        table.dispatchEvent(new CustomEvent('datatable:init', { detail: { dt }, bubbles: true }));
     });
 
     document.querySelectorAll('[data-dt-filter]').forEach((ctrl) => {

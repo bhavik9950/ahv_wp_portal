@@ -68,14 +68,17 @@ class ContactGroupController extends Controller
         $this->authorizePermission(Permission::ContactManage);
 
         $data = $request->validate([
-            'group_id' => ['required', 'string', Scoped::exists('contact_groups')],
-            'contact_ids' => ['required', 'array', 'min:1'],
+            'group_id' => ['nullable', 'required_without:new_group_name', 'string', Scoped::exists('contact_groups')],
+            'new_group_name' => ['nullable', 'required_without:group_id', 'string', 'max:80'],
+            'contact_ids' => ['required', 'array', 'min:1', 'max:5000'],
             'contact_ids.*' => ['string', Scoped::exists('contacts')],
             'action' => ['required', 'in:add,remove'],
         ]);
 
-        /** @var ContactGroup $group */
-        $group = ContactGroup::query()->findOrFail($data['group_id']);
+        $group = filled($data['group_id'] ?? null)
+            ? ContactGroup::query()->findOrFail($data['group_id'])
+            : ContactGroup::query()->firstOrCreate(['name' => trim($data['new_group_name'])]);
+
         $ids = Contact::query()->whereKey($data['contact_ids'])->pluck('id')->all();
 
         $data['action'] === 'add'

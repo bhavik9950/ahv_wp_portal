@@ -5,7 +5,7 @@
     @php($canImport = auth()->user()->can(\App\Enums\Permission::ContactImport->value))
     @php($canExport = auth()->user()->can(\App\Enums\Permission::ContactExport->value))
 
-    <div class="space-y-4" x-data="{ selected: [] }">
+    <div class="space-y-4">
         <div class="flex items-end justify-between flex-wrap gap-3">
             <div class="flex flex-wrap items-end gap-2">
                 <x-dt-filter label="Opt-in" target="#contacts-table" col-name="Opt-in">
@@ -35,18 +35,33 @@
             </div>
         </div>
 
-        {{-- Bulk group assignment --}}
-        @if ($canManage && $groups->isNotEmpty())
-            <form method="POST" action="{{ route('whatsapp.groups.assign') }}" class="flex items-center gap-2" x-show="selected.length">
-                @csrf
-                <template x-for="id in selected" :key="id"><input type="hidden" name="contact_ids[]" :value="id"></template>
-                <span class="text-sm opacity-70" x-text="selected.length + ' selected'"></span>
-                <select name="group_id" class="select select-bordered select-sm">
-                    @foreach ($groups as $g)<option value="{{ $g->id }}">{{ $g->name }}</option>@endforeach
-                </select>
-                <button name="action" value="add" class="btn btn-sm">Add to group</button>
-                <button name="action" value="remove" class="btn btn-sm btn-ghost">Remove</button>
-            </form>
+        {{-- Bulk group assignment — bulk-select.js fills contact_ids[] on submit --}}
+        @if ($canManage)
+            <div data-bulk-bar hidden
+                 class="flex flex-wrap items-center gap-2 rounded-box border border-primary/30 bg-primary/5 p-3">
+                <span class="text-sm font-medium">
+                    <span data-bulk-count>0</span> contact(s) selected
+                </span>
+
+                <form method="POST" action="{{ route('whatsapp.groups.assign') }}"
+                      id="contact-bulk-form" data-bulk-ids
+                      class="flex flex-wrap items-center gap-2">
+                    @csrf
+                    <select name="group_id" class="select select-bordered select-sm">
+                        <option value="">Choose a group…</option>
+                        @foreach ($groups as $g)<option value="{{ $g->id }}">{{ $g->name }}</option>@endforeach
+                    </select>
+                    <span class="text-xs opacity-50">or</span>
+                    <input name="new_group_name" maxlength="80" placeholder="new group name"
+                           class="input input-bordered input-sm w-40">
+                    <button name="action" value="add" class="btn btn-sm btn-primary">
+                        <i class="ti ti-users-plus"></i> Add to group
+                    </button>
+                    <button name="action" value="remove" class="btn btn-sm btn-ghost">Remove from group</button>
+                </form>
+            </div>
+            @error('contact_ids')<p class="text-error text-xs">{{ $message }}</p>@enderror
+            @error('group_id')<p class="text-error text-xs">{{ $message }}</p>@enderror
         @endif
 
         @if ($capped ?? false)
@@ -54,16 +69,18 @@
         @endif
 
         <div class="card bg-base-100 border border-base-300 overflow-x-auto">
-            <table class="table" id="contacts-table" data-datatable data-order='[[{{ $canManage ? 5 : 4 }},"desc"]]' data-no-sort="{{ $canManage ? '0' : '' }}">
+            <table class="table" id="contacts-table" data-datatable
+                   @if ($canManage) data-bulk="#contact-bulk-form" @endif
+                   data-order='[[{{ $canManage ? 5 : 4 }},"desc"]]' data-no-sort="{{ $canManage ? '0' : '' }}">
                 <thead><tr>
-                    @if ($canManage)<th></th>@endif
+                    @if ($canManage)<th class="w-8"><input type="checkbox" class="checkbox checkbox-sm js-bulk-all" title="Select all (every page)"></th>@endif
                     <th>Name</th><th>Phone</th><th>Opt-in</th><th>Groups</th><th>Added</th>
                 </tr></thead>
                 <tbody>
                     @foreach ($contacts as $c)
                         <tr class="hover">
                             @if ($canManage)
-                                <td><input type="checkbox" class="checkbox checkbox-sm" x-model="selected" value="{{ $c->id }}"></td>
+                                <td><input type="checkbox" class="checkbox checkbox-sm js-bulk-row" value="{{ $c->id }}"></td>
                             @endif
                             <td><a class="link link-hover" href="{{ route('whatsapp.contacts.show', $c) }}">{{ $c->name ?: '—' }}</a></td>
                             <td class="font-mono">+{{ $c->phone_e164 }}</td>

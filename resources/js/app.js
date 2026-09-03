@@ -14,6 +14,7 @@ import './row-links';
 import './trend-chart';
 import './template-preview';
 import './nav-active';
+import './bulk-select';
 
 import Alpine from 'alpinejs';
 
