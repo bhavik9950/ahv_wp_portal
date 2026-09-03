@@ -14,6 +14,7 @@ use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use League\Csv\EscapeFormula;
 use League\Csv\Reader;
 use League\Csv\Writer;
 
@@ -81,6 +82,7 @@ final class ContactImportService
         if ($errorRows !== []) {
             $reportPath = "imports/{$import->getKey()}-errors.csv";
             $csv = Writer::createFromString();
+            $csv->addFormatter(new EscapeFormula);
             $csv->insertOne([...$header, '_reason']);
             $csv->insertAll($errorRows);
             Storage::disk($import->disk)->put($reportPath, $csv->toString());

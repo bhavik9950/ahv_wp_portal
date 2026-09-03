@@ -8,6 +8,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Services\Audit\AuditLogger;
+use App\Support\Csv;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -53,7 +54,7 @@ class CampaignReportController extends Controller
 
             $campaign->recipients()->with('contact')->chunk(1000, function ($rows) use ($out): void {
                 foreach ($rows as $r) {
-                    fputcsv($out, [
+                    fputcsv($out, Csv::row([
                         $r->phone_e164,
                         $r->contact?->name,
                         $r->status->value,
@@ -61,7 +62,7 @@ class CampaignReportController extends Controller
                         $r->error_message,
                         $r->attempts,
                         optional($r->last_attempt_at)->toIso8601String(),
-                    ]);
+                    ]));
                 }
             });
 

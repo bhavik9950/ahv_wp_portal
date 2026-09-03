@@ -29,6 +29,8 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="LOG_CHANNEL" value="null"/>
+        <env name="WABA_LOG_CHANNEL" value="null"/>
         <env name="WABA_DRIVER" value="mock"/>
         <env name="WHATSAPP_SENDING_ENABLED" value="true"/>
         <env name="WABA_API_VERSION" value="v22.0"/>

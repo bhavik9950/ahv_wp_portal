@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Contacts;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Services\Audit\AuditLogger;
+use App\Support\Csv;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -31,7 +32,7 @@ class ContactExportController extends Controller
 
             $query->chunk(1000, function ($contacts) use ($out): void {
                 foreach ($contacts as $c) {
-                    fputcsv($out, [
+                    fputcsv($out, Csv::row([
                         $c->name,
                         $c->phone_e164,
                         $c->country_code,
@@ -39,7 +40,7 @@ class ContactExportController extends Controller
                         $c->opt_in_status->value,
                         optional($c->opted_in_at)->toIso8601String(),
                         $c->created_at?->toIso8601String(),
-                    ]);
+                    ]));
                 }
             });
 
