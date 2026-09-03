@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use App\Models\WebhookEvent;
 
 function makeInboundWebhookEvent(array $overrides = []): WebhookEvent
@@ -27,37 +28,62 @@ function makeInboundWebhookEvent(array $overrides = []): WebhookEvent
     ], $overrides));
 }
 
-it('shows the webhook events list to an audit-capable admin', function () {
+it('shows an audit-capable admin only their own org\'s events', function () {
     $org = makeOrganization();
     $admin = makeMember($org, 'org_admin');
-    makeInboundWebhookEvent();
+    makeInboundWebhookEvent(['organization_id' => $org->getKey()]);
 
-    $this->actingAs($admin)->get(route('admin.webhook-events.index'))
+    // Another org's event must not appear.
+    $otherOrg = makeOrganization();
+    makeInboundWebhookEvent(['organization_id' => $otherOrg->getKey(), 'payload' => ['entry' => [['changes' => [[
+        'field' => 'messages',
+        'value' => ['messages' => [['id' => 'wamid.OTHER', 'from' => '910000000000', 'type' => 'text', 'text' => ['body' => 'secret other-org message']]]],
+    ]]]]]]);
+
+    $this->actingAs($admin)
+        ->withSession(['current_organization_id' => $org->getKey()])
+        ->get(route('admin.webhook-events.index'))
         ->assertOk()
         ->assertSee('id="webhook-events-table"', false)
-        ->assertSee('inbound: text')
-        ->assertSee('Kya aap website banate ho?');
+        ->assertSee('Kya aap website banate ho?')
+        ->assertDontSee('secret other-org message');
 });
 
 it('warns when events are received but not processed', function () {
     $org = makeOrganization();
     $admin = makeMember($org, 'org_admin');
-    makeInboundWebhookEvent(['status' => 'received', 'processed_at' => null]);
+    makeInboundWebhookEvent(['organization_id' => $org->getKey(), 'status' => 'received', 'processed_at' => null]);
 
     $this->actingAs($admin)->get(route('admin.webhook-events.index'))
         ->assertOk()
         ->assertSee('queue:work', false);
 });
 
-it('shows a single event with its raw payload', function () {
+it('shows a single event to its own org, 404s another org\'s event', function () {
     $org = makeOrganization();
     $admin = makeMember($org, 'org_admin');
-    $event = makeInboundWebhookEvent();
+    $mine = makeInboundWebhookEvent(['organization_id' => $org->getKey()]);
 
-    $this->actingAs($admin)->get(route('admin.webhook-events.show', $event))
+    $otherOrg = makeOrganization();
+    $theirs = makeInboundWebhookEvent(['organization_id' => $otherOrg->getKey()]);
+
+    $this->actingAs($admin)->withSession(['current_organization_id' => $org->getKey()]);
+
+    $this->get(route('admin.webhook-events.show', $mine))->assertOk()->assertSee('wamid.ABC');
+    $this->get(route('admin.webhook-events.show', $theirs))->assertNotFound();
+});
+
+it('lets a super admin see every org\'s events', function () {
+    $org = makeOrganization();
+    $superUser = User::factory()->create(['is_super_admin' => true]);
+    $org->users()->attach($superUser);
+
+    $otherOrg = makeOrganization();
+    makeInboundWebhookEvent(['organization_id' => $otherOrg->getKey()]);
+
+    $this->actingAs($superUser)->get(route('admin.webhook-events.index'))
         ->assertOk()
-        ->assertSee('Payload')
-        ->assertSee('wamid.ABC');
+        ->assertSee('Kya aap website banate ho?');
 });
 
 it('forbids a viewer without the audit permission', function () {
