@@ -66,6 +66,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('templates', [TemplateController::class, 'store'])->name('templates.store');
         Route::post('templates/sync', [TemplateController::class, 'sync'])->name('templates.sync');
         Route::get('templates/{template}', [TemplateController::class, 'show'])->name('templates.show');
+        Route::post('templates/{template}/header-sample', [TemplateController::class, 'headerSample'])->name('templates.header-sample');
         Route::delete('templates/{template}', [TemplateController::class, 'destroy'])->name('templates.destroy');
 
         // Test send

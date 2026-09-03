@@ -8,10 +8,12 @@ use App\Enums\TemplateStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Whatsapp\SendTestMessageRequest;
 use App\Models\Message;
+use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappPhoneNumber;
 use App\Models\WhatsappTemplate;
 use App\Services\WhatsApp\Data\OutboundMessage;
 use App\Services\WhatsApp\Data\Recipient;
+use App\Services\WhatsApp\MediaLibrary;
 use App\Services\WhatsApp\OutboundMessageService;
 use App\Services\WhatsApp\RateLimitedException;
 use App\Services\WhatsApp\WhatsAppSendingDisabledException;
@@ -23,6 +25,7 @@ class TestSendController extends Controller
 {
     public function __construct(
         private readonly OutboundMessageService $sender,
+        private readonly MediaLibrary $media,
     ) {}
 
     public function create(): View
@@ -30,6 +33,7 @@ class TestSendController extends Controller
         $this->authorize('create', Message::class);
 
         $templates = WhatsappTemplate::query()
+            ->with('headerSampleMedia')
             ->where('status', TemplateStatus::Approved->value)
             ->orderBy('name')
             ->get();
@@ -40,6 +44,7 @@ class TestSendController extends Controller
             // Structure + example data the preview panel reads (CSP-safe JSON blob).
             'templateData' => $templates->mapWithKeys(function (WhatsappTemplate $t): array {
                 $examples = $t->bodyVariableExamples();
+                $sample = $t->headerSampleMedia;
 
                 return [$t->getKey() => [
                     'name' => $t->name,
@@ -48,6 +53,10 @@ class TestSendController extends Controller
                     'header' => $t->headerFormat() === null ? null : [
                         'format' => $t->headerFormat(),
                         'text' => $t->headerText(),
+                        'mediaUrl' => $sample !== null && $sample->category() === 'image'
+                            ? $this->media->temporaryUrl($sample, 3600)
+                            : null,
+                        'hasSample' => $sample !== null,
                     ],
                     'body' => $t->bodyText(),
                     'footer' => $t->footerText(),
@@ -69,11 +78,33 @@ class TestSendController extends Controller
         $number = WhatsappPhoneNumber::query()->findOrFail($request->validated('whatsapp_phone_number_id'));
 
         $template = $request->filled('template_id')
-            ? WhatsappTemplate::query()->findOrFail($request->string('template_id'))
+            ? WhatsappTemplate::query()->with('headerSampleMedia')->findOrFail($request->string('template_id'))
             : null;
 
         if ($template !== null && ! $template->isSendable()) {
             return back()->withErrors(['template_id' => 'Only APPROVED templates can be sent.'])->withInput();
+        }
+
+        // A media-header template needs an image/video/document parameter at send time.
+        $headerParam = null;
+        if ($template !== null && $template->hasMediaHeader()) {
+            if ($template->headerSampleMedia === null) {
+                return back()->withErrors([
+                    'template_id' => 'This template has a '.strtolower((string) $template->headerFormat())
+                        .' header with no sample stored. Open the template and use "Add sample", then send.',
+                ])->withInput();
+            }
+
+            $account = $number->businessAccount()->first();
+            if ($account instanceof WhatsappBusinessAccount) {
+                $metaId = $this->media->ensureMetaId($template->headerSampleMedia, $account);
+                $type = match ($template->headerSampleMedia->category()) {
+                    'video' => 'video',
+                    'document' => 'document',
+                    default => 'image',
+                };
+                $headerParam = ['type' => $type, $type => ['id' => $metaId]];
+            }
         }
 
         $results = [];
@@ -90,6 +121,7 @@ class TestSendController extends Controller
                         static fn ($v): string => (string) $v,
                         array_values((array) $request->validated('variables', [])),
                     ),
+                    $headerParam,
                 )
                 : OutboundMessage::text($recipient, (string) $request->validated('body'));
 

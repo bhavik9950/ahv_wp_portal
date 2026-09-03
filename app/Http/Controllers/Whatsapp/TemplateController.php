@@ -9,9 +9,11 @@ use App\Http\Requests\Whatsapp\StoreTemplateRequest;
 use App\Jobs\SyncTemplatesJob;
 use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappTemplate;
+use App\Services\WhatsApp\MediaLibrary;
 use App\Services\WhatsApp\Templates\TemplateComposer;
 use App\Services\WhatsApp\Templates\TemplateSubmissionService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TemplateController extends Controller
@@ -60,6 +62,32 @@ class TemplateController extends Controller
         return redirect()
             ->route('whatsapp.templates.show', $template)
             ->with('flash_notify', ['type' => 'success', 'message' => 'Template submitted to Meta for review.']);
+    }
+
+    /**
+     * Attach / replace the local header‑sample file for a media‑header template.
+     * No Meta round‑trip — the file is only used for the portal preview and as
+     * the header media at send time.
+     */
+    public function headerSample(Request $request, WhatsappTemplate $template, MediaLibrary $media): RedirectResponse
+    {
+        $this->authorize('update', $template);
+
+        abort_unless($template->hasMediaHeader(), 422, 'This template has no media header.');
+
+        $request->validate([
+            'sample_media' => ['required', 'file', 'max:102400', 'mimes:jpg,jpeg,png,mp4,3gp,pdf'],
+        ]);
+
+        try {
+            $stored = $media->store($request->file('sample_media'));
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['sample_media' => $e->getMessage()]);
+        }
+
+        $template->forceFill(['header_sample_media_id' => $stored->getKey()])->save();
+
+        return back()->with('flash_notify', ['type' => 'success', 'message' => 'Header sample saved.']);
     }
 
     public function show(WhatsappTemplate $template): View

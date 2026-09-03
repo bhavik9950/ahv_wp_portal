@@ -8,10 +8,12 @@ use App\Enums\TemplateStatus;
 use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappTemplate;
 use App\Services\Audit\AuditLogger;
+use App\Services\WhatsApp\MediaLibrary;
 use App\Services\WhatsApp\WhatsAppManager;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use RuntimeException;
+use Throwable;
 
 final class TemplateSubmissionService
 {
@@ -19,6 +21,7 @@ final class TemplateSubmissionService
         private readonly WhatsAppManager $manager,
         private readonly TemplateComposer $composer,
         private readonly AuditLogger $audit,
+        private readonly MediaLibrary $media,
     ) {}
 
     /**
@@ -49,9 +52,12 @@ final class TemplateSubmissionService
         }
 
         $creds = $this->manager->credentialsFor($account);
+        $sampleMediaId = null;
 
         // A media header needs a sample file uploaded to Meta first; the returned
-        // handle goes into the template's example.header_handle.
+        // handle goes into the template's example.header_handle. We also keep a
+        // local copy so the portal can preview it and reuse it as the header
+        // media when the template is sent.
         if ($sample !== null && in_array($data['header_type'] ?? 'none', ['image', 'video', 'document'], true)) {
             $data['header_handle'] = $this->manager->driver()->uploadTemplateSample(
                 $creds,
@@ -60,6 +66,13 @@ final class TemplateSubmissionService
                 $sample->getMimeType() ?: 'application/octet-stream',
                 $sample->getClientOriginalName() ?: 'sample',
             );
+
+            try {
+                $sampleMediaId = $this->media->store($sample)->getKey();
+            } catch (Throwable $e) {
+                // Non-fatal: the template is still submitted, just without a local
+                // preview copy.
+            }
         }
 
         $components = $this->composer->toComponents($data);
@@ -85,6 +98,7 @@ final class TemplateSubmissionService
             'status' => TemplateStatus::fromMeta($response['status'] ?? 'PENDING')->value,
             'meta_template_id' => $response['id'] ?? null,
             'components' => $components,
+            'header_sample_media_id' => $sampleMediaId ?? $template->header_sample_media_id,
             'raw_meta' => $response,
             'rejection_reason' => null,
             'created_by' => Auth::id(),

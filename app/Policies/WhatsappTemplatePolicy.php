@@ -31,6 +31,11 @@ class WhatsappTemplatePolicy
         return $user->can(Permission::TemplateSubmit->value) && $this->sameOrg($template);
     }
 
+    public function update(User $user, WhatsappTemplate $template): bool
+    {
+        return $user->can(Permission::TemplateManage->value) && $this->sameOrg($template);
+    }
+
     public function delete(User $user, WhatsappTemplate $template): bool
     {
         return $user->can(Permission::TemplateManage->value) && $this->sameOrg($template);

@@ -86,9 +86,17 @@
                                     <span class="opacity-60" x-text="tpl.language"></span>
                                 </div>
                                 <div x-show="tpl.header && tpl.header.format === 'TEXT'" class="text-sm font-semibold" x-text="tpl.header?.text"></div>
-                                <div x-show="mediaHeader" class="flex items-center gap-1 text-xs opacity-70">
-                                    <i class="ti ti-photo"></i><span x-text="mediaHeader + ' header — attach the media in Meta; test send uses the sample'"></span>
-                                </div>
+                                <template x-if="mediaHeader">
+                                    <div class="text-xs opacity-70">
+                                        <img x-show="tpl.header.mediaUrl" :src="tpl.header.mediaUrl" alt="header sample"
+                                             class="rounded max-h-40 border border-base-300">
+                                        <div x-show="!tpl.header.mediaUrl" class="flex items-center gap-1">
+                                            <i class="ti ti-photo"></i>
+                                            <span x-text="mediaHeader + ' header'"></span>
+                                            <span x-show="!tpl.header.hasSample" class="text-warning">— no sample stored; add one on the template page to send</span>
+                                        </div>
+                                    </div>
+                                </template>
                                 <div class="text-sm leading-relaxed whitespace-pre-wrap break-words">
                                     <template x-for="(c, i) in chunks(tpl.body)" :key="i"><span
                                         :class="c.isVar ? 'badge badge-sm badge-primary badge-outline mx-0.5 align-middle' : ''"
@@ -135,7 +143,9 @@
                                     <div class="chat chat-start">
                                         <div class="chat-bubble bg-base-100 text-base-content max-w-full">
                                             <div x-show="tpl.header && tpl.header.format === 'TEXT'" class="font-semibold whitespace-pre-wrap break-words" x-text="render(tpl.header?.text)"></div>
-                                            <div x-show="mediaHeader" class="mb-1 flex h-24 items-center justify-center rounded bg-base-300 text-xs opacity-60">
+                                            <img x-show="mediaHeader && tpl.header.mediaUrl" :src="tpl.header?.mediaUrl" alt=""
+                                                 class="mb-1 rounded max-h-48 w-full object-cover">
+                                            <div x-show="mediaHeader && !tpl.header.mediaUrl" class="mb-1 flex h-24 items-center justify-center rounded bg-base-300 text-xs opacity-60">
                                                 <i class="ti ti-photo text-lg"></i>
                                             </div>
                                             <div class="whitespace-pre-wrap break-words" x-text="render(tpl.body)"></div>

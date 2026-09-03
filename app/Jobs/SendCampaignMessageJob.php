@@ -199,7 +199,10 @@ class SendCampaignMessageJob implements ShouldBeUnique, ShouldQueue
      */
     private function headerParam(Campaign $campaign): ?array
     {
-        $media = $campaign->media()->first();
+        // The campaign's own media header, or the template's stored sample as a fallback.
+        $media = $campaign->media()->first()
+            ?? $campaign->template()->first()?->headerSampleMedia()->first();
+
         if ($media === null) {
             return null;
         }

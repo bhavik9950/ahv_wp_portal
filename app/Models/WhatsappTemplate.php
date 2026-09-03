@@ -41,6 +41,7 @@ class WhatsappTemplate extends Model
         'language',
         'category',
         'components',
+        'header_sample_media_id',
     ];
 
     protected function casts(): array
@@ -57,6 +58,14 @@ class WhatsappTemplate extends Model
         return $this->belongsTo(WhatsappBusinessAccount::class, 'whatsapp_business_account_id');
     }
 
+    /**
+     * @return BelongsTo<Media, $this>
+     */
+    public function headerSampleMedia(): BelongsTo
+    {
+        return $this->belongsTo(Media::class, 'header_sample_media_id');
+    }
+
     public function statusEnum(): TemplateStatus
     {
         return TemplateStatus::fromMeta($this->status);
@@ -65,6 +74,12 @@ class WhatsappTemplate extends Model
     public function isSendable(): bool
     {
         return $this->statusEnum()->isSendable();
+    }
+
+    /** True when the template's header expects a media parameter at send time. */
+    public function hasMediaHeader(): bool
+    {
+        return in_array($this->headerFormat(), ['IMAGE', 'VIDEO', 'DOCUMENT'], true);
     }
 
     /** Distinct {{n}} placeholders referenced anywhere in the components, sorted. */

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\MessageStatus;
+use App\Models\Media;
 use App\Models\Message;
 use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappPhoneNumber;
@@ -10,6 +11,7 @@ use App\Models\WhatsappTemplate;
 use App\Services\WhatsApp\Data\OutboundMessage;
 use App\Services\WhatsApp\Data\Recipient;
 use App\Services\WhatsApp\OutboundMessageService;
+use Illuminate\Support\Facades\Storage;
 
 function testSendNumber(): WhatsappPhoneNumber
 {
@@ -91,6 +93,57 @@ it('renders the template structure + variable examples on the send page', functi
         ->assertSee('Hi {{1}}, order {{2}} is ready.', false) // body text in the JSON blob
         ->assertSee('ORD-42', false)                          // example value
         ->assertSee('id="test-send-templates"', false);
+});
+
+it('sends an image-header template using its stored sample as the header media', function () {
+    Storage::fake('local');
+    $number = testSendNumber();
+    $agent = makeMember($number->organization, 'support_agent');
+    $sample = Media::factory()->for($number->organization)->create(['mime_type' => 'image/jpeg', 'path' => 'media/sample.jpg']);
+    Storage::disk('local')->put('media/sample.jpg', 'fake-bytes');
+    $template = WhatsappTemplate::factory()->forAccount($number->businessAccount)->create([
+        'name' => 'promo_img',
+        'header_sample_media_id' => $sample->id,
+        'components' => [
+            ['type' => 'HEADER', 'format' => 'IMAGE'],
+            ['type' => 'BODY', 'text' => 'Namaste, sampark karein.'],
+        ],
+    ]);
+
+    $this->actingAs($agent)->post(route('whatsapp.test-send.store'), [
+        'whatsapp_phone_number_id' => $number->id,
+        'mode' => 'template',
+        'template_id' => $template->id,
+        'recipients' => '919876500001',
+    ])->assertRedirect();
+
+    $sent = Message::sole();
+    $header = collect($sent->payload['template']['components'] ?? [])->firstWhere('type', 'header');
+
+    expect($header)->not->toBeNull()
+        ->and($header['parameters'][0]['type'])->toBe('image')
+        ->and($header['parameters'][0]['image']['id'])->toStartWith('mock-media-');
+});
+
+it('blocks an image-header template send when no sample file is stored', function () {
+    $number = testSendNumber();
+    $agent = makeMember($number->organization, 'support_agent');
+    $template = WhatsappTemplate::factory()->forAccount($number->businessAccount)->create([
+        'name' => 'promo_img_nosample',
+        'components' => [['type' => 'HEADER', 'format' => 'IMAGE'], ['type' => 'BODY', 'text' => 'hi']],
+    ]);
+
+    $this->actingAs($agent)
+        ->from(route('whatsapp.test-send.create'))
+        ->post(route('whatsapp.test-send.store'), [
+            'whatsapp_phone_number_id' => $number->id,
+            'mode' => 'template',
+            'template_id' => $template->id,
+            'recipients' => '919876500001',
+        ])
+        ->assertSessionHasErrors('template_id');
+
+    expect(Message::count())->toBe(0);
 });
 
 it('rejects a template send with a blank variable', function () {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappTemplate;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 function wabaAccount(): WhatsappBusinessAccount
 {
@@ -56,7 +57,8 @@ it('submits a valid template and creates a PENDING local record', function () {
         ->and(collect($template->components)->pluck('type')->all())->toBe(['BODY', 'FOOTER']);
 });
 
-it('submits an image-header template with an uploaded sample and stores the handle', function () {
+it('submits an image-header template with an uploaded sample and stores the handle + a local copy', function () {
+    Storage::fake('local');
     $account = wabaAccount();
     $admin = makeMember($account->organization, 'org_admin');
 
@@ -73,7 +75,25 @@ it('submits an image-header template with an uploaded sample and stores the hand
     $header = collect($template->components)->firstWhere('type', 'HEADER');
 
     expect($header['format'])->toBe('IMAGE')
-        ->and($header['example']['header_handle'][0] ?? null)->toStartWith('4::');
+        ->and($header['example']['header_handle'][0] ?? null)->toStartWith('4::')
+        ->and($template->header_sample_media_id)->not->toBeNull()
+        ->and($template->headerSampleMedia->category())->toBe('image');
+});
+
+it('attaches a header sample to an already-approved media template', function () {
+    Storage::fake('local');
+    $account = wabaAccount();
+    $admin = makeMember($account->organization, 'org_admin');
+    $template = WhatsappTemplate::factory()->forAccount($account)->create([
+        'name' => 'approved_img_tpl',
+        'components' => [['type' => 'HEADER', 'format' => 'IMAGE'], ['type' => 'BODY', 'text' => 'hi']],
+    ]);
+
+    $this->actingAs($admin)->post(route('whatsapp.templates.header-sample', $template), [
+        'sample_media' => UploadedFile::fake()->image('banner.png', 900, 900),
+    ])->assertRedirect();
+
+    expect($template->fresh()->header_sample_media_id)->not->toBeNull();
 });
 
 it('rejects an image-header template with no sample file', function () {
