@@ -27,6 +27,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // and client IP. TRUSTED_PROXIES: "*" for a dev tunnel, a comma list of
         // proxy IPs/CIDRs for production, or empty to trust none (default).
         $proxies = trim((string) env('TRUSTED_PROXIES', ''));
+
+        // Never trust every proxy in production — a spoofed X-Forwarded-For would
+        // otherwise defeat per-IP rate limiting and poison audit logs (finding M-1).
+        if ($proxies === '*' && env('APP_ENV') === 'production') {
+            $proxies = '127.0.0.1';
+        }
+
         $middleware->trustProxies(
             at: $proxies === '*' ? '*' : array_values(array_filter(array_map('trim', explode(',', $proxies)))),
             headers: Request::HEADER_X_FORWARDED_FOR
