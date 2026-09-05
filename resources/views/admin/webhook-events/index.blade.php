@@ -150,6 +150,12 @@
                                 @if ($e->error)
                                     <span class="text-error">· {{ \Illuminate\Support\Str::limit($e->error, 60) }}</span>
                                 @endif
+                                @if ($e->phone() && \Illuminate\Support\Facades\Route::has('whatsapp.conversations.show'))
+                                    <a href="{{ route('whatsapp.conversations.show', $e->phone()) }}"
+                                       class="link link-primary whitespace-nowrap" onclick="event.stopPropagation()">
+                                        <i class="ti ti-message-circle-2"></i> Open chat
+                                    </a>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

@@ -83,6 +83,57 @@ class Message extends Model
         return $this->belongsTo(WhatsappTemplate::class, 'template_id');
     }
 
+    /** Downloaded copy of an inbound image/video/audio/document, once fetched. */
+    public function media(): BelongsTo
+    {
+        return $this->belongsTo(Media::class);
+    }
+
+    /** The Meta media id referenced by this message's payload, if any. */
+    public function metaMediaId(): ?string
+    {
+        return data_get($this->payload, "{$this->type->value}.id");
+    }
+
+    public function hasDownloadableMedia(): bool
+    {
+        return $this->type->isMedia() && $this->metaMediaId() !== null;
+    }
+
+    /** Best-effort plain-text rendition of this message, for chat bubbles / previews. */
+    public function bodyText(): ?string
+    {
+        return match ($this->type) {
+            MessageType::Text => data_get($this->payload, 'text.body'),
+            MessageType::Image, MessageType::Video, MessageType::Document, MessageType::Audio => data_get($this->payload, "{$this->type->value}.caption"),
+            MessageType::Interactive => data_get($this->payload, 'interactive.button_reply.title')
+                ?? data_get($this->payload, 'interactive.list_reply.title')
+                ?? data_get($this->payload, 'interactive.nfm_reply.body'),
+            MessageType::Location => collect([
+                data_get($this->payload, 'location.name'),
+                data_get($this->payload, 'location.address'),
+            ])->filter()->implode(' — ') ?: null,
+            MessageType::Template => $this->renderedTemplateBody(),
+        };
+    }
+
+    /** The stored template's body text with {{n}} placeholders swapped for the sent values. */
+    private function renderedTemplateBody(): ?string
+    {
+        $body = $this->template?->bodyText();
+        if ($body === null) {
+            return null;
+        }
+
+        $bodyComponent = collect(data_get($this->payload, 'template.components', []))->firstWhere('type', 'body');
+
+        foreach (($bodyComponent['parameters'] ?? []) as $i => $param) {
+            $body = str_replace('{{'.($i + 1).'}}', (string) ($param['text'] ?? ''), $body);
+        }
+
+        return $body;
+    }
+
     public function isSuccessful(): bool
     {
         return in_array($this->status, [

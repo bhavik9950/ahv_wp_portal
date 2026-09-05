@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\MessageStatus;
 use App\Enums\TemplateStatus;
+use App\Models\Contact;
 use App\Models\Message;
 use App\Models\Organization;
 use App\Models\WebhookEvent;
@@ -157,9 +158,15 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 continue;
             }
 
-            (new Message)->forceFill([
+            $contact = Contact::query()->withoutGlobalScopes()
+                ->where('organization_id', $localNumber->organization_id)
+                ->where('phone_e164', $from)
+                ->first();
+
+            $message = (new Message)->forceFill([
                 'organization_id' => $localNumber->organization_id,
                 'whatsapp_phone_number_id' => $localNumber->getKey(),
+                'contact_id' => $contact?->getKey(),
                 'wamid' => $wamid,
                 'direction' => 'inbound',
                 'to_phone' => $from,
@@ -168,7 +175,12 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 'payload' => $incoming,
                 'idempotency_key' => 'inbound:'.($wamid ?? Str::uuid()->toString()),
                 'status' => MessageStatus::Delivered->value,
-            ])->save();
+            ]);
+            $message->save();
+
+            if ($message->hasDownloadableMedia()) {
+                DownloadInboundMediaJob::dispatch($message->getKey())->onQueue('whatsapp-media');
+            }
 
             $this->maybeHandleStopKeyword($incoming, $from, $localNumber->organization_id);
         }

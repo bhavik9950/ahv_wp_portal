@@ -135,3 +135,28 @@ it('records an inbound message from a customer', function () {
     expect($inbound)->not->toBeNull()
         ->and($inbound->direction)->toBe('inbound');
 });
+
+it('downloads and links an inbound image to the message', function () {
+    $number = configureWaba();
+
+    [$raw, $sig] = signedWebhook([
+        'entry' => [['changes' => [['field' => 'messages', 'value' => [
+            'metadata' => ['phone_number_id' => '111222333'],
+            'messages' => [[
+                'id' => 'wamid.INBOUND-IMG',
+                'from' => '919999911111',
+                'type' => 'image',
+                'image' => ['id' => 'meta-media-1', 'mime_type' => 'image/jpeg'],
+            ]],
+        ]]]]],
+    ]);
+
+    $this->call('POST', '/api/webhooks/whatsapp', [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_X_HUB_SIGNATURE_256' => $sig,
+    ], $raw)->assertOk();
+
+    $inbound = Message::withoutGlobalScopes()->where('wamid', 'wamid.INBOUND-IMG')->first();
+    expect($inbound->media_id)->not->toBeNull()
+        ->and($inbound->media->mime_type)->toBe('image/png'); // mock driver always returns a PNG
+});

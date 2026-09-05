@@ -71,6 +71,17 @@ class WebhookEvent extends Model
     }
 
     /**
+     * The customer phone number this event is about, if any — lets the UI
+     * link straight into that number's chat thread.
+     */
+    public function phone(): ?string
+    {
+        $value = data_get($this->payload, 'entry.0.changes.0.value', []);
+
+        return data_get($value, 'messages.0.from') ?? data_get($value, 'statuses.0.recipient_id');
+    }
+
+    /**
      * One-line human summary (sender + snippet, or affected wamid).
      */
     public function summary(): string

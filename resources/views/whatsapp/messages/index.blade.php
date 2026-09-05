@@ -28,6 +28,9 @@
                         <tr class="hover cursor-pointer" data-href="{{ route('whatsapp.messages.show', $m) }}">
                             <td class="font-mono">
                                 <a class="link link-hover" href="{{ route('whatsapp.messages.show', $m) }}">{{ $m->to_phone }}</a>
+                                <a href="{{ route('whatsapp.conversations.show', $m->to_phone) }}" class="ml-1" title="Open chat" onclick="event.stopPropagation()">
+                                    <i class="ti ti-message-circle-2 text-xs opacity-60"></i>
+                                </a>
                             </td>
                             <td>{{ ucfirst($m->direction) }}</td>
                             <td>{{ $m->type->value }}</td>

@@ -77,6 +77,12 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
         Route::get('messages/{message}', [MessageController::class, 'show'])->name('messages.show');
 
+        // WhatsApp-style chat view, grouped by phone number.
+        Route::get('conversations', [MessageController::class, 'conversations'])->name('conversations.index');
+        Route::get('conversations/{phone}', [MessageController::class, 'conversation'])
+            ->where('phone', '[0-9]+')
+            ->name('conversations.show');
+
         // Media library
         Route::get('media', [MediaController::class, 'index'])->name('media.index');
         Route::post('media', [MediaController::class, 'store'])->name('media.store');

@@ -96,6 +96,14 @@ final class MockWhatsAppDriver implements WhatsAppDriver
         return '4::'.base64_encode('mock-sample-'.Str::random(16));
     }
 
+    public function downloadMedia(WabaCredentials $creds, string $mediaId): array
+    {
+        // A tiny valid 1x1 PNG so local dev can preview "downloaded" media.
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=');
+
+        return ['contents' => $png, 'mime_type' => 'image/png', 'sha256' => hash('sha256', $png)];
+    }
+
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array
     {
         return [

@@ -12,9 +12,16 @@
     @endphp
 
     <div class="max-w-3xl space-y-4" x-data="{ payload: {{ json_encode(json_encode($event->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) }} }">
-        <a href="{{ route('admin.webhook-events.index') }}" class="btn btn-sm btn-ghost">
-            <i class="ti ti-arrow-left"></i> Back
-        </a>
+        <div class="flex items-center justify-between">
+            <a href="{{ route('admin.webhook-events.index') }}" class="btn btn-sm btn-ghost">
+                <i class="ti ti-arrow-left"></i> Back
+            </a>
+            @if ($event->phone() && \Illuminate\Support\Facades\Route::has('whatsapp.conversations.show'))
+                <a href="{{ route('whatsapp.conversations.show', $event->phone()) }}" class="btn btn-sm btn-primary">
+                    <i class="ti ti-message-circle-2"></i> Open chat
+                </a>
+            @endif
+        </div>
 
         <div class="card bg-base-100 border border-base-300">
             <div class="card-body gap-4">

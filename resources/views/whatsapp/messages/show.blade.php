@@ -2,7 +2,12 @@
     <x-slot name="title">Message</x-slot>
 
     <div class="max-w-2xl space-y-4">
-        <a href="{{ route('whatsapp.messages.index') }}" class="btn btn-ghost btn-sm"><i class="ti ti-arrow-left"></i> Messages</a>
+        <div class="flex items-center justify-between">
+            <a href="{{ route('whatsapp.messages.index') }}" class="btn btn-ghost btn-sm"><i class="ti ti-arrow-left"></i> Messages</a>
+            <a href="{{ route('whatsapp.conversations.show', $message->to_phone) }}" class="btn btn-sm btn-primary">
+                <i class="ti ti-message-circle-2"></i> Open chat
+            </a>
+        </div>
 
         <div class="card bg-base-100 border border-base-300">
             <div class="card-body">

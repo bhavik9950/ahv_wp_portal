@@ -53,6 +53,15 @@ interface WhatsAppDriver
     public function uploadTemplateSample(WabaCredentials $creds, string $appId, string $contents, string $mimeType, string $filename): string;
 
     /**
+     * Download an inbound media attachment: GET /{media-id} resolves a
+     * short-lived, authenticated CDN URL, which is then fetched with the same
+     * bearer token.
+     *
+     * @return array{contents: string, mime_type: string, sha256: ?string}
+     */
+    public function downloadMedia(WabaCredentials $creds, string $mediaId): array;
+
+    /**
      * @return array<string, mixed> raw Meta phone number object
      */
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array;

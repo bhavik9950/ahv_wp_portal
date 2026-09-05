@@ -30,7 +30,7 @@ final class MediaLibrary
      */
     private const RULES = [
         'image' => [
-            'mimes' => ['image/jpeg' => ['jpg', 'jpeg'], 'image/png' => ['png']],
+            'mimes' => ['image/jpeg' => ['jpg', 'jpeg'], 'image/png' => ['png'], 'image/webp' => ['webp']],
             'max' => 5_242_880, // 5 MB
         ],
         'video' => [
@@ -99,6 +99,41 @@ final class MediaLibrary
         ])->save();
 
         $this->audit->log('media.uploaded', $media, ['category' => $category, 'size' => $media->size_bytes]);
+
+        return $media;
+    }
+
+    /**
+     * Store an inbound attachment already downloaded from Meta (no UploadedFile
+     * involved — same validation rules, matched by content instead of extension).
+     */
+    public function storeRaw(string $contents, string $mimeType, string $originalName): Media
+    {
+        // WhatsApp sends parameters on some mimes (e.g. "audio/ogg; codecs=opus").
+        $mime = strtolower(trim(explode(';', $mimeType)[0]));
+        [$category, $ext] = $this->categoryFor($mime, strlen($contents));
+
+        $checksum = hash('sha256', $contents);
+        $existing = Media::query()->where('checksum_sha256', $checksum)->first();
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $path = "media/{$this->currentOrg->resolve()?->getKey()}/".Str::ulid().".{$ext}";
+        Storage::disk($this->disk())->put($path, $contents, ['visibility' => 'private']);
+
+        $media = new Media;
+        $media->forceFill([
+            'organization_id' => $this->currentOrg->resolve()?->getKey(),
+            'disk' => $this->disk(),
+            'path' => $path,
+            'original_name' => $originalName,
+            'mime_type' => $mime,
+            'size_bytes' => strlen($contents),
+            'checksum_sha256' => $checksum,
+        ])->save();
+
+        $this->audit->log('media.received', $media, ['category' => $category, 'size' => $media->size_bytes]);
 
         return $media;
     }
@@ -179,6 +214,25 @@ final class MediaLibrary
         }
 
         throw new RuntimeException("Files of type {$mime} cannot be sent on WhatsApp.");
+    }
+
+    /**
+     * @return array{0: string, 1: string} [category, extension]
+     */
+    private function categoryFor(string $mime, int $size): array
+    {
+        foreach (self::RULES as $category => $rule) {
+            if (! isset($rule['mimes'][$mime])) {
+                continue;
+            }
+            if ($size > $rule['max']) {
+                throw new RuntimeException('File is larger than WhatsApp allows for '.$category.' ('.$this->humanBytes($rule['max']).').');
+            }
+
+            return [$category, $rule['mimes'][$mime][0]];
+        }
+
+        throw new RuntimeException("Files of type {$mime} cannot be stored.");
     }
 
     private function humanBytes(int $bytes): string

@@ -186,6 +186,39 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         return $handle;
     }
 
+    public function downloadMedia(WabaCredentials $creds, string $mediaId): array
+    {
+        $meta = $this->client($creds)->get("/{$mediaId}");
+        $this->throwUnlessOk($meta);
+
+        $url = $meta->json('url');
+        if (! is_string($url) || $url === '') {
+            throw new RuntimeException('Meta did not return a media URL.');
+        }
+
+        $maxBytes = (int) config('services.whatsapp.http.max_download_bytes', 20_971_520);
+        $declaredSize = (int) $meta->json('file_size', 0);
+        if ($declaredSize > 0 && $declaredSize > $maxBytes) {
+            throw new RuntimeException('Media file is larger than this app will download.');
+        }
+
+        // Meta's CDN URL is short-lived and requires the same bearer token —
+        // it comes from Meta's own API response, not user input.
+        $file = $this->client($creds)->get($url);
+        $this->throwUnlessOk($file);
+
+        $contents = $file->body();
+        if (strlen($contents) > $maxBytes) {
+            throw new RuntimeException('Media file is larger than this app will download.');
+        }
+
+        return [
+            'contents' => $contents,
+            'mime_type' => (string) ($meta->json('mime_type') ?? $file->header('Content-Type') ?? 'application/octet-stream'),
+            'sha256' => is_string($meta->json('sha256')) ? $meta->json('sha256') : null,
+        ];
+    }
+
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array
     {
         $response = $this->client($creds)->get("/{$phoneNumberId}", [
