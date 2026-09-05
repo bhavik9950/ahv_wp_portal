@@ -127,7 +127,10 @@ final class MediaLibrary
             'organization_id' => $this->currentOrg->resolve()?->getKey(),
             'disk' => $this->disk(),
             'path' => $path,
-            'original_name' => $originalName,
+            // Meta's inbound webhook only gives us a numeric media id, not a
+            // filename — append the sniffed extension so downloads land with
+            // a usable name instead of an extension-less number.
+            'original_name' => str_ends_with(strtolower($originalName), ".{$ext}") ? $originalName : "{$originalName}.{$ext}",
             'mime_type' => $mime,
             'size_bytes' => strlen($contents),
             'checksum_sha256' => $checksum,

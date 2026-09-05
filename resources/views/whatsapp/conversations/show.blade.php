@@ -34,9 +34,16 @@
 
                             @if ($m->type->value === 'image')
                                 @if ($m->media)
-                                    <a href="{{ $mediaUrls[$m->getKey()] }}" target="_blank" rel="noopener">
-                                        <img src="{{ $mediaUrls[$m->getKey()] }}" alt="Image" class="rounded-lg max-h-72 object-cover mb-1">
-                                    </a>
+                                    <div class="relative inline-block mb-1">
+                                        <a href="{{ $mediaUrls[$m->getKey()] }}" target="_blank" rel="noopener">
+                                            <img src="{{ $mediaUrls[$m->getKey()] }}" alt="Image" class="rounded-lg max-h-72 object-cover">
+                                        </a>
+                                        <a href="{{ $mediaUrls[$m->getKey()] }}" download="{{ $m->media->original_name }}"
+                                           class="absolute top-1.5 right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                                           title="Download image">
+                                            <i class="ti ti-download text-sm"></i>
+                                        </a>
+                                    </div>
                                 @elseif ($m->hasDownloadableMedia())
                                     <div class="flex items-center gap-2 opacity-70 py-2">
                                         <span class="loading loading-spinner loading-xs"></span> Downloading image…
@@ -48,7 +55,11 @@
 
                             @elseif ($m->type->value === 'video')
                                 @if ($m->media)
-                                    <video controls class="rounded-lg max-h-72 mb-1" src="{{ $mediaUrls[$m->getKey()] }}"></video>
+                                    <video controls class="rounded-lg max-h-72 mb-1 block" src="{{ $mediaUrls[$m->getKey()] }}"></video>
+                                    <a href="{{ $mediaUrls[$m->getKey()] }}" download="{{ $m->media->original_name }}"
+                                       class="text-xs {{ $m->direction === 'outbound' ? 'text-primary-content/80' : 'link' }}">
+                                        <i class="ti ti-download"></i> Download
+                                    </a>
                                 @elseif ($m->hasDownloadableMedia())
                                     <div class="flex items-center gap-2 opacity-70 py-2">
                                         <span class="loading loading-spinner loading-xs"></span> Downloading video…
@@ -60,7 +71,14 @@
 
                             @elseif ($m->type->value === 'audio')
                                 @if ($m->media)
-                                    <audio controls class="max-w-full" src="{{ $mediaUrls[$m->getKey()] }}"></audio>
+                                    <div class="flex items-center gap-2">
+                                        <audio controls class="max-w-full" src="{{ $mediaUrls[$m->getKey()] }}"></audio>
+                                        <a href="{{ $mediaUrls[$m->getKey()] }}" download="{{ $m->media->original_name }}"
+                                           class="{{ $m->direction === 'outbound' ? 'text-primary-content/80' : 'opacity-60' }}"
+                                           title="Download">
+                                            <i class="ti ti-download"></i>
+                                        </a>
+                                    </div>
                                 @elseif ($m->hasDownloadableMedia())
                                     <div class="flex items-center gap-2 opacity-70 py-2">
                                         <span class="loading loading-spinner loading-xs"></span> Downloading voice message…
@@ -71,10 +89,11 @@
 
                             @elseif ($m->type->value === 'document')
                                 @if ($m->media)
-                                    <a href="{{ $mediaUrls[$m->getKey()] }}" target="_blank" rel="noopener"
+                                    <a href="{{ $mediaUrls[$m->getKey()] }}" download="{{ $m->media->original_name }}"
                                        class="flex items-center gap-2 {{ $m->direction === 'outbound' ? '' : 'link' }}">
                                         <i class="ti ti-file-description text-lg"></i>
                                         <span class="truncate">{{ $m->media->original_name }}</span>
+                                        <i class="ti ti-download text-sm opacity-70"></i>
                                     </a>
                                 @elseif ($m->hasDownloadableMedia())
                                     <div class="flex items-center gap-2 opacity-70 py-2">
