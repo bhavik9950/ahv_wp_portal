@@ -71,6 +71,10 @@ return [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'single')),
             'ignore_exceptions' => false,
+            // The stack driver builds a fresh Monolog logger from its child
+            // channels' handlers/processors but not their timezone, so the
+            // tap must be reapplied here too or "stack" silently reverts to UTC.
+            'tap' => [UseDisplayTimezone::class],
         ],
 
         'single' => [
