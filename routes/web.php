@@ -58,6 +58,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
         Route::get('phone-numbers', [PhoneNumberController::class, 'index'])->name('phone-numbers.index');
         Route::get('phone-numbers/calling', [PhoneNumberController::class, 'calling'])->name('phone-numbers.calling');
+        Route::post('phone-numbers/calling', [PhoneNumberController::class, 'updateCalling'])->name('phone-numbers.calling.update');
         Route::post('phone-numbers/sync', [PhoneNumberController::class, 'sync'])->name('phone-numbers.sync');
         Route::post('phone-numbers/{phoneNumber}/default', [PhoneNumberController::class, 'setDefault'])->name('phone-numbers.default');
 

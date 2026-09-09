@@ -1,6 +1,8 @@
 <x-app-layout>
     <x-slot name="title">WhatsApp Calling</x-slot>
 
+    @php($canManage = auth()->user()->can(\App\Enums\Permission::WabaManage->value))
+
     <div class="max-w-2xl space-y-4">
         <a href="{{ route('whatsapp.phone-numbers.index') }}" class="btn btn-ghost btn-sm">
             <i class="ti ti-arrow-left"></i> Phone Numbers
@@ -50,6 +52,30 @@
                             @endforeach
                         </div>
                     @endif
+                @endif
+
+                @error('calling')<p class="text-error text-sm">{{ $message }}</p>@enderror
+
+                @if ($canManage && $account && ! $error)
+                    @php($isOn = strtoupper((string) ($settings['status'] ?? '')) === 'ENABLED')
+                    <div class="rounded-lg border border-base-300 p-3 flex flex-wrap items-center justify-between gap-3">
+                        <div class="text-sm">
+                            @if ($isOn)
+                                <strong>Calling is ON.</strong> Customers can call this number now — but the portal
+                                can't answer WhatsApp calls yet, so they'll ring out.
+                            @else
+                                <strong>Calling is OFF.</strong> The call button won't appear in customer chats.
+                            @endif
+                        </div>
+                        <form method="POST" action="{{ route('whatsapp.phone-numbers.calling.update') }}"
+                              data-confirm="{{ $isOn ? 'Turn WhatsApp calling OFF for this number?' : 'Turn WhatsApp calling ON? Calls will ring out until answering is built.' }}">
+                            @csrf
+                            <input type="hidden" name="status" value="{{ $isOn ? 'DISABLED' : 'ENABLED' }}">
+                            <button class="btn btn-sm {{ $isOn ? 'btn-error btn-outline' : 'btn-primary' }}">
+                                {{ $isOn ? 'Disable calling' : 'Enable calling' }}
+                            </button>
+                        </form>
+                    </div>
                 @endif
 
                 <div class="divider text-xs my-1">What this means</div>

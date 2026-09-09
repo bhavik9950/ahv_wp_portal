@@ -120,6 +120,11 @@ final class MockWhatsAppDriver implements WhatsAppDriver
         return ['status' => 'DISABLED', 'call_icon_visibility' => 'DEFAULT'];
     }
 
+    public function updateCallingStatus(WabaCredentials $creds, string $phoneNumberId, string $status): void
+    {
+        // no-op
+    }
+
     public function listPhoneNumbers(WabaCredentials $creds): array
     {
         return [

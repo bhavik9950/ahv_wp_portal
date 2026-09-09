@@ -79,6 +79,12 @@ interface WhatsAppDriver
     public function getCallingSettings(WabaCredentials $creds, string $phoneNumberId): array;
 
     /**
+     * Turn WhatsApp Business Calling on or off for a number.
+     * POST /{phone-number-id}/settings  { calling: { status: ENABLED|DISABLED } }
+     */
+    public function updateCallingStatus(WabaCredentials $creds, string $phoneNumberId, string $status): void;
+
+    /**
      * All phone numbers registered on the WABA.
      *
      * @return array<int, array<string, mixed>> raw Meta phone number objects

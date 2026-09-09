@@ -258,6 +258,23 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         return is_array($calling) ? $calling : [];
     }
 
+    public function updateCallingStatus(WabaCredentials $creds, string $phoneNumberId, string $status): void
+    {
+        if ($phoneNumberId === '') {
+            throw new RuntimeException('No phone number id configured for this WABA.');
+        }
+
+        $status = strtoupper($status);
+        if (! in_array($status, ['ENABLED', 'DISABLED'], true)) {
+            throw new RuntimeException('Calling status must be ENABLED or DISABLED.');
+        }
+
+        $response = $this->client($creds)->post("/{$phoneNumberId}/settings", [
+            'calling' => ['status' => $status],
+        ]);
+        $this->throwUnlessOk($response);
+    }
+
     public function runConnectionChecks(WabaCredentials $creds): array
     {
         $checks = [];

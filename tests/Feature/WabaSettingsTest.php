@@ -127,6 +127,37 @@ it('forbids a viewer-less member from the calling status page', function () {
     $this->actingAs($user)->get(route('whatsapp.phone-numbers.calling'))->assertForbidden();
 });
 
+it('lets an admin toggle WhatsApp calling on and off', function () {
+    $org = makeOrganization();
+    $admin = makeMember($org, 'org_admin');
+    $account = WhatsappBusinessAccount::factory()->for($org)->create(['access_token' => 'EAAx0000000000000000']);
+    WhatsappPhoneNumber::factory()->forAccount($account)->create(['phone_number_id' => '55550001', 'is_default' => true]);
+
+    $this->actingAs($admin)
+        ->post(route('whatsapp.phone-numbers.calling.update'), ['status' => 'DISABLED'])
+        ->assertRedirect();
+});
+
+it('rejects an invalid calling status', function () {
+    $org = makeOrganization();
+    $admin = makeMember($org, 'org_admin');
+    WhatsappBusinessAccount::factory()->for($org)->create(['access_token' => 'EAAx0000000000000000']);
+
+    $this->actingAs($admin)
+        ->post(route('whatsapp.phone-numbers.calling.update'), ['status' => 'MAYBE'])
+        ->assertStatus(422);
+});
+
+it('forbids a viewer from toggling calling', function () {
+    $org = makeOrganization();
+    $viewer = makeMember($org, 'viewer');
+    WhatsappBusinessAccount::factory()->for($org)->create(['access_token' => 'EAAx0000000000000000']);
+
+    $this->actingAs($viewer)
+        ->post(route('whatsapp.phone-numbers.calling.update'), ['status' => 'DISABLED'])
+        ->assertForbidden();
+});
+
 it('prefills the settings form and seeds secrets from .env bootstrap for a new account', function () {
     config()->set('services.whatsapp.bootstrap.access_token', 'EAAbootstraptoken1234567');
     config()->set('services.whatsapp.bootstrap.webhook_verify_token', 'boot-verify');
