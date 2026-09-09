@@ -11,7 +11,9 @@ use App\Models\VoiceCampaign;
 use App\Services\Voice\VoiceBroadcastManager;
 use App\Services\Voice\VoiceCampaignService;
 use App\Services\WhatsApp\MediaLibrary;
+use App\Services\WhatsApp\PhoneNumberNormalizer;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
@@ -79,6 +81,43 @@ class VoiceCampaignController extends Controller
 
         return redirect()->route('whatsapp.voice-campaigns.show', $campaign)
             ->with('flash_notify', ['type' => 'success', 'message' => $at ? 'Voice campaign scheduled.' : 'Voice campaign started.']);
+    }
+
+    public function quickCreate(): View
+    {
+        $this->authorize('create', VoiceCampaign::class);
+
+        return view('voice-campaigns.quick', [
+            'providerConfigured' => $this->manager->isConfigured(),
+        ]);
+    }
+
+    public function quickStore(Request $request, MediaLibrary $media, PhoneNumberNormalizer $normalizer): RedirectResponse
+    {
+        $this->authorize('create', VoiceCampaign::class);
+
+        $data = $request->validate([
+            'audio' => ['required', 'file', 'max:16384', 'mimes:mp3,ogg,m4a,aac,amr'],
+            'phone' => ['required', 'string', 'max:20'],
+            'consent_confirmed' => ['accepted'],
+        ], [
+            'consent_confirmed.accepted' => 'Confirm the recipient consented to this call.',
+        ]);
+
+        $phone = $normalizer->normalize($data['phone']);
+        if ($phone === null) {
+            return back()->withInput()->withErrors(['phone' => 'Enter a valid phone number with country code.']);
+        }
+
+        try {
+            $audio = $media->store($request->file('audio'));
+            $campaign = $this->service->quickCall("Quick call to +{$phone}", $audio->getKey(), $phone);
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->withErrors(['audio' => $e->getMessage()]);
+        }
+
+        return redirect()->route('whatsapp.voice-campaigns.show', $campaign)
+            ->with('flash_notify', ['type' => 'success', 'message' => 'Calling +'.$phone.' now.']);
     }
 
     public function show(VoiceCampaign $voiceCampaign): View

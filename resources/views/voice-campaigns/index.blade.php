@@ -5,9 +5,14 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm opacity-70">Automated calls that play a recorded audio clip to a list of contacts.</p>
             @can('create', \App\Models\VoiceCampaign::class)
-                <a href="{{ route('whatsapp.voice-campaigns.create') }}" class="btn btn-sm btn-primary">
-                    <i class="ti ti-plus"></i> New voice campaign
-                </a>
+                <div class="flex gap-2">
+                    <a href="{{ route('whatsapp.voice-campaigns.quick') }}" class="btn btn-sm btn-ghost">
+                        <i class="ti ti-phone-outgoing"></i> Quick call
+                    </a>
+                    <a href="{{ route('whatsapp.voice-campaigns.create') }}" class="btn btn-sm btn-primary">
+                        <i class="ti ti-plus"></i> New voice campaign
+                    </a>
+                </div>
             @endcan
         </div>
 

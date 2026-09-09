@@ -137,6 +137,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         // Voice broadcast campaigns (recorded outbound calls)
         Route::get('voice-campaigns', [VoiceCampaignController::class, 'index'])->name('voice-campaigns.index');
         Route::get('voice-campaigns/create', [VoiceCampaignController::class, 'create'])->name('voice-campaigns.create');
+        Route::get('voice-campaigns/quick', [VoiceCampaignController::class, 'quickCreate'])->name('voice-campaigns.quick');
+        Route::post('voice-campaigns/quick', [VoiceCampaignController::class, 'quickStore'])->name('voice-campaigns.quick.store');
         Route::post('voice-campaigns', [VoiceCampaignController::class, 'store'])->name('voice-campaigns.store');
         Route::get('voice-campaigns/{voiceCampaign}', [VoiceCampaignController::class, 'show'])->name('voice-campaigns.show');
         Route::post('voice-campaigns/{voiceCampaign}/pause', [VoiceCampaignController::class, 'pause'])->name('voice-campaigns.pause');

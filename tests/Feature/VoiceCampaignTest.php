@@ -73,6 +73,25 @@ it('fills in the delivery outcome when the report is polled', function () {
         ->and($campaign->fresh()->totals['answered'])->toBe(2);
 });
 
+it('places a quick one-off call to a single number', function () {
+    Storage::fake('local');
+    config()->set('services.voice.driver', 'mock');
+
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+
+    $this->actingAs($manager)->post(route('whatsapp.voice-campaigns.quick.store'), [
+        'audio' => UploadedFile::fake()->create('clip.mp3', 80, 'audio/mpeg'),
+        'phone' => '+91 98765 43210',
+        'consent_confirmed' => '1',
+    ])->assertRedirect();
+
+    $campaign = VoiceCampaign::sole();
+    expect($campaign->recipients()->count())->toBe(1)
+        ->and($campaign->recipients()->first()->phone_e164)->toBe('919876543210')
+        ->and($campaign->recipients()->first()->status->value)->toBe(VoiceCallStatus::Placed->value);
+});
+
 it('requires the consent confirmation to start', function () {
     Storage::fake('local');
     $org = makeOrganization();

@@ -209,6 +209,45 @@ final class VoiceCampaignService
         return $libraryId;
     }
 
+    /**
+     * A one-number campaign that starts immediately — for testing a recording
+     * or a genuine one-off call. Skips the audience resolver.
+     */
+    public function quickCall(string $name, string $audioMediaId, string $phoneE164): VoiceCampaign
+    {
+        $campaign = $this->createDraft($name);
+        $campaign->forceFill([
+            'audio_media_id' => $audioMediaId,
+            'audience_filter' => ['type' => 'contacts', 'contact_ids' => []],
+            'delay_seconds' => 0,
+            'consent_confirmed' => true,
+        ])->save();
+
+        if (! $this->manager->isConfigured()) {
+            throw new RuntimeException('The voice provider credentials are not configured on the server.');
+        }
+
+        $this->ensureAudioUploaded($campaign);
+
+        $campaign->recipients()->create([
+            'phone_e164' => $phoneE164,
+            'phone_hash' => hash('sha256', $phoneE164),
+            'status' => VoiceCallStatus::Pending->value,
+        ]);
+
+        $campaign->forceFill([
+            'status' => CampaignStatus::Processing->value,
+            'started_at' => now(),
+            'audience_summary' => ['total' => 1],
+        ])->save();
+
+        DispatchVoiceBatchJob::dispatch($campaign->getKey())->onQueue('default');
+
+        $this->audit->log('voice_campaign.quick_call', $campaign, ['recipients' => 1]);
+
+        return $campaign;
+    }
+
     public function createDraft(string $name): VoiceCampaign
     {
         $campaign = new VoiceCampaign;
