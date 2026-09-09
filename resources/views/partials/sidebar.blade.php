@@ -25,6 +25,7 @@
     {!! $nav('Import Contacts', 'ti-file-import', 'whatsapp.contacts.import.create', \App\Enums\Permission::ContactImport->value) !!}
     {!! $nav('Test Send', 'ti-send-2', 'whatsapp.test-send.create', \App\Enums\Permission::MessageSend->value) !!}
     {!! $nav('Campaigns', 'ti-rocket', 'whatsapp.campaigns.index', \App\Enums\Permission::CampaignView->value) !!}
+    {!! $nav('Voice Campaigns', 'ti-phone-outgoing', 'whatsapp.voice-campaigns.index', \App\Enums\Permission::CampaignView->value) !!}
     {!! $nav('Messages', 'ti-messages', 'whatsapp.messages.index', \App\Enums\Permission::MessageView->value) !!}
     {!! $nav('Chats', 'ti-message-circle-2', 'whatsapp.conversations.index', \App\Enums\Permission::MessageView->value) !!}
     {!! $nav('Media', 'ti-photo', 'whatsapp.media.index', \App\Enums\Permission::CampaignView->value) !!}

@@ -31,3 +31,6 @@ Thumbs.db
 /.claude
 /csv
 
+
+# Local API reference collections
+/sample

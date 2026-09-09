@@ -102,4 +102,39 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Voice broadcast (outbound recorded-call campaigns)
+    |--------------------------------------------------------------------------
+    |
+    | A separate telecom channel from WhatsApp — places automated calls that
+    | play a pre-recorded audio clip to a list of numbers. Provider:
+    | SMS Gateway Center Voice API. India: the sender is responsible for TRAI
+    | DLT registration and DND/NCPR compliance; the portal only gates on an
+    | explicit consent confirmation per campaign.
+    |
+    */
+
+    'voice' => [
+        // 'mock' (offline simulator) or 'smsgatewaycenter' (real API).
+        'driver' => env('VOICE_DRIVER', 'mock'),
+
+        'base_url' => env('VOICE_BASE_URL', 'https://unify.smsgateway.center/VoiceApi'),
+
+        // Credentials — never commit real values; set these in the server .env.
+        'userid' => env('VOICE_USER_ID'),
+        'password' => env('VOICE_PASSWORD'),
+        'api_key' => env('VOICE_API_KEY'),
+
+        'log_channel' => env('VOICE_LOG_CHANNEL', 'whatsapp'),
+
+        'http' => [
+            'connect_timeout' => (int) env('VOICE_HTTP_CONNECT_TIMEOUT', 10),
+            'timeout' => (int) env('VOICE_HTTP_TIMEOUT', 30),
+        ],
+
+        // Hard ceiling on recipients per voice campaign.
+        'max_recipients' => (int) env('VOICE_MAX_RECIPIENTS', 2000),
+    ],
+
 ];

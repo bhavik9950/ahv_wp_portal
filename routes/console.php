@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Jobs\PollVoiceReportsJob;
 use App\Jobs\SyncTemplatesJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -18,5 +19,8 @@ Artisan::command('inspire', function () {
 Schedule::job(new SyncTemplatesJob, 'whatsapp-high')->hourly()->withoutOverlapping();
 
 Schedule::command('campaigns:dispatch-due')->everyMinute()->withoutOverlapping();
+
+Schedule::command('voice:dispatch-due')->everyMinute()->withoutOverlapping();
+Schedule::job(new PollVoiceReportsJob, 'default')->everyTwoMinutes()->withoutOverlapping();
 
 Schedule::command('queue:prune-failed --hours=168')->daily();

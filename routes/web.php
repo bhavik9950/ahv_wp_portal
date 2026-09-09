@@ -16,6 +16,7 @@ use App\Http\Controllers\Contacts\UnsubscribeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\Voice\VoiceCampaignController;
 use App\Http\Controllers\Whatsapp\MediaController;
 use App\Http\Controllers\Whatsapp\MessageController;
 use App\Http\Controllers\Whatsapp\PhoneNumberController;
@@ -132,6 +133,16 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::delete('campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
         Route::get('campaigns/{campaign}/report', [CampaignReportController::class, 'show'])->name('campaigns.report');
         Route::get('campaigns/{campaign}/report/export', [CampaignReportController::class, 'export'])->name('campaigns.report.export');
+
+        // Voice broadcast campaigns (recorded outbound calls)
+        Route::get('voice-campaigns', [VoiceCampaignController::class, 'index'])->name('voice-campaigns.index');
+        Route::get('voice-campaigns/create', [VoiceCampaignController::class, 'create'])->name('voice-campaigns.create');
+        Route::post('voice-campaigns', [VoiceCampaignController::class, 'store'])->name('voice-campaigns.store');
+        Route::get('voice-campaigns/{voiceCampaign}', [VoiceCampaignController::class, 'show'])->name('voice-campaigns.show');
+        Route::post('voice-campaigns/{voiceCampaign}/pause', [VoiceCampaignController::class, 'pause'])->name('voice-campaigns.pause');
+        Route::post('voice-campaigns/{voiceCampaign}/resume', [VoiceCampaignController::class, 'resume'])->name('voice-campaigns.resume');
+        Route::post('voice-campaigns/{voiceCampaign}/cancel', [VoiceCampaignController::class, 'cancel'])->name('voice-campaigns.cancel');
+        Route::delete('voice-campaigns/{voiceCampaign}', [VoiceCampaignController::class, 'destroy'])->name('voice-campaigns.destroy');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
