@@ -137,4 +137,34 @@ return [
         'max_recipients' => (int) env('VOICE_MAX_RECIPIENTS', 2000),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp AI assistant (auto-reply bot)
+    |--------------------------------------------------------------------------
+    |
+    | Replies to inbound customer messages with an LLM, inside Meta's 24h
+    | service window. Global gate here + a per-organization on/off + persona
+    | in `bot_settings`. Never initiates conversations, never markets.
+    |
+    */
+
+    'bot' => [
+        // Global gate. When false, no inbound message is handed to the bot.
+        'enabled' => (bool) env('BOT_ENABLED', false),
+
+        // 'anthropic' (real) or 'fake' (offline, deterministic — used in tests).
+        'driver' => env('BOT_LLM_DRIVER', 'anthropic'),
+
+        'anthropic_key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('BOT_MODEL', 'claude-opus-5'),
+        'max_output_tokens' => (int) env('BOT_MAX_OUTPUT_TOKENS', 1024),
+        'effort' => env('BOT_EFFORT', 'low'), // low | medium | high
+
+        'service_window_hours' => 24,
+        'history_turns' => (int) env('BOT_HISTORY_TURNS', 12),
+        'daily_reply_cap' => (int) env('BOT_DAILY_CAP', 40),
+
+        'http_timeout' => (int) env('BOT_HTTP_TIMEOUT', 120),
+    ],
+
 ];

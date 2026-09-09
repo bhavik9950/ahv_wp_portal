@@ -28,6 +28,8 @@
     {!! $nav('Voice Campaigns', 'ti-phone-outgoing', 'whatsapp.voice-campaigns.index', \App\Enums\Permission::CampaignView->value) !!}
     {!! $nav('Messages', 'ti-messages', 'whatsapp.messages.index', \App\Enums\Permission::MessageView->value) !!}
     {!! $nav('Chats', 'ti-message-circle-2', 'whatsapp.conversations.index', \App\Enums\Permission::MessageView->value) !!}
+    {!! $nav('Assistant', 'ti-robot', 'whatsapp.assistant.conversations', \App\Enums\Permission::MessageView->value) !!}
+    {!! $nav('Assistant Settings', 'ti-adjustments-alt', 'whatsapp.assistant.settings', \App\Enums\Permission::WabaManage->value) !!}
     {!! $nav('Media', 'ti-photo', 'whatsapp.media.index', \App\Enums\Permission::CampaignView->value) !!}
     {!! $nav('Reports', 'ti-chart-bar', 'whatsapp.reports.index', \App\Enums\Permission::ReportView->value) !!}
     {!! $nav('Webhooks', 'ti-webhook', 'whatsapp.webhooks.index', \App\Enums\Permission::WabaView->value) !!}

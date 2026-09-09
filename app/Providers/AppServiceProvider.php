@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Enums\Permission;
+use App\Services\Bot\Contracts\LlmClient;
+use App\Services\Bot\Llm\AnthropicLlmClient;
+use App\Services\Bot\Llm\FakeLlmClient;
 use App\Support\CurrentOrganization;
 use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -22,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(TenantContext::class);
         $this->app->scoped(CurrentOrganization::class);
+
+        $this->app->bind(LlmClient::class, fn () => match ((string) config('services.bot.driver', 'anthropic')) {
+            'fake' => new FakeLlmClient,
+            default => new AnthropicLlmClient,
+        });
     }
 
     public function boot(): void
@@ -47,6 +56,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(function ($user, string $ability) {
             return $user->isSuperAdmin() ? true : null;
         });
+
+        // The AI assistant is part of the WhatsApp integration config.
+        Gate::define('manage-bot', fn ($user) => $user->can(Permission::WabaManage->value));
 
         RateLimiter::for('login', fn (Request $request) => [
             Limit::perMinute(5)->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()),

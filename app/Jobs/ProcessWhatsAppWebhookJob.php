@@ -182,6 +182,10 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 DownloadInboundMediaJob::dispatch($message->getKey())->onQueue('whatsapp-media');
             }
 
+            if (config('services.bot.enabled')) {
+                HandleInboundMessageJob::dispatch($message->getKey())->onQueue('bot');
+            }
+
             $this->maybeHandleStopKeyword($incoming, $from, $localNumber->organization_id);
         }
 

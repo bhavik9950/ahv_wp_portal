@@ -6,6 +6,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\SystemControlController;
 use App\Http\Controllers\Admin\WebhookEventController;
+use App\Http\Controllers\Bot\AssistantController;
 use App\Http\Controllers\Campaigns\CampaignController;
 use App\Http\Controllers\Campaigns\CampaignReportController;
 use App\Http\Controllers\Contacts\ContactController;
@@ -145,6 +146,13 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('voice-campaigns/{voiceCampaign}/resume', [VoiceCampaignController::class, 'resume'])->name('voice-campaigns.resume');
         Route::post('voice-campaigns/{voiceCampaign}/cancel', [VoiceCampaignController::class, 'cancel'])->name('voice-campaigns.cancel');
         Route::delete('voice-campaigns/{voiceCampaign}', [VoiceCampaignController::class, 'destroy'])->name('voice-campaigns.destroy');
+
+        // AI assistant (auto-reply bot)
+        Route::get('assistant/settings', [AssistantController::class, 'settings'])->name('assistant.settings');
+        Route::put('assistant/settings', [AssistantController::class, 'update'])->name('assistant.settings.update');
+        Route::get('assistant/conversations', [AssistantController::class, 'conversations'])->name('assistant.conversations');
+        Route::get('assistant/conversations/{conversation}', [AssistantController::class, 'conversation'])->name('assistant.conversation');
+        Route::post('assistant/conversations/{conversation}/mode', [AssistantController::class, 'setMode'])->name('assistant.conversation.mode');
     });
 
     Route::prefix('admin')->name('admin.')->group(function () {
