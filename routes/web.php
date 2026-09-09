@@ -57,6 +57,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('settings/check', [WabaSettingsController::class, 'check'])->name('settings.check');
 
         Route::get('phone-numbers', [PhoneNumberController::class, 'index'])->name('phone-numbers.index');
+        Route::get('phone-numbers/calling', [PhoneNumberController::class, 'calling'])->name('phone-numbers.calling');
         Route::post('phone-numbers/sync', [PhoneNumberController::class, 'sync'])->name('phone-numbers.sync');
         Route::post('phone-numbers/{phoneNumber}/default', [PhoneNumberController::class, 'setDefault'])->name('phone-numbers.default');
 

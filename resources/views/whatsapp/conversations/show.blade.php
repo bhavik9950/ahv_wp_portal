@@ -11,10 +11,13 @@
             <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
                 {{ mb_strtoupper(mb_substr($contact?->name ?? '#', 0, 1)) }}
             </span>
-            <div class="min-w-0">
+            <div class="min-w-0 flex-1">
                 <div class="font-medium truncate">{{ $contact?->name ?? 'Unknown contact' }}</div>
                 <div class="text-xs opacity-60 font-mono">+{{ $phone }}</div>
             </div>
+            <a href="tel:+{{ $phone }}" class="btn btn-ghost btn-sm btn-square" title="Call this number from your device">
+                <i class="ti ti-phone-call"></i>
+            </a>
         </div>
 
         <div class="card bg-base-200/50 border border-base-300">

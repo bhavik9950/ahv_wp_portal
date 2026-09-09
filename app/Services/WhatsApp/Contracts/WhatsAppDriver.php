@@ -67,6 +67,18 @@ interface WhatsAppDriver
     public function getPhoneNumber(WabaCredentials $creds, string $phoneNumberId): array;
 
     /**
+     * The WhatsApp Business Calling settings for a number.
+     * GET /{phone-number-id}/settings?fields=calling
+     *
+     * Returns the `calling` object ({status, call_icon_visibility, call_hours, …})
+     * or [] when calling has never been provisioned for the number. Throws when
+     * the account is not eligible for calling at all.
+     *
+     * @return array<string, mixed>
+     */
+    public function getCallingSettings(WabaCredentials $creds, string $phoneNumberId): array;
+
+    /**
      * All phone numbers registered on the WABA.
      *
      * @return array<int, array<string, mixed>> raw Meta phone number objects

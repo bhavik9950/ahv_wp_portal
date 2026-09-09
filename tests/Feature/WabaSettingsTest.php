@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappPhoneNumber;
 use Illuminate\Support\Facades\DB;
@@ -104,6 +105,26 @@ it('syncs phone numbers from the driver', function () {
     $this->actingAs($admin)->get(route('whatsapp.phone-numbers.index'))
         ->assertOk()
         ->assertSee('AH&amp;V Mock Business', false);
+});
+
+it('shows the live WhatsApp calling status for the default number', function () {
+    $org = makeOrganization();
+    $admin = makeMember($org, 'org_admin');
+    $account = WhatsappBusinessAccount::factory()->for($org)->create(['access_token' => 'EAAx0000000000000000']);
+    WhatsappPhoneNumber::factory()->forAccount($account)->create(['phone_number_id' => '55550001', 'is_default' => true]);
+
+    $this->actingAs($admin)->get(route('whatsapp.phone-numbers.calling'))
+        ->assertOk()
+        ->assertSee('WhatsApp Business Calling')
+        ->assertSee('DISABLED'); // mock driver default
+});
+
+it('forbids a viewer-less member from the calling status page', function () {
+    $org = makeOrganization();
+    $user = User::factory()->create();
+    $org->users()->attach($user);
+
+    $this->actingAs($user)->get(route('whatsapp.phone-numbers.calling'))->assertForbidden();
 });
 
 it('prefills the settings form and seeds secrets from .env bootstrap for a new account', function () {

@@ -6,12 +6,19 @@
     <div class="space-y-4">
         <div class="flex items-center justify-between flex-wrap gap-3">
             <p class="text-sm opacity-70">Phone numbers registered on your WhatsApp Business Account.</p>
-            @if ($canManage && $account)
-                <form method="POST" action="{{ route('whatsapp.phone-numbers.sync') }}">
-                    @csrf
-                    <button class="btn btn-sm btn-outline"><i class="ti ti-refresh"></i> Sync from Meta</button>
-                </form>
-            @endif
+            <div class="flex gap-2">
+                @if ($account)
+                    <a href="{{ route('whatsapp.phone-numbers.calling') }}" class="btn btn-sm btn-ghost">
+                        <i class="ti ti-phone"></i> Calling status
+                    </a>
+                @endif
+                @if ($canManage && $account)
+                    <form method="POST" action="{{ route('whatsapp.phone-numbers.sync') }}">
+                        @csrf
+                        <button class="btn btn-sm btn-outline"><i class="ti ti-refresh"></i> Sync from Meta</button>
+                    </form>
+                @endif
+            </div>
         </div>
 
         @if (! $account)

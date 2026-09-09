@@ -212,9 +212,14 @@ final class MetaCloudApiDriver implements WhatsAppDriver
             throw new RuntimeException('Media file is larger than this app will download.');
         }
 
+        $mime = $meta->json('mime_type');
+        if (! is_string($mime) || $mime === '') {
+            $mime = $file->header('Content-Type') ?: 'application/octet-stream';
+        }
+
         return [
             'contents' => $contents,
-            'mime_type' => (string) ($meta->json('mime_type') ?? $file->header('Content-Type') ?? 'application/octet-stream'),
+            'mime_type' => $mime,
             'sha256' => is_string($meta->json('sha256')) ? $meta->json('sha256') : null,
         ];
     }
@@ -237,6 +242,20 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         $this->throwUnlessOk($response);
 
         return $response->json('data') ?? [];
+    }
+
+    public function getCallingSettings(WabaCredentials $creds, string $phoneNumberId): array
+    {
+        if ($phoneNumberId === '') {
+            throw new RuntimeException('No phone number id configured for this WABA.');
+        }
+
+        $response = $this->client($creds)->get("/{$phoneNumberId}/settings", ['fields' => 'calling']);
+        $this->throwUnlessOk($response);
+
+        $calling = $response->json('calling');
+
+        return is_array($calling) ? $calling : [];
     }
 
     public function runConnectionChecks(WabaCredentials $creds): array

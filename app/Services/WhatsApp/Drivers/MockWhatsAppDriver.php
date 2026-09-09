@@ -115,6 +115,11 @@ final class MockWhatsAppDriver implements WhatsAppDriver
         ];
     }
 
+    public function getCallingSettings(WabaCredentials $creds, string $phoneNumberId): array
+    {
+        return ['status' => 'DISABLED', 'call_icon_visibility' => 'DEFAULT'];
+    }
+
     public function listPhoneNumbers(WabaCredentials $creds): array
     {
         return [
