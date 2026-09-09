@@ -57,6 +57,46 @@ it('submits a valid template and creates a PENDING local record', function () {
         ->and(collect($template->components)->pluck('type')->all())->toBe(['BODY', 'FOOTER']);
 });
 
+it('submits a template with a call (phone number) button', function () {
+    $account = wabaAccount();
+    $admin = makeMember($account->organization, 'org_admin');
+
+    $this->actingAs($admin)->post(route('whatsapp.templates.store'), [
+        'name' => 'call_us_back',
+        'language' => 'en',
+        'category' => 'UTILITY',
+        'header_type' => 'none',
+        'body' => 'Hi {{1}}, tap below to call us.',
+        'buttons' => [
+            ['type' => 'phone', 'text' => 'Call AH&V', 'phone_number' => '+917878159887'],
+            ['type' => 'quick_reply', 'text' => 'No thanks'],
+        ],
+    ])->assertRedirect();
+
+    $buttons = collect(WhatsappTemplate::where('name', 'call_us_back')->sole()->components)
+        ->firstWhere('type', 'BUTTONS')['buttons'];
+
+    expect($buttons)->toHaveCount(2)
+        ->and($buttons[0])->toMatchArray(['type' => 'PHONE_NUMBER', 'text' => 'Call AH&V', 'phone_number' => '+917878159887'])
+        ->and($buttons[1])->toMatchArray(['type' => 'QUICK_REPLY', 'text' => 'No thanks']);
+});
+
+it('rejects a call button with no phone number', function () {
+    $account = wabaAccount();
+    $admin = makeMember($account->organization, 'org_admin');
+
+    $this->actingAs($admin)->post(route('whatsapp.templates.store'), [
+        'name' => 'bad_call_btn',
+        'language' => 'en',
+        'category' => 'UTILITY',
+        'header_type' => 'none',
+        'body' => 'Hi there.',
+        'buttons' => [['type' => 'phone', 'text' => 'Call us']],
+    ])->assertSessionHasErrors('buttons.0.phone_number');
+
+    expect(WhatsappTemplate::where('name', 'bad_call_btn')->exists())->toBeFalse();
+});
+
 it('submits an image-header template with an uploaded sample and stores the handle + a local copy', function () {
     Storage::fake('local');
     $account = wabaAccount();

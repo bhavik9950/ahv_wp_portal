@@ -39,6 +39,24 @@
                          alt="header sample" class="rounded-lg max-h-56 border border-base-300 mb-2">
                 @endif
                 <div class="bg-base-200 rounded-lg p-4 text-sm whitespace-pre-line">{{ $preview }}</div>
+
+                @php($btns = $template->component('BUTTONS')['buttons'] ?? [])
+                @if ($btns)
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        @foreach ($btns as $b)
+                            @php($bt = strtoupper((string) ($b['type'] ?? '')))
+                            <span class="badge badge-outline gap-1 py-3">
+                                <i class="ti {{ $bt === 'PHONE_NUMBER' ? 'ti-phone' : ($bt === 'URL' ? 'ti-external-link' : 'ti-arrow-back-up') }}"></i>
+                                {{ $b['text'] ?? '' }}
+                                @if (! empty($b['phone_number']))
+                                    <span class="opacity-60 font-mono">· {{ $b['phone_number'] }}</span>
+                                @elseif (! empty($b['url']))
+                                    <span class="opacity-60 font-mono truncate max-w-[12rem]">· {{ $b['url'] }}</span>
+                                @endif
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
 

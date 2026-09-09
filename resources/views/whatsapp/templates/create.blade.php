@@ -11,7 +11,17 @@
         </div>
 
         <form method="POST" action="{{ route('whatsapp.templates.store') }}" enctype="multipart/form-data"
-              x-data="{ header: '{{ old('header_type', 'none') }}', buttons: {{ old('buttons') ? count(old('buttons')) : 0 }} }"
+              x-data="{
+                  header: '{{ old('header_type', 'none') }}',
+                  buttons: @js(collect(old('buttons', []))->map(fn ($b) => [
+                      'type' => $b['type'] ?? 'quick_reply',
+                      'text' => $b['text'] ?? '',
+                      'url' => $b['url'] ?? '',
+                      'phone_number' => $b['phone_number'] ?? '',
+                  ])->values()),
+                  addButton() { if (this.buttons.length < 10) this.buttons.push({ type: 'quick_reply', text: '', url: '', phone_number: '' }); },
+                  removeButton() { this.buttons.pop(); },
+              }"
               data-loading data-loading-text="Submitting…"
               class="card bg-base-100 border border-base-300">
             @csrf
@@ -81,21 +91,35 @@
                     <div class="flex items-center justify-between">
                         <label class="label"><span class="label-text">Buttons (optional)</span></label>
                         <div class="flex gap-1">
-                            <button type="button" class="btn btn-xs" x-on:click="buttons = Math.min(10, buttons + 1)">Add</button>
-                            <button type="button" class="btn btn-xs btn-ghost" x-on:click="buttons = Math.max(0, buttons - 1)">Remove</button>
+                            <button type="button" class="btn btn-xs" x-on:click="addButton()">Add</button>
+                            <button type="button" class="btn btn-xs btn-ghost" x-on:click="removeButton()">Remove</button>
                         </div>
                     </div>
-                    <template x-for="i in buttons" :key="i">
+                    <template x-for="(btn, i) in buttons" :key="i">
                         <div class="grid grid-cols-3 gap-2 mb-2">
-                            <select :name="`buttons[${i-1}][type]`" class="select select-bordered select-sm">
+                            <select x-model="btn.type" :name="`buttons[${i}][type]`" class="select select-bordered select-sm">
                                 <option value="quick_reply">Quick reply</option>
-                                <option value="url">URL</option>
-                                <option value="phone">Phone</option>
+                                <option value="url">Visit website</option>
+                                <option value="phone">Call phone number</option>
                             </select>
-                            <input :name="`buttons[${i-1}][text]`" class="input input-bordered input-sm" placeholder="Button text" maxlength="25">
-                            <input :name="`buttons[${i-1}][url]`" class="input input-bordered input-sm" placeholder="https:// or phone">
+                            <input x-model="btn.text" :name="`buttons[${i}][text]`" class="input input-bordered input-sm" placeholder="Button text" maxlength="25">
+                            <div>
+                                <template x-if="btn.type === 'url'">
+                                    <input x-model="btn.url" :name="`buttons[${i}][url]`" class="input input-bordered input-sm w-full" placeholder="https://example.com">
+                                </template>
+                                <template x-if="btn.type === 'phone'">
+                                    <input x-model="btn.phone_number" :name="`buttons[${i}][phone_number]`" class="input input-bordered input-sm w-full" placeholder="+91 78781 59887">
+                                </template>
+                            </div>
                         </div>
                     </template>
+                    <p class="text-xs opacity-60" x-show="buttons.some(b => b.type === 'phone')">
+                        Call buttons dial a normal phone number in the customer's dialer. Use full international format with country code (e.g. <span class="font-mono">+917878159887</span>).
+                    </p>
+                    @error('buttons')<p class="text-error text-xs mt-1">{{ $message }}</p>@enderror
+                    @foreach ($errors->get('buttons.*') as $field => $messages)
+                        @foreach ($messages as $m)<p class="text-error text-xs mt-1">{{ $m }}</p>@endforeach
+                    @endforeach
                 </div>
 
                 @if ($errors->any())
