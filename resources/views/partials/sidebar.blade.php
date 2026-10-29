@@ -35,11 +35,21 @@
     {!! $nav('Webhooks', 'ti-webhook', 'whatsapp.webhooks.index', \App\Enums\Permission::WabaView->value) !!}
     {!! $nav('Settings', 'ti-settings-2', 'whatsapp.settings.edit', \App\Enums\Permission::WabaView->value) !!}
 
-    <li class="menu-title mt-3">Admin</li>
-    {!! $nav('Users', 'ti-user-cog', 'admin.users.index', \App\Enums\Permission::OrgManage->value) !!}
-    {!! $nav('Roles &amp; Permissions', 'ti-shield-lock', 'admin.roles.index', \App\Enums\Permission::OrgManage->value) !!}
-    {!! $nav('Audit Logs', 'ti-history', 'admin.audit.index', \App\Enums\Permission::AuditView->value) !!}
-    {!! $nav('Webhook Events', 'ti-webhook', 'admin.webhook-events.index', \App\Enums\Permission::AuditView->value) !!}
-    {!! $nav('System Health', 'ti-heartbeat', 'admin.health', \App\Enums\Permission::OrgManage->value) !!}
-    {!! $nav('Emergency Controls', 'ti-alert-triangle', 'admin.controls', \App\Enums\Permission::OrgManage->value) !!}
+    @php
+        $user = auth()->user();
+        $isSuper = $user?->isSuperAdmin() ?? false;
+        $canSeeAdmin = $user && ($isSuper || $user->can(\App\Enums\Permission::OrgManage->value) || $user->can(\App\Enums\Permission::AuditView->value));
+    @endphp
+
+    @if ($canSeeAdmin)
+        <li class="menu-title mt-3">Admin</li>
+        {!! $nav('Users', 'ti-user-cog', 'admin.users.index', \App\Enums\Permission::OrgManage->value) !!}
+        {!! $nav('Roles &amp; Permissions', 'ti-shield-lock', 'admin.roles.index', \App\Enums\Permission::OrgManage->value) !!}
+        {!! $nav('Audit Logs', 'ti-history', 'admin.audit.index', \App\Enums\Permission::AuditView->value) !!}
+        @if ($isSuper)
+            {!! $nav('Webhook Events', 'ti-webhook', 'admin.webhook-events.index', \App\Enums\Permission::AuditView->value) !!}
+            {!! $nav('System Health', 'ti-heartbeat', 'admin.health', \App\Enums\Permission::OrgManage->value) !!}
+            {!! $nav('Emergency Controls', 'ti-alert-triangle', 'admin.controls', \App\Enums\Permission::OrgManage->value) !!}
+        @endif
+    @endif
 </ul>

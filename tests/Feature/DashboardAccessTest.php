@@ -38,3 +38,23 @@ it('hides admin-only nav items from a viewer', function () {
         ->assertDontSee('Audit Logs')
         ->assertSee('Dashboard');
 });
+
+it('shows system health and emergency controls only to super admins', function () {
+    $org = makeOrganization();
+    $orgAdmin = makeMember($org, 'org_admin');
+    $superAdmin = User::factory()->superAdmin()->create();
+    app(\App\Services\Organizations\OrganizationProvisioner::class)->addMember($org, $superAdmin, \App\Enums\OrganizationRole::OrgAdmin);
+
+    // Regular client OrgAdmin sees business modules, but NOT platform emergency controls or system health
+    $this->actingAs($orgAdmin)->get('/dashboard')
+        ->assertOk()
+        ->assertSee('Campaigns')
+        ->assertDontSee('Emergency Controls')
+        ->assertDontSee('System Health');
+
+    // SuperAdmin sees Emergency Controls and System Health
+    $this->actingAs($superAdmin)->get('/dashboard')
+        ->assertOk()
+        ->assertSee('Emergency Controls')
+        ->assertSee('System Health');
+});
