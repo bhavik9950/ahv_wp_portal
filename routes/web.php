@@ -18,6 +18,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrganizationSwitchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\Voice\VoiceCampaignController;
 use App\Http\Controllers\Whatsapp\MediaController;
 use App\Http\Controllers\Whatsapp\MessageController;
@@ -51,6 +52,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('/organization/switch', OrganizationSwitchController::class)->name('organization.switch');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
+    // Organization subscription status & manual UTR payment submission
+    Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/subscription', [SubscriptionController::class, 'store'])->name('subscription.store');
+
     Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
         Route::view('/', 'whatsapp.overview')->name('overview');
 
@@ -69,15 +74,15 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         // Templates
         Route::get('templates', [TemplateController::class, 'index'])->name('templates.index');
         Route::get('templates/create', [TemplateController::class, 'create'])->name('templates.create');
-        Route::post('templates', [TemplateController::class, 'store'])->name('templates.store');
+        Route::post('templates', [TemplateController::class, 'store'])->middleware('subscription.active')->name('templates.store');
         Route::post('templates/sync', [TemplateController::class, 'sync'])->name('templates.sync');
         Route::get('templates/{template}', [TemplateController::class, 'show'])->name('templates.show');
-        Route::post('templates/{template}/header-sample', [TemplateController::class, 'headerSample'])->name('templates.header-sample');
+        Route::post('templates/{template}/header-sample', [TemplateController::class, 'headerSample'])->middleware('subscription.active')->name('templates.header-sample');
         Route::delete('templates/{template}', [TemplateController::class, 'destroy'])->name('templates.destroy');
 
         // Test send
         Route::get('test-send', [TestSendController::class, 'create'])->name('test-send.create');
-        Route::post('test-send', [TestSendController::class, 'store'])->name('test-send.store');
+        Route::post('test-send', [TestSendController::class, 'store'])->middleware('subscription.active')->name('test-send.store');
 
         // Messages / conversation viewer
         Route::get('messages', [MessageController::class, 'index'])->name('messages.index');
@@ -124,12 +129,12 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
         // Campaigns
         Route::get('campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
-        Route::post('campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+        Route::post('campaigns', [CampaignController::class, 'store'])->middleware('subscription.active')->name('campaigns.store');
         Route::get('campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaigns.edit');
         Route::put('campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
         Route::get('campaigns/{campaign}/audience-preview', [CampaignController::class, 'audiencePreview'])->name('campaigns.audience-preview');
         Route::post('campaigns/{campaign}/test', [CampaignController::class, 'test'])->name('campaigns.test');
-        Route::post('campaigns/{campaign}/launch', [CampaignController::class, 'launch'])->name('campaigns.launch');
+        Route::post('campaigns/{campaign}/launch', [CampaignController::class, 'launch'])->middleware('subscription.active')->name('campaigns.launch');
         Route::post('campaigns/{campaign}/pause', [CampaignController::class, 'pause'])->name('campaigns.pause');
         Route::post('campaigns/{campaign}/resume', [CampaignController::class, 'resume'])->name('campaigns.resume');
         Route::post('campaigns/{campaign}/cancel', [CampaignController::class, 'cancel'])->name('campaigns.cancel');
@@ -141,8 +146,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('voice-campaigns', [VoiceCampaignController::class, 'index'])->name('voice-campaigns.index');
         Route::get('voice-campaigns/create', [VoiceCampaignController::class, 'create'])->name('voice-campaigns.create');
         Route::get('voice-campaigns/quick', [VoiceCampaignController::class, 'quickCreate'])->name('voice-campaigns.quick');
-        Route::post('voice-campaigns/quick', [VoiceCampaignController::class, 'quickStore'])->name('voice-campaigns.quick.store');
-        Route::post('voice-campaigns', [VoiceCampaignController::class, 'store'])->name('voice-campaigns.store');
+        Route::post('voice-campaigns/quick', [VoiceCampaignController::class, 'quickStore'])->middleware('subscription.active')->name('voice-campaigns.quick.store');
+        Route::post('voice-campaigns', [VoiceCampaignController::class, 'store'])->middleware('subscription.active')->name('voice-campaigns.store');
         Route::get('voice-campaigns/{voiceCampaign}', [VoiceCampaignController::class, 'show'])->name('voice-campaigns.show');
         Route::post('voice-campaigns/{voiceCampaign}/pause', [VoiceCampaignController::class, 'pause'])->name('voice-campaigns.pause');
         Route::post('voice-campaigns/{voiceCampaign}/resume', [VoiceCampaignController::class, 'resume'])->name('voice-campaigns.resume');

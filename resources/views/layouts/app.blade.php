@@ -82,6 +82,24 @@
             </header>
 
             <main class="p-4 sm:p-6 flex-1">
+                @php($currentOrg = app(\App\Support\CurrentOrganization::class)->resolve())
+                @if ($currentOrg && $currentOrg->isSubscriptionExpired() && ! auth()->user()?->isSuperAdmin())
+                    <div class="alert alert-error mb-4 shadow-sm border border-error/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <i class="ti ti-alert-triangle text-2xl shrink-0"></i>
+                            <div>
+                                <div class="font-bold text-sm">Subscription Has Ended</div>
+                                <div class="text-xs opacity-90">Your subscription expired on {{ $currentOrg->subscription_expires_at?->format('d M Y') ?? 'recently' }}. Your portal is currently in read-only mode. Kindly renew to send messages, create templates, or launch campaigns.</div>
+                            </div>
+                        </div>
+                        @if (\Illuminate\Support\Facades\Route::has('subscription.index'))
+                            <a href="{{ route('subscription.index') }}" class="btn btn-sm btn-neutral shrink-0">
+                                <i class="ti ti-credit-card"></i> Renew Now
+                            </a>
+                        @endif
+                    </div>
+                @endif
+
                 @if (session('status'))
                     <div class="alert alert-success mb-4"><i class="ti ti-check"></i><span>{{ session('status') }}</span></div>
                 @endif

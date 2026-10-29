@@ -34,6 +34,7 @@
     {!! $nav('Reports', 'ti-chart-bar', 'whatsapp.reports.index', \App\Enums\Permission::ReportView->value) !!}
     {!! $nav('Webhooks', 'ti-webhook', 'whatsapp.webhooks.index', \App\Enums\Permission::WabaView->value) !!}
     {!! $nav('Settings', 'ti-settings-2', 'whatsapp.settings.edit', \App\Enums\Permission::WabaView->value) !!}
+    {!! $nav('Subscription &amp; Billing', 'ti-credit-card', 'subscription.index') !!}
 
     @php
         $user = auth()->user();

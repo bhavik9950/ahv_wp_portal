@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureTenantContext;
 use App\Http\Middleware\SecurityHeaders;
@@ -46,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => EnsureTenantContext::class,
             'super-admin' => EnsureSuperAdmin::class,
+            'subscription.active' => EnsureActiveSubscription::class,
         ]);
 
         // The tenant must be bound BEFORE route-model binding runs, otherwise
