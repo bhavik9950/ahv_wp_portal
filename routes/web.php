@@ -15,6 +15,7 @@ use App\Http\Controllers\Contacts\ContactGroupController;
 use App\Http\Controllers\Contacts\ContactImportController;
 use App\Http\Controllers\Contacts\UnsubscribeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrganizationSwitchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\Voice\VoiceCampaignController;
@@ -47,6 +48,7 @@ Route::middleware('auth')->group(function () {
 
 // Authenticated routes that operate on tenant-scoped data.
 Route::middleware(['auth', 'tenant'])->group(function () {
+    Route::post('/organization/switch', OrganizationSwitchController::class)->name('organization.switch');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::prefix('whatsapp')->name('whatsapp.')->group(function () {

@@ -22,10 +22,46 @@
                         <i class="ti ti-menu-2 text-xl"></i>
                     </label>
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 flex items-center gap-3">
                     <span class="text-lg font-semibold">{{ $header ?? ($title ?? 'Dashboard') }}</span>
+                    @php($activeOrg = app(\App\Support\CurrentOrganization::class)->resolve())
+                    @if ($activeOrg)
+                        <span class="badge badge-sm badge-outline gap-1 hidden sm:inline-flex text-xs opacity-80" title="Active Organization">
+                            <i class="ti ti-building text-xs"></i> {{ $activeOrg->name }}
+                        </span>
+                    @endif
                 </div>
-                <div class="flex-none">
+                <div class="flex-none flex items-center gap-2">
+                    @php($currentUser = auth()->user())
+                    @if ($currentUser)
+                        @php($availableOrgs = $currentUser->isSuperAdmin() ? \App\Models\Organization::withoutGlobalScopes()->orderBy('name')->get() : $currentUser->organizations)
+                        @if ($availableOrgs->count() > 1)
+                            <div class="dropdown dropdown-end">
+                                <div tabindex="0" role="button" class="btn btn-ghost btn-xs gap-1 border border-base-300">
+                                    <i class="ti ti-switch-horizontal text-xs"></i>
+                                    <span class="hidden md:inline text-xs">Switch Org</span>
+                                </div>
+                                <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-40 w-56 p-2 shadow border border-base-300">
+                                    <li class="menu-title text-xs">Organizations</li>
+                                    @foreach ($availableOrgs as $orgItem)
+                                        <li>
+                                            <form method="POST" action="{{ route('organization.switch') }}" class="p-0">
+                                                @csrf
+                                                <input type="hidden" name="organization_id" value="{{ $orgItem->getKey() }}">
+                                                <button type="submit" class="w-full text-left flex items-center justify-between py-1.5 px-3 {{ $activeOrg && $activeOrg->getKey() === $orgItem->getKey() ? 'active font-medium' : '' }}">
+                                                    <span class="truncate">{{ $orgItem->name }}</span>
+                                                    @if ($activeOrg && $activeOrg->getKey() === $orgItem->getKey())
+                                                        <i class="ti ti-check text-xs"></i>
+                                                    @endif
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    @endif
+
                     <div class="dropdown dropdown-end">
                         <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-2">
                             <i class="ti ti-user-circle text-lg"></i>
