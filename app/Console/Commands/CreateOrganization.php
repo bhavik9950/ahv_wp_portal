@@ -22,6 +22,7 @@ class CreateOrganization extends Command
         {--admin-name= : Full name of the organization admin}
         {--password= : Admin login password (auto-generated if omitted)}
         {--waba-id= : Client Meta WhatsApp Business Account ID (optional)}
+        {--plan=monthly : Subscription plan (lifetime, yearly, half_yearly, monthly)}
         {--timezone=Asia/Kolkata : Organization default timezone}';
 
     protected $description = 'Provision a new isolated client organization with its own admin user and dashboard';
@@ -50,6 +51,9 @@ class CreateOrganization extends Command
             'name' => $name,
             'timezone' => (string) $this->option('timezone'),
         ]);
+
+        $plan = (string) ($this->option('plan') ?: 'monthly');
+        $organization->extendSubscription($plan);
 
         // Find or create the user
         /** @var User $user */
@@ -87,6 +91,8 @@ class CreateOrganization extends Command
             [
                 ['Organization ID', $organization->getKey()],
                 ['Organization Name', $organization->name],
+                ['Plan', ucfirst($organization->plan)],
+                ['Subscription Status', $organization->is_lifetime ? 'Lifetime Access' : 'Valid until '.$organization->subscription_expires_at?->format('d M Y')],
                 ['Admin Name', $user->name],
                 ['Admin Email', $user->email],
                 ['Initial Password', $password],

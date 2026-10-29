@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\Permission;
+use App\Http\Controllers\Admin\AdminOrganizationController;
+use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\HealthController;
 use App\Http\Controllers\Admin\SystemControlController;
 use App\Http\Controllers\Admin\WebhookEventController;
@@ -182,6 +184,18 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('controls/revoke/{account}', [SystemControlController::class, 'revokeIntegration'])
             ->middleware('super-admin')
             ->name('controls.revoke');
+
+        // Super-admin only: Subscriptions, UTR verification, and Organization Management
+        Route::middleware('super-admin')->group(function () {
+            Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
+            Route::post('subscriptions/{subscriptionRequest}/approve', [AdminSubscriptionController::class, 'approve'])->name('subscriptions.approve');
+            Route::post('subscriptions/{subscriptionRequest}/reject', [AdminSubscriptionController::class, 'reject'])->name('subscriptions.reject');
+            Route::post('subscriptions/settings', [AdminSubscriptionController::class, 'updateSettings'])->name('subscriptions.settings');
+
+            Route::get('organizations', [AdminOrganizationController::class, 'index'])->name('organizations.index');
+            Route::get('organizations/{organization}/edit', [AdminOrganizationController::class, 'edit'])->name('organizations.edit');
+            Route::put('organizations/{organization}', [AdminOrganizationController::class, 'update'])->name('organizations.update');
+        });
     });
 });
 

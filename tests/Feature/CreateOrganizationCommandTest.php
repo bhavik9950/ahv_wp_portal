@@ -38,3 +38,19 @@ it('provisions a new organization with an admin user and scoped WABA', function 
         ->and($waba->name)->toBe('Acme Technologies WhatsApp')
         ->and($waba->is_active)->toBeFalse();
 });
+
+it('provisions a lifetime organization via artisan command', function () {
+    $this->artisan('org:create', [
+        'name' => 'Lifetime Client',
+        '--admin-email' => 'lifetime@client.test',
+        '--admin-name' => 'Lifetime Admin',
+        '--password' => 'Secret123456!',
+        '--plan' => 'lifetime',
+    ])->assertSuccessful();
+
+    $org = Organization::where('name', 'Lifetime Client')->first();
+    expect($org)->not->toBeNull()
+        ->and($org->is_lifetime)->toBeTrue()
+        ->and($org->plan)->toBe('lifetime')
+        ->and($org->hasActiveSubscription())->toBeTrue();
+});
