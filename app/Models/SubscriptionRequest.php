@@ -60,3 +60,4 @@ class SubscriptionRequest extends Model
         return $this->status === 'rejected';
     }
 }
+

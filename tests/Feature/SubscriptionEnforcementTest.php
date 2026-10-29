@@ -65,3 +65,4 @@ it('blocks write actions and displays warning banner when subscription is expire
         ->assertOk()
         ->assertDontSee('Subscription Has Ended');
 });
+

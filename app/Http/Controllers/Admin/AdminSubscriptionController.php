@@ -98,3 +98,4 @@ class AdminSubscriptionController extends Controller
         ]);
     }
 }
+

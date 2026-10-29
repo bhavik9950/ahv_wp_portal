@@ -43,3 +43,4 @@ final class EnsureActiveSubscription
         return $next($request);
     }
 }
+

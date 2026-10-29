@@ -44,3 +44,4 @@ it('correctly checks allowed module access', function () {
         ->and($org->hasModule('chats'))->toBeTrue()
         ->and($org->hasModule('voice_campaigns'))->toBeFalse();
 });
+
