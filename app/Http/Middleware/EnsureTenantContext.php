@@ -42,6 +42,14 @@ final class EnsureTenantContext
             ? null
             : $request->session()->get('current_organization_id');
 
+        // Multi-tenant resolution: If preferredId is not in session (fresh login),
+        // or user does not belong to the requested org, fall back to their primary organization.
+        if (! $this->current->isSingleTenant() && ! $user->isSuperAdmin()) {
+            if ($preferredId === null || ! $user->belongsToOrganization($preferredId)) {
+                $preferredId = $user->organizations()->first()?->getKey();
+            }
+        }
+
         $organization = $this->current->resolve($preferredId);
 
         if ($organization === null) {

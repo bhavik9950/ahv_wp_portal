@@ -19,7 +19,7 @@ return [
     |
     */
 
-    'mode' => env('TENANT_MODE', 'single'),
+    'mode' => env('TENANT_MODE', 'multi'),
 
     /*
     | In single mode: the organization to use. When null, the sole (oldest)

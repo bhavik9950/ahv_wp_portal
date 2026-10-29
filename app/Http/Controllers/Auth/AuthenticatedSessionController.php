@@ -28,6 +28,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        /** @var \App\Models\User|null $user */
+        $user = $request->user();
+
+        if ($user && ! $user->isSuperAdmin()) {
+            $primaryOrg = $user->organizations()->first();
+            if ($primaryOrg) {
+                $request->session()->put('current_organization_id', $primaryOrg->getKey());
+            }
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

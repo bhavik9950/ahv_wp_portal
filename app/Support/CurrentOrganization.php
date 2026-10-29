@@ -18,12 +18,12 @@ final class CurrentOrganization
 
     public function isSingleTenant(): bool
     {
-        return config('tenant.mode', 'single') === 'single';
+        return config('tenant.mode', 'multi') === 'single';
     }
 
     public function resolve(int|string|null $preferredId = null): ?Organization
     {
-        if ($this->cached !== null) {
+        if ($this->cached !== null && ($preferredId === null || (string) $this->cached->getKey() === (string) $preferredId)) {
             return $this->cached;
         }
 
