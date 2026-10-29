@@ -114,6 +114,14 @@ class Message extends Model
                 data_get($this->payload, 'location.address'),
             ])->filter()->implode(' — ') ?: null,
             MessageType::Template => $this->renderedTemplateBody(),
+            MessageType::Reaction => data_get($this->payload, 'reaction.emoji') ? ('Reacted: '.(string) data_get($this->payload, 'reaction.emoji')) : null,
+            MessageType::Sticker => '[Sticker]',
+            MessageType::Contacts => '[Contact card]',
+            MessageType::Button => data_get($this->payload, 'button.text'),
+            MessageType::Order => '[Order]',
+            MessageType::System => data_get($this->payload, 'system.body'),
+            MessageType::Unsupported => '[Unsupported message]',
+            default => null,
         };
     }
 

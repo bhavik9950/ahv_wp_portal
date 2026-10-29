@@ -126,6 +126,22 @@
                                 </div>
                                 <div class="whitespace-pre-line">{{ $m->bodyText() ?? '—' }}</div>
 
+                            @elseif ($m->type->value === 'reaction')
+                                <div class="text-2xl py-1">{{ data_get($m->payload, 'reaction.emoji') ?? '👍' }}</div>
+
+                            @elseif ($m->type->value === 'sticker')
+                                @if ($m->media)
+                                    <img src="{{ $mediaUrls[$m->getKey()] }}" alt="Sticker" class="rounded-lg max-h-36 object-contain">
+                                @else
+                                    <div class="italic text-xs opacity-70 py-1"><i class="ti ti-mood-smile"></i> Sticker</div>
+                                @endif
+
+                            @elseif ($m->type->value === 'unsupported')
+                                <div class="italic text-xs opacity-70 flex items-center gap-1.5 py-1">
+                                    <i class="ti ti-info-circle text-warning"></i>
+                                    <span>Unsupported message format (e.g. sticker, poll, or system message)</span>
+                                </div>
+
                             @else
                                 <div class="whitespace-pre-line">{{ $m->bodyText() ?? ucfirst($m->type->value) }}</div>
                             @endif

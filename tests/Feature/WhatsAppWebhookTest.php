@@ -160,3 +160,31 @@ it('downloads and links an inbound image to the message', function () {
     expect($inbound->media_id)->not->toBeNull()
         ->and($inbound->media->mime_type)->toBe('image/png'); // mock driver always returns a PNG
 });
+
+it('handles unsupported inbound message types gracefully without throwing enum exceptions', function () {
+    $number = configureWaba();
+
+    [$raw, $sig] = signedWebhook([
+        'entry' => [['changes' => [['field' => 'messages', 'value' => [
+            'metadata' => ['phone_number_id' => '111222333'],
+            'messages' => [[
+                'id' => 'wamid.INBOUND-UNSUPPORTED',
+                'from' => '919200234903',
+                'type' => 'unsupported',
+                'errors' => [
+                    ['code' => 131051, 'title' => 'Unsupported message type'],
+                ],
+            ]],
+        ]]]]],
+    ]);
+
+    $this->call('POST', '/api/webhooks/whatsapp', [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_X_HUB_SIGNATURE_256' => $sig,
+    ], $raw)->assertOk();
+
+    $inbound = Message::withoutGlobalScopes()->where('wamid', 'wamid.INBOUND-UNSUPPORTED')->first();
+    expect($inbound)->not->toBeNull()
+        ->and($inbound->type->value)->toBe('unsupported')
+        ->and($inbound->bodyText())->toBe('[Unsupported message]');
+});

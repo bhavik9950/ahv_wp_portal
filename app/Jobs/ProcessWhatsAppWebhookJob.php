@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Enums\MessageStatus;
+use App\Enums\MessageType;
 use App\Enums\TemplateStatus;
 use App\Models\Contact;
 use App\Models\Message;
@@ -163,6 +164,9 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 ->where('phone_e164', $from)
                 ->first();
 
+            $rawType = (string) ($incoming['type'] ?? 'text');
+            $messageType = MessageType::tryFrom($rawType) ?? MessageType::Unsupported;
+
             $message = (new Message)->forceFill([
                 'organization_id' => $localNumber->organization_id,
                 'whatsapp_phone_number_id' => $localNumber->getKey(),
@@ -171,7 +175,7 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 'direction' => 'inbound',
                 'to_phone' => $from,
                 'to_phone_hash' => hash('sha256', $from),
-                'type' => $incoming['type'] ?? 'text',
+                'type' => $messageType,
                 'payload' => $incoming,
                 'idempotency_key' => 'inbound:'.($wamid ?? Str::uuid()->toString()),
                 'status' => MessageStatus::Delivered->value,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\MessageType;
 use App\Jobs\Concerns\BindsTenant;
 use App\Models\BotMessage;
 use App\Models\Message;
@@ -60,6 +61,10 @@ class HandleInboundMessageJob implements ShouldBeUnique, ShouldQueue
         $settings = $bot->settingsFor($message->organization_id);
         if ($settings === null || ! $settings->enabled) {
             return;
+        }
+
+        if (! in_array($message->type, [MessageType::Text, MessageType::Interactive], true)) {
+            return; // MVP: bot only replies to text or interactive selections
         }
 
         $text = trim((string) $message->bodyText());

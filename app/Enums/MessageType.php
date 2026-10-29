@@ -14,9 +14,17 @@ enum MessageType: string
     case Audio = 'audio';
     case Location = 'location';
     case Interactive = 'interactive';
+    case Contacts = 'contacts';
+    case Sticker = 'sticker';
+    case Reaction = 'reaction';
+    case Button = 'button';
+    case Order = 'order';
+    case System = 'system';
+    case Unsupported = 'unsupported';
+    case Unknown = 'unknown';
 
     public function isMedia(): bool
     {
-        return in_array($this, [self::Image, self::Video, self::Document, self::Audio], true);
+        return in_array($this, [self::Image, self::Video, self::Document, self::Audio, self::Sticker], true);
     }
 }
