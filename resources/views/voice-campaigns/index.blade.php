@@ -2,6 +2,11 @@
     <x-slot name="title">Voice Campaigns</x-slot>
 
     <div class="space-y-4">
+        <div class="alert alert-info bg-info/10 text-xs border border-info/20">
+            <i class="ti ti-sparkles text-info"></i>
+            <span><strong>Early Preview / Coming Soon:</strong> AI Voice Calling Agent module is currently in private preview. For high-volume automated telephony campaigns, contact AHV team.</span>
+        </div>
+
         <div class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm opacity-70">Automated calls that play a recorded audio clip to a list of contacts.</p>
             @can('create', \App\Models\VoiceCampaign::class)

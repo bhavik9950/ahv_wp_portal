@@ -31,7 +31,7 @@ use App\Http\Controllers\Whatsapp\WabaSettingsController;
 use App\Models\Contact;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('dashboard'));
+Route::get('/', fn () => auth()->check() ? redirect()->route('dashboard') : view('welcome'))->name('home');
 
 // Public health probe — no secrets, no auth.
 Route::get('/health', [HealthController::class, 'ping']);

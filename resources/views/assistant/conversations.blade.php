@@ -2,6 +2,11 @@
     <x-slot name="title">Assistant Conversations</x-slot>
 
     <div class="space-y-4">
+        <div class="alert alert-info bg-info/10 text-xs border border-info/20">
+            <i class="ti ti-sparkles text-info"></i>
+            <span><strong>Private Preview / Coming Soon:</strong> Autonomous AI WhatsApp Chatbot is currently in early preview. Contact AHV support if you wish to activate custom AI LLM agents on your WABA account.</span>
+        </div>
+
         <div class="flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm opacity-70">Every WhatsApp thread the assistant has seen. "Human" rows need a person to reply.</p>
             <a href="{{ route('whatsapp.assistant.settings') }}" class="btn btn-sm btn-ghost"><i class="ti ti-adjustments-alt"></i> Settings</a>

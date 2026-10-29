@@ -4,12 +4,12 @@
      * passes the (optional) ability check. Falls back to a disabled item so the
      * IA from plan §41 stays visible while modules are still being built.
      */
-    $nav = function (string $label, string $icon, ?string $routeName = null, ?string $ability = null) {
+    $nav = function (string $label, string $icon, ?string $routeName = null, ?string $ability = null, ?string $badge = null) {
         $url = $routeName && \Illuminate\Support\Facades\Route::has($routeName) ? route($routeName) : null;
         $allowed = ! $ability || auth()->user()?->can($ability);
         $active = $url && request()->url() === $url;
 
-        return view('partials.sidebar-item', compact('label', 'icon', 'url', 'allowed', 'active'));
+        return view('partials.sidebar-item', compact('label', 'icon', 'url', 'allowed', 'active', 'badge'));
     };
 @endphp
 
@@ -25,11 +25,11 @@
     {!! $nav('Import Contacts', 'ti-file-import', 'whatsapp.contacts.import.create', \App\Enums\Permission::ContactImport->value) !!}
     {!! $nav('Test Send', 'ti-send-2', 'whatsapp.test-send.create', \App\Enums\Permission::MessageSend->value) !!}
     {!! $nav('Campaigns', 'ti-rocket', 'whatsapp.campaigns.index', \App\Enums\Permission::CampaignView->value) !!}
-    {!! $nav('Voice Campaigns', 'ti-phone-outgoing', 'whatsapp.voice-campaigns.index', \App\Enums\Permission::CampaignView->value) !!}
+    {!! $nav('Voice Campaigns', 'ti-phone-outgoing', 'whatsapp.voice-campaigns.index', \App\Enums\Permission::CampaignView->value, 'soon') !!}
     {!! $nav('Messages', 'ti-messages', 'whatsapp.messages.index', \App\Enums\Permission::MessageView->value) !!}
     {!! $nav('Chats', 'ti-message-circle-2', 'whatsapp.conversations.index', \App\Enums\Permission::MessageView->value) !!}
-    {!! $nav('Assistant', 'ti-robot', 'whatsapp.assistant.conversations', \App\Enums\Permission::MessageView->value) !!}
-    {!! $nav('Assistant Settings', 'ti-adjustments-alt', 'whatsapp.assistant.settings', \App\Enums\Permission::WabaManage->value) !!}
+    {!! $nav('Assistant', 'ti-robot', 'whatsapp.assistant.conversations', \App\Enums\Permission::MessageView->value, 'soon') !!}
+    {!! $nav('Assistant Settings', 'ti-adjustments-alt', 'whatsapp.assistant.settings', \App\Enums\Permission::WabaManage->value, 'soon') !!}
     {!! $nav('Media', 'ti-photo', 'whatsapp.media.index', \App\Enums\Permission::CampaignView->value) !!}
     {!! $nav('Reports', 'ti-chart-bar', 'whatsapp.reports.index', \App\Enums\Permission::ReportView->value) !!}
     {!! $nav('Webhooks', 'ti-webhook', 'whatsapp.webhooks.index', \App\Enums\Permission::WabaView->value) !!}
