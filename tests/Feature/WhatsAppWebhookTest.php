@@ -188,3 +188,86 @@ it('handles unsupported inbound message types gracefully without throwing enum e
         ->and($inbound->type->value)->toBe('unsupported')
         ->and($inbound->bodyText())->toBe('[Unsupported message]');
 });
+
+it('processes the exact Meta production unsupported webhook payload without error', function () {
+    $org = makeOrganization();
+    $account = WhatsappBusinessAccount::factory()->for($org)->create([
+        'app_secret' => APP_SECRET,
+        'webhook_verify_token' => 'verify-me',
+    ]);
+    WhatsappPhoneNumber::factory()->forAccount($account)->create([
+        'phone_number_id' => '767513449786746',
+    ]);
+
+    $payload = [
+        'object' => 'whatsapp_business_account',
+        'entry' => [
+            [
+                'id' => '1243393774488265',
+                'changes' => [
+                    [
+                        'field' => 'messages',
+                        'value' => [
+                            'messaging_product' => 'whatsapp',
+                            'metadata' => [
+                                'display_phone_number' => '918104055511',
+                                'phone_number_id' => '767513449786746',
+                            ],
+                            'contacts' => [
+                                [
+                                    'wa_id' => '919280234903',
+                                    'user_id' => 'IN.1568636894658580',
+                                ],
+                            ],
+                            'messages' => [
+                                [
+                                    'from' => '919280234903',
+                                    'id' => 'wamid.HBgMOTE5MjgwMjM0OTAzFQIAEhgSQjg0MTQyNEExMzBCRjNDRkMzAA==',
+                                    'timestamp' => '1792775229',
+                                    'type' => 'unsupported',
+                                    'errors' => [
+                                        [
+                                            'code' => 131051,
+                                            'title' => 'Message type unknown',
+                                            'message' => 'Message type unknown',
+                                            'error_data' => [
+                                                'details' => 'Message type is currently not supported.',
+                                            ],
+                                        ],
+                                    ],
+                                    'unsupported' => [
+                                        'type' => 'unknown',
+                                        'raw_type' => 'unknown',
+                                    ],
+                                    'from_user_id' => 'IN.1568636894658580',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    [$raw, $sig] = signedWebhook($payload);
+
+    $this->call('POST', '/api/webhooks/whatsapp', [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_X_HUB_SIGNATURE_256' => $sig,
+    ], $raw)->assertOk();
+
+    $event = WebhookEvent::latest('id')->first();
+    expect($event)->not->toBeNull()
+        ->and($event->status)->toBe('processed')
+        ->and($event->error)->toBeNull();
+
+    $inbound = Message::withoutGlobalScopes()
+        ->where('wamid', 'wamid.HBgMOTE5MjgwMjM0OTAzFQIAEhgSQjg0MTQyNEExMzBCRjNDRkMzAA==')
+        ->first();
+
+    expect($inbound)->not->toBeNull()
+        ->and($inbound->direction)->toBe('inbound')
+        ->and($inbound->to_phone)->toBe('919280234903')
+        ->and($inbound->type->value)->toBe('unsupported')
+        ->and($inbound->bodyText())->toBe('[Unsupported message]');
+});
