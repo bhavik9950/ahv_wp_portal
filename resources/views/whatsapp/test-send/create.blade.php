@@ -88,9 +88,13 @@
                                 <div x-show="tpl.header && tpl.header.format === 'TEXT'" class="text-sm font-semibold" x-text="tpl.header?.text"></div>
                                 <template x-if="mediaHeader">
                                     <div class="text-xs opacity-70">
-                                        <img x-show="tpl.header.mediaUrl" :src="tpl.header.mediaUrl" alt="header sample"
+                                        <img x-show="mediaHeader === 'IMAGE' && tpl.header.mediaUrl" :src="tpl.header.mediaUrl" alt="header sample"
                                              class="rounded max-h-40 border border-base-300">
-                                        <div x-show="!tpl.header.mediaUrl" class="flex items-center gap-1">
+                                        <div x-show="mediaHeader === 'DOCUMENT'" class="flex items-center gap-1.5 p-2 rounded bg-base-100 border border-base-300 w-fit">
+                                            <i class="ti ti-file-text text-lg text-primary"></i>
+                                            <span class="font-medium" x-text="tpl.header.fileName || 'PDF Document Header'"></span>
+                                        </div>
+                                        <div x-show="mediaHeader !== 'DOCUMENT' && !tpl.header.mediaUrl" class="flex items-center gap-1">
                                             <i class="ti ti-photo"></i>
                                             <span x-text="mediaHeader + ' header'"></span>
                                             <span x-show="!tpl.header.hasSample" class="text-warning">— no sample stored; add one on the template page to send</span>
@@ -113,7 +117,7 @@
                             {{-- Fill the variables --}}
                             <template x-if="tpl.variables.length">
                                 <div class="space-y-2">
-                                    @php($nPlaceholder = '{{n}}')
+                                    @php($nPlaceholder = '{' . '{n}' . '}')
                                     <p class="text-xs opacity-60">Each <span class="badge badge-xs badge-primary badge-outline">{{ $nPlaceholder }}</span> is a placeholder the template fills in per recipient. Enter the value to use for this test.</p>
                                     <template x-for="v in tpl.variables" :key="v.index">
                                         <div>
