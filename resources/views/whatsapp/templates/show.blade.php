@@ -42,7 +42,7 @@
                         <div class="p-3 mb-2 rounded-lg bg-base-300 flex items-center justify-between border border-base-content/10">
                             <div class="flex items-center gap-2">
                                 <i class="ti ti-file-text text-xl text-primary"></i>
-                                <span class="text-xs font-semibold">{{ $template->headerSampleMedia->file_name }}</span>
+                                <span class="text-xs font-semibold">{{ $template->headerSampleMedia->original_name }}</span>
                             </div>
                             <a href="{{ app(\App\Services\WhatsApp\MediaLibrary::class)->temporaryUrl($template->headerSampleMedia, 3600) }}" target="_blank" class="btn btn-xs btn-ghost gap-1">
                                 <i class="ti ti-download"></i> View PDF

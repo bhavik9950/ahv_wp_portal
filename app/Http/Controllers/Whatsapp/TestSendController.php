@@ -56,7 +56,7 @@ class TestSendController extends Controller
                         'mediaUrl' => $sample !== null
                             ? $this->media->temporaryUrl($sample, 3600)
                             : null,
-                        'fileName' => $sample?->file_name,
+                        'fileName' => $sample?->original_name,
                         'hasSample' => $sample !== null,
                     ],
                     'body' => $t->bodyText(),
@@ -104,7 +104,13 @@ class TestSendController extends Controller
                     'document' => 'document',
                     default => 'image',
                 };
-                $headerParam = ['type' => $type, $type => ['id' => $metaId]];
+                $headerParam = [
+                    'type' => $type,
+                    $type => array_filter([
+                        'id' => $metaId,
+                        'filename' => $type === 'document' ? $template->headerSampleMedia->original_name : null,
+                    ]),
+                ];
             }
         }
 

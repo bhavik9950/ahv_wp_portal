@@ -216,6 +216,12 @@ class SendCampaignMessageJob implements ShouldBeUnique, ShouldQueue
         $metaId = app(MediaLibrary::class)->ensureMetaId($media, $account);
         $type = $media->category() === 'video' ? 'video' : ($media->category() === 'image' ? 'image' : 'document');
 
-        return ['type' => $type, $type => ['id' => $metaId]];
+        return [
+            'type' => $type,
+            $type => array_filter([
+                'id' => $metaId,
+                'filename' => $type === 'document' ? $media->original_name : null,
+            ]),
+        ];
     }
 }
