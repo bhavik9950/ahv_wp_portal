@@ -143,10 +143,15 @@
                                     <div class="chat chat-start">
                                         <div class="chat-bubble bg-base-100 text-base-content max-w-full">
                                             <div x-show="tpl.header && tpl.header.format === 'TEXT'" class="font-semibold whitespace-pre-wrap break-words" x-text="render(tpl.header?.text)"></div>
-                                            <img x-show="mediaHeader && tpl.header.mediaUrl" :src="tpl.header?.mediaUrl" alt=""
+                                            <img x-show="mediaHeader === 'IMAGE' && tpl.header.mediaUrl" :src="tpl.header?.mediaUrl" alt=""
                                                  class="mb-1 rounded max-h-48 w-full object-cover">
+                                            <div x-show="mediaHeader === 'DOCUMENT' && tpl.header.mediaUrl" class="mb-1 p-2 rounded bg-base-200 border border-base-content/10 flex items-center gap-2">
+                                                <i class="ti ti-file-text text-xl text-primary"></i>
+                                                <span class="text-xs font-semibold truncate" x-text="tpl.header.fileName || 'Document header (PDF)'"></span>
+                                            </div>
                                             <div x-show="mediaHeader && !tpl.header.mediaUrl" class="mb-1 flex h-24 items-center justify-center rounded bg-base-300 text-xs opacity-60">
-                                                <i class="ti ti-photo text-lg"></i>
+                                                <i :class="mediaHeader === 'DOCUMENT' ? 'ti ti-file-text text-2xl text-primary' : 'ti ti-photo text-lg'"></i>
+                                                <span x-show="mediaHeader === 'DOCUMENT'" class="ml-1 font-medium">Document attached</span>
                                             </div>
                                             <div class="whitespace-pre-wrap break-words" x-text="render(tpl.body)"></div>
                                             <div x-show="tpl.footer" class="mt-1 text-xs opacity-50" x-text="tpl.footer"></div>

@@ -53,9 +53,10 @@ class TestSendController extends Controller
                     'header' => $t->headerFormat() === null ? null : [
                         'format' => $t->headerFormat(),
                         'text' => $t->headerText(),
-                        'mediaUrl' => $sample !== null && $sample->category() === 'image'
+                        'mediaUrl' => $sample !== null
                             ? $this->media->temporaryUrl($sample, 3600)
                             : null,
+                        'fileName' => $sample?->file_name,
                         'hasSample' => $sample !== null,
                     ],
                     'body' => $t->bodyText(),

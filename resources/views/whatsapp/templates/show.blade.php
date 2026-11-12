@@ -27,16 +27,28 @@
                 </div>
                 <p class="text-xs opacity-60">{{ $template->language }} · {{ $template->category }}</p>
 
-                @if ($template->rejection_reason)
+                @if ($template->rejection_reason && strtoupper(trim($template->rejection_reason)) !== 'NONE')
                     <div class="alert alert-error text-sm mt-2">
                         <i class="ti ti-x"></i><span>Rejection reason: {{ $template->rejection_reason }}</span>
                     </div>
                 @endif
 
                 <div class="divider text-xs">Preview</div>
-                @if ($template->headerSampleMedia && $template->headerSampleMedia->category() === 'image')
-                    <img src="{{ app(\App\Services\WhatsApp\MediaLibrary::class)->temporaryUrl($template->headerSampleMedia, 3600) }}"
-                         alt="header sample" class="rounded-lg max-h-56 border border-base-300 mb-2">
+                @if ($template->headerSampleMedia)
+                    @if ($template->headerSampleMedia->category() === 'image')
+                        <img src="{{ app(\App\Services\WhatsApp\MediaLibrary::class)->temporaryUrl($template->headerSampleMedia, 3600) }}"
+                             alt="header sample" class="rounded-lg max-h-56 border border-base-300 mb-2">
+                    @elseif ($template->headerSampleMedia->category() === 'document')
+                        <div class="p-3 mb-2 rounded-lg bg-base-300 flex items-center justify-between border border-base-content/10">
+                            <div class="flex items-center gap-2">
+                                <i class="ti ti-file-text text-xl text-primary"></i>
+                                <span class="text-xs font-semibold">{{ $template->headerSampleMedia->file_name }}</span>
+                            </div>
+                            <a href="{{ app(\App\Services\WhatsApp\MediaLibrary::class)->temporaryUrl($template->headerSampleMedia, 3600) }}" target="_blank" class="btn btn-xs btn-ghost gap-1">
+                                <i class="ti ti-download"></i> View PDF
+                            </a>
+                        </div>
+                    @endif
                 @endif
                 <div class="bg-base-200 rounded-lg p-4 text-sm whitespace-pre-line">{{ $preview }}</div>
 
