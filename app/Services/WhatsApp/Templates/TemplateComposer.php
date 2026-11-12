@@ -34,7 +34,23 @@ final class TemplateComposer
             $components[] = $header;
         }
 
-        $components[] = ['type' => 'BODY', 'text' => (string) ($data['body'] ?? '')];
+        $bodyText = (string) ($data['body'] ?? '');
+        $bodyComponent = ['type' => 'BODY', 'text' => $bodyText];
+
+        $placeholders = $this->bodyPlaceholders($bodyText);
+        if ($placeholders !== []) {
+            // Meta requires sample values for each placeholder when creating a template.
+            // E.g. example => ['body_text' => [['Sample 1', 'Sample 2']]]
+            $sampleValues = [];
+            foreach ($placeholders as $num) {
+                $sampleValues[] = "Sample {$num}";
+            }
+            $bodyComponent['example'] = [
+                'body_text' => [$sampleValues],
+            ];
+        }
+
+        $components[] = $bodyComponent;
 
         if (filled($data['footer'] ?? null)) {
             $components[] = ['type' => 'FOOTER', 'text' => $data['footer']];

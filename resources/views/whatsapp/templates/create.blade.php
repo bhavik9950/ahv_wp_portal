@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="title">New Template</x-slot>
 
-    @php($v1 = '{{1}}')
-    @php($v2 = '{{2}}')
+    @php($v1 = '{' . '{1}' . '}')
+    @php($v2 = '{' . '{2}' . '}')
     <div class="max-w-2xl">
         <div class="alert alert-info mb-4 text-sm">
             <i class="ti ti-info-circle"></i>
