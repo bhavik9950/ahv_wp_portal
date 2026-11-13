@@ -9,6 +9,44 @@
     <title>{{ $title ?? '' }}{{ isset($title) ? ' · ' : '' }}{{ config('app.name') }}</title>
     {{ $head ?? '' }}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        /* Bulletproof vertical alignment & text visibility for select dropdowns across the portal */
+        select, .select {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            vertical-align: middle !important;
+        }
+        .select-sm {
+            height: 2.25rem !important;
+            min-height: 2.25rem !important;
+            line-height: 2.25rem !important;
+            font-size: 0.8125rem !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            padding-left: 0.75rem !important;
+            padding-right: 2rem !important;
+        }
+        .select:not(.select-sm):not(.select-lg):not(.select-xs) {
+            height: 2.625rem !important;
+            min-height: 2.625rem !important;
+            line-height: 2.625rem !important;
+            font-size: 0.875rem !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            padding-left: 0.875rem !important;
+            padding-right: 2.5rem !important;
+        }
+        .dt-length select {
+            height: 2.25rem !important;
+            min-height: 2.25rem !important;
+            line-height: 2.25rem !important;
+            font-size: 0.8125rem !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            padding-left: 0.625rem !important;
+            padding-right: 1.75rem !important;
+        }
+    </style>
 </head>
 <body class="font-sans antialiased bg-base-200 text-base-content">
     <div class="drawer lg:drawer-open min-h-screen">

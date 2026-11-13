@@ -3,7 +3,7 @@
 
     @php($m = $metrics)
 
-    <div class="space-y-6">
+    <div class="space-y-6" @if ($range->key === 'today') data-auto-refresh="15" @endif>
         <div class="flex items-center gap-2 flex-wrap">
             @foreach ($presets as $p)
                 <a href="{{ route('whatsapp.reports.index', ['range' => $p['key']]) }}"

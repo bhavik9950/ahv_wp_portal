@@ -5,7 +5,7 @@
     $n = max(1, count($trend));
     $max = max(1, collect($trend)->max('outbound') ?? 1);
 
-    $xFor = fn (int $i) => $n === 1 ? $padL : $padL + $i * (($w - $padL - $padR) / ($n - 1));
+    $xFor = fn (int $i) => $n === 1 ? ($padL + ($w - $padL - $padR) / 2) : $padL + $i * (($w - $padL - $padR) / ($n - 1));
     $yFor = fn (int $v) => $h - $padB - ($v / $max) * ($h - $padT - $padB);
 
     $seriesDefs = [
@@ -25,13 +25,24 @@
             $pts[] = "{$x},{$y}";
             $jsPts[] = ['x' => $x, 'y' => $y, 'date' => \Illuminate\Support\Carbon::parse($row['date'])->format('d M'), 'value' => (int) $row[$sd['key']]];
         }
-        $paths[$sd['key']] = 'M '.implode(' L ', $pts);
+        if ($n === 1) {
+            $ySingle = round($yFor((int) ($trend[0][$sd['key']] ?? 0)), 1);
+            $paths[$sd['key']] = "M {$padL},{$ySingle} L ".($w - $padR).",{$ySingle}";
+        } else {
+            $paths[$sd['key']] = 'M '.implode(' L ', $pts);
+        }
         $jsSeries[] = ['name' => $sd['name'], 'color' => "var({$sd['var']})", 'points' => $jsPts];
     }
 
-    $areaPath = $paths['outbound']
-        .' L '.round($xFor($n - 1), 1).','.round($yFor(0), 1)
-        .' L '.round($xFor(0), 1).','.round($yFor(0), 1).' Z';
+    if ($n === 1) {
+        $yOut = round($yFor((int) ($trend[0]['outbound'] ?? 0)), 1);
+        $yZero = round($yFor(0), 1);
+        $areaPath = "M {$padL},{$yOut} L ".($w - $padR).",{$yOut} L ".($w - $padR).",{$yZero} L {$padL},{$yZero} Z";
+    } else {
+        $areaPath = $paths['outbound']
+            .' L '.round($xFor($n - 1), 1).','.round($yFor(0), 1)
+            .' L '.round($xFor(0), 1).','.round($yFor(0), 1).' Z';
+    }
 
     $ticks = $n <= 8 ? range(0, $n - 1) : [0, intdiv($n, 2), $n - 1];
 
@@ -70,6 +81,15 @@
         {{-- dashed so it's distinguishable from the aqua line without relying on hue --}}
         <path d="{{ $paths['failed'] }}" fill="none" stroke="var(--series-8)" stroke-width="1.5"
               stroke-linejoin="round" stroke-dasharray="4 3" opacity="0.9" />
+
+        {{-- Point markers --}}
+        @foreach ($seriesDefs as $sd)
+            @foreach ($trend as $i => $row)
+                @php($x = round($xFor($i), 1))
+                @php($y = round($yFor((int) $row[$sd['key']]), 1))
+                <circle cx="{{ $x }}" cy="{{ $y }}" r="{{ $n === 1 ? 5 : 3 }}" fill="var({{ $sd['var'] }})" stroke="var(--chart-surface, #fff)" stroke-width="1.5" />
+            @endforeach
+        @endforeach
 
         @foreach ($ticks as $i)
             <text x="{{ $xFor($i) }}" y="{{ $h - 8 }}" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.5">
