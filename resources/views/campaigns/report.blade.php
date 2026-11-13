@@ -30,7 +30,34 @@
                     @endif
                 @endif
                 @if ($canExport)
-                    <a href="{{ route('whatsapp.campaigns.report.export', $campaign) }}" data-turbo="false" class="btn btn-xs btn-outline"><i class="ti ti-download"></i> CSV</a>
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-xs btn-outline gap-1">
+                            <i class="ti ti-download"></i> Export CSV <i class="ti ti-chevron-down text-[10px]"></i>
+                        </label>
+                        <ul tabindex="0" class="dropdown-content z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-56 border border-base-300 text-xs">
+                            <li class="menu-title text-[10px] uppercase font-bold tracking-wider opacity-60">Export Filter</li>
+                            <li>
+                                <a href="{{ route('whatsapp.campaigns.report.export', [$campaign, 'type' => 'all']) }}" data-turbo="false">
+                                    <i class="ti ti-file-text"></i> All Recipients
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('whatsapp.campaigns.report.export', [$campaign, 'type' => 'success']) }}" data-turbo="false" class="text-success">
+                                    <i class="ti ti-circle-check"></i> Only Success (Sent/Read)
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('whatsapp.campaigns.report.export', [$campaign, 'type' => 'failed']) }}" data-turbo="false" class="text-error">
+                                    <i class="ti ti-alert-triangle"></i> Only Failed / Skipped
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('whatsapp.campaigns.report.export', [$campaign, 'type' => 'inbound']) }}" data-turbo="false" class="text-info">
+                                    <i class="ti ti-message-dots"></i> Only Inbound (Replies)
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 @endif
             </div>
         </div>

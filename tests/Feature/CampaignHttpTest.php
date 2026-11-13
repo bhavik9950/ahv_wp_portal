@@ -92,3 +92,47 @@ it('exports a campaign report as CSV', function () {
     $response->assertOk();
     expect($response->streamedContent())->toContain('phone', 'status');
 });
+
+it('exports filtered campaign report: only success, failed, and inbound', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    $campaign = Campaign::factory()->for($org)->status(CampaignStatus::Completed)->create();
+    
+    $rec1 = CampaignRecipient::factory()->forCampaign($campaign)->create([
+        'status' => \App\Enums\CampaignRecipientStatus::Delivered,
+        'phone_e164' => '919876500001',
+    ]);
+    $rec2 = CampaignRecipient::factory()->forCampaign($campaign)->create([
+        'status' => \App\Enums\CampaignRecipientStatus::Failed,
+        'phone_e164' => '919876500002',
+        'error_message' => 'Template rejected by user',
+    ]);
+
+    // Test success filter
+    $respSuccess = $this->actingAs($manager)->get(route('whatsapp.campaigns.report.export', [$campaign, 'type' => 'success']));
+    $respSuccess->assertOk();
+    $contentSuccess = $respSuccess->streamedContent();
+    expect($contentSuccess)->toContain('919876500001')
+        ->and($contentSuccess)->not->toContain('919876500002');
+
+    // Test failed filter
+    $respFailed = $this->actingAs($manager)->get(route('whatsapp.campaigns.report.export', [$campaign, 'type' => 'failed']));
+    $respFailed->assertOk();
+    $contentFailed = $respFailed->streamedContent();
+    expect($contentFailed)->toContain('919876500002')
+        ->and($contentFailed)->not->toContain('919876500001');
+
+    // Test inbound filter
+    \App\Models\Message::factory()->create([
+        'organization_id' => $org->id,
+        'direction' => 'inbound',
+        'type' => \App\Enums\MessageType::Text,
+        'to_phone' => '919876500001',
+        'payload' => ['text' => ['body' => 'Ji zaroor aayenge']],
+    ]);
+
+    $respInbound = $this->actingAs($manager)->get(route('whatsapp.campaigns.report.export', [$campaign, 'type' => 'inbound']));
+    $respInbound->assertOk();
+    $contentInbound = $respInbound->streamedContent();
+    expect($contentInbound)->toContain('919876500001', 'Ji zaroor aayenge');
+});
