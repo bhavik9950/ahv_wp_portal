@@ -74,8 +74,8 @@ class SeedWeddingContacts extends Command
         $invalid = 0;
 
         foreach ($reader->getRecords() as $record) {
-            $name = trim((string) ($record['name'] ?? ''));
-            $rawPhone = trim((string) ($record['phone'] ?? ''));
+            $name = trim((string) ($record['Name'] ?? $record['name'] ?? ''));
+            $rawPhone = trim((string) ($record['Phone'] ?? $record['phone'] ?? ''));
 
             $parsed = $normalizer->parse($rawPhone, '91');
             if ($parsed === null) {
