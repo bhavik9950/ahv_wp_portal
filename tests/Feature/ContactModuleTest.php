@@ -144,3 +144,31 @@ it('exports contacts as CSV for an authorized user', function () {
     $response->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
     expect($response->streamedContent())->toContain('phone_e164');
 });
+
+it('clears contacts via artisan contacts:clear command', function () {
+    $org = makeOrganization();
+    Contact::factory()->for($org)->count(3)->create();
+
+    expect(Contact::count())->toBe(3);
+
+    $this->artisan('contacts:clear', ['--force' => true, '--org' => $org->id])
+        ->assertSuccessful();
+
+    expect(Contact::count())->toBe(0);
+});
+
+it('clears contacts by group name via artisan contacts:clear command', function () {
+    $org = makeOrganization();
+    $group = ContactGroup::factory()->for($org)->create(['name' => 'Old Group']);
+    $c1 = Contact::factory()->for($org)->create();
+    $c2 = Contact::factory()->for($org)->create();
+    $group->contacts()->attach($c1);
+
+    expect(Contact::count())->toBe(2);
+
+    $this->artisan('contacts:clear', ['--group' => 'Old Group', '--force' => true, '--org' => $org->id])
+        ->assertSuccessful();
+
+    expect(Contact::count())->toBe(1)
+        ->and(Contact::first()->id)->toBe($c2->id);
+});
