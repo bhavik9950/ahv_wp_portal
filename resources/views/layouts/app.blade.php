@@ -54,7 +54,7 @@
 
         <div class="drawer-content flex flex-col">
             {{-- Top bar --}}
-            <header class="navbar bg-base-100 border-b border-base-300 sticky top-0 z-30 px-4">
+            <header id="app-header" class="navbar bg-base-100 border-b border-base-300 sticky top-0 z-30 px-4">
                 <div class="flex-none lg:hidden">
                     <label for="app-drawer" class="btn btn-square btn-ghost" aria-label="Open menu">
                         <i class="ti ti-menu-2 text-xl"></i>

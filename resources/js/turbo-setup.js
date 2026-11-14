@@ -110,6 +110,15 @@ document.addEventListener('turbo:load', () => {
 
         const y = window.scrollY;
         document.addEventListener('turbo:load', () => window.scrollTo(0, y), { once: true });
+
+        // Suppress view transitions and progress bar during background auto-refresh
+        document.documentElement.classList.add('no-view-transition');
+        document.addEventListener('turbo:load', () => {
+            requestAnimationFrame(() => {
+                document.documentElement.classList.remove('no-view-transition');
+            });
+        }, { once: true });
+
         window.Turbo.visit(window.location.href, { action: 'replace' });
     }, seconds * 1000);
 });

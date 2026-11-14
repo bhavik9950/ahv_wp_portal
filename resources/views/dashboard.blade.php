@@ -38,7 +38,7 @@
                 <div class="flex items-center gap-1.5">
                     <i class="ti ti-target opacity-50 text-base"></i>
                     <select name="campaign_id" id="filter_campaign_id"
-                            onchange="document.getElementById('dashboard_filter_form').submit()"
+                            onchange="submitDashboardFilter()"
                             class="select select-bordered select-sm max-w-xs text-xs font-medium">
                         <option value="">All Campaigns (Account-wide)</option>
                         @foreach ($campaigns as $camp)
@@ -58,14 +58,23 @@
         </form>
 
         <script>
-            function setDashboardPreset(presetKey) {
+            function submitDashboardFilter() {
                 var form = document.getElementById('dashboard_filter_form');
-                document.getElementById('filter_range_key').value = presetKey;
+                if (!form) return;
+                form.classList.add('opacity-70', 'pointer-events-none');
                 if (form.requestSubmit) {
                     form.requestSubmit();
                 } else {
+                    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
                     form.submit();
                 }
+            }
+
+            function setDashboardPreset(presetKey) {
+                var form = document.getElementById('dashboard_filter_form');
+                if (!form) return;
+                document.getElementById('filter_range_key').value = presetKey;
+                submitDashboardFilter();
             }
         </script>
 

@@ -15,16 +15,23 @@
     background-color: hsl(var(--p));
 }
 
-/* Cross-fade between pages (Chrome View Transitions); the permanent sidebar
-   is excluded so only the content area animates. */
+/* Cross-fade between pages (Chrome View Transitions); permanent layout shells
+   (sidebar + top header) are excluded so only the dynamic content area animates. */
 @media (prefers-reduced-motion: no-preference) {
     ::view-transition-old(root),
     ::view-transition-new(root) {
-        animation-duration: 140ms;
+        animation-duration: 120ms;
     }
 }
 #app-sidebar {
     view-transition-name: app-sidebar;
+}
+#app-header {
+    view-transition-name: app-header;
+}
+html.no-view-transition,
+html.no-view-transition * {
+    view-transition-name: none !important;
 }
 
 /* Make DataTables (v2 "dt" styling) blend into daisyUI. */
