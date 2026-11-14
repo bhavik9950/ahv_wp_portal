@@ -172,9 +172,11 @@
                     <i class="ti ti-layout-dashboard"></i> Dashboard
                 </a>
             @else
-                <a href="{{ route('login') }}" class="btn btn-ghost btn-sm">Log in</a>
-                <a href="#pricing" class="btn btn-primary btn-sm gap-1">
-                    <i class="ti ti-rocket"></i> Get Started
+                <a href="#request-access" class="btn btn-primary btn-sm gap-1">
+                    <i class="ti ti-mail-fast"></i> Request Access
+                </a>
+                <a href="{{ route('login') }}" class="btn btn-ghost btn-sm text-xs opacity-70 hover:opacity-100 gap-1" title="Authorized Client Login">
+                    <i class="ti ti-lock"></i> Client Portal
                 </a>
             @endauth
         </div>
@@ -197,12 +199,19 @@
             </p>
 
             <div class="flex flex-wrap items-center justify-center gap-3 pt-4">
-                <a href="{{ route('login') }}" class="btn btn-primary btn-md px-6 shadow-md gap-2">
-                    <i class="ti ti-login"></i> Access Portal Dashboard
+                <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20onboarding%20and%20accessing%20the%20WhatsApp%20Cloud%20Portal."
+                   target="_blank" rel="noopener noreferrer"
+                   class="btn btn-primary btn-md px-6 shadow-md gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0">
+                    <i class="ti ti-brand-whatsapp text-xl"></i> Request Access on WhatsApp
                 </a>
-                <a href="#pricing" class="btn btn-outline btn-md px-6 gap-2">
-                    <i class="ti ti-tag"></i> View Transparent Pricing
+                <a href="#features" class="btn btn-outline btn-md px-6 gap-2">
+                    <i class="ti ti-apps"></i> Explore Features
                 </a>
+            </div>
+
+            <div class="flex items-center justify-center gap-2 text-xs opacity-60 pt-1">
+                <i class="ti ti-shield-lock text-emerald-600"></i>
+                <span>Private Enterprise SaaS &bull; Accounts provisioned on request</span>
             </div>
 
             {{-- Trust Indicators --}}
@@ -474,7 +483,11 @@
                         </ul>
                     </div>
                     <div class="p-5 pt-0">
-                        <a href="{{ route('login') }}" class="btn btn-outline btn-sm w-full">Start 1 Month</a>
+                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%201%20Month%20Plan%20(₹1,999)%20for%20WhatsApp%20Cloud%20Portal."
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-outline btn-sm w-full gap-1">
+                            <i class="ti ti-brand-whatsapp text-emerald-600"></i> Inquire for 1 Month
+                        </a>
                     </div>
                 </div>
 
@@ -495,7 +508,11 @@
                         </ul>
                     </div>
                     <div class="p-5 pt-0">
-                        <a href="{{ route('login') }}" class="btn btn-outline btn-sm w-full">Start 6 Months</a>
+                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%206%20Months%20Plan%20(₹9,999)%20for%20WhatsApp%20Cloud%20Portal."
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-outline btn-sm w-full gap-1">
+                            <i class="ti ti-brand-whatsapp text-emerald-600"></i> Inquire for 6 Months
+                        </a>
                     </div>
                 </div>
 
@@ -516,7 +533,11 @@
                         </ul>
                     </div>
                     <div class="p-5 pt-0">
-                        <a href="{{ route('login') }}" class="btn btn-outline btn-sm w-full">Start 1 Year</a>
+                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%201%20Year%20Plan%20(₹17,999)%20for%20WhatsApp%20Cloud%20Portal."
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-outline btn-sm w-full gap-1">
+                            <i class="ti ti-brand-whatsapp text-emerald-600"></i> Inquire for 1 Year
+                        </a>
                     </div>
                 </div>
 
@@ -538,8 +559,10 @@
                         </ul>
                     </div>
                     <div class="p-5 pt-0">
-                        <a href="{{ route('login') }}" class="btn btn-success text-white btn-sm w-full gap-1">
-                            <i class="ti ti-infinity"></i> Claim Lifetime License
+                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20want%20to%20claim%20the%20Lifetime%20Access%20License%20(₹20,000)%20for%20WhatsApp%20Cloud%20Portal."
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-success text-white btn-sm w-full gap-1">
+                            <i class="ti ti-brand-whatsapp"></i> Inquire for Lifetime License
                         </a>
                     </div>
                 </div>
@@ -547,6 +570,51 @@
 
             <div class="p-4 rounded-xl bg-base-200 border border-base-300 text-center text-xs opacity-70 max-w-xl mx-auto">
                 <i class="ti ti-info-circle text-primary"></i> Manual Payment Verification via <strong>UPI QR Code or Direct Bank Transfer</strong> with instant UTR verification by AHV team.
+            </div>
+        </div>
+    </section>
+
+    {{-- Request Access & Enterprise Onboarding --}}
+    <section id="request-access" class="py-16 px-4 sm:px-8 max-w-5xl mx-auto space-y-8">
+        <div class="card bg-gradient-to-br from-emerald-500/10 via-base-100 to-base-100 border-2 border-emerald-500/30 p-8 sm:p-10 rounded-3xl shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-4">
+                    <span class="badge badge-success badge-sm font-semibold text-white">Closed Enterprise Access</span>
+                    <h2 class="text-3xl font-bold tracking-tight">Request Platform Onboarding</h2>
+                    <p class="text-xs sm:text-sm opacity-75 leading-relaxed">
+                        To maintain 100% Meta Cloud API compliance, pristine number quality rating, and multi-tenant security, <strong>AHV WhatsApp Portal</strong> is an invite-only platform.
+                    </p>
+                    <p class="text-xs sm:text-sm opacity-75 leading-relaxed">
+                        Each organization receives a dedicated workspace with verified WABA credentials, phone number routing, and custom sender isolation.
+                    </p>
+                    <div class="pt-2 flex items-center gap-2 text-xs opacity-60">
+                        <i class="ti ti-shield-check text-emerald-600 text-lg"></i>
+                        <span>Zero public signup spam &bull; Strict client data isolation</span>
+                    </div>
+                </div>
+
+                <div class="card bg-base-100 border border-base-300 p-6 space-y-4 shadow-xs">
+                    <h3 class="font-bold text-sm">Direct Contact with AHV Team</h3>
+                    <p class="text-xs opacity-70 leading-relaxed">
+                        Get your WhatsApp Business Account (WABA) connected and broadcast templates approved within 24 hours.
+                    </p>
+
+                    <div class="space-y-2">
+                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20would%20like%20to%20request%20access%20to%20the%20WhatsApp%20Cloud%20Portal."
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-emerald bg-emerald-600 hover:bg-emerald-700 text-white btn-sm w-full gap-2 shadow-xs">
+                            <i class="ti ti-brand-whatsapp text-lg"></i> Chat with Onboarding Team (+91 81040 55511)
+                        </a>
+                    </div>
+
+                    <div class="divider my-1 text-[0.7rem] opacity-50">OR FOR EXISTING CLIENTS</div>
+
+                    <div class="text-center">
+                        <a href="{{ route('login') }}" class="btn btn-ghost btn-xs opacity-75 hover:opacity-100 gap-1 text-xs">
+                            <i class="ti ti-lock"></i> Sign In to Authorized Client Portal &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -608,7 +676,7 @@
                 <a href="#features" class="hover:underline">Features</a>
                 <a href="#pricing" class="hover:underline">Pricing</a>
                 <a href="#faq" class="hover:underline">FAQ</a>
-                <a href="{{ route('login') }}" class="hover:underline">Client Login</a>
+                <a href="{{ route('login') }}" class="hover:underline">Client Portal</a>
             </div>
             <div>
                 &copy; {{ date('Y') }} AHV Software. All rights reserved. Official Meta Cloud API Partner.

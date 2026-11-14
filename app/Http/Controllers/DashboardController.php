@@ -21,7 +21,8 @@ class DashboardController extends Controller
         $campaignId = $request->query('campaign_id') ?: null;
 
         $campaigns = Campaign::query()->latest()->limit(50)->get(['id', 'name', 'status']);
-        $selectedCampaign = $campaignId ? Campaign::query()->find($campaignId) : null;
+        $selectedCampaign = $campaignId ? Campaign::query()->with('template')->find($campaignId) : null;
+        $campaignTotals = $selectedCampaign ? ($selectedCampaign->totals ?? $selectedCampaign->recomputeTotals()) : null;
 
         return view('dashboard', [
             'range' => $range,
@@ -29,6 +30,7 @@ class DashboardController extends Controller
             'campaigns' => $campaigns,
             'selectedCampaignId' => $campaignId,
             'selectedCampaign' => $selectedCampaign,
+            'campaignTotals' => $campaignTotals,
             'metrics' => $metrics->forRange($range->from, $range->to, $range->key, $campaignId),
         ]);
     }

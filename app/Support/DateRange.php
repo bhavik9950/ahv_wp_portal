@@ -53,6 +53,17 @@ final class DateRange
         return new self($from->startOfDay(), $to->endOfDay(), 'custom');
     }
 
+    public function label(): string
+    {
+        return match ($this->key) {
+            'today' => 'Today',
+            'yesterday' => 'Yesterday',
+            'last_7_days' => 'Last 7 days',
+            'last_30_days' => 'Last 30 days',
+            default => 'Custom period',
+        };
+    }
+
     /** @return list<array{key: string, label: string}> */
     public static function presets(): array
     {
