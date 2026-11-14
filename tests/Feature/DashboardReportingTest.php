@@ -72,6 +72,32 @@ it('honours the date range on the dashboard', function () {
         ->assertSee(Carbon::now($org->timezone)->toDateString());
 });
 
+it('filters dashboard metrics by campaign_id', function () {
+    $org = makeOrganization();
+    $viewer = makeMember($org, 'viewer');
+    $c1 = Campaign::factory()->for($org)->status(CampaignStatus::Completed)->create(['name' => 'First Campaign']);
+    $c2 = Campaign::factory()->for($org)->status(CampaignStatus::Completed)->create(['name' => 'Second Campaign']);
+
+    \App\Models\Message::factory()->create([
+        'organization_id' => $org->id,
+        'campaign_id' => $c1->id,
+        'direction' => 'outbound',
+        'status' => \App\Enums\MessageStatus::Delivered,
+    ]);
+
+    \App\Models\Message::factory()->create([
+        'organization_id' => $org->id,
+        'campaign_id' => $c2->id,
+        'direction' => 'outbound',
+        'status' => \App\Enums\MessageStatus::Failed,
+    ]);
+
+    $resp = $this->actingAs($viewer)->get(route('dashboard', ['range' => 'today', 'campaign_id' => $c1->id]));
+    $resp->assertOk()
+        ->assertSee('Filtered by campaign:')
+        ->assertSee('First Campaign');
+});
+
 it('shows the reports overview to a report viewer and gates it otherwise', function () {
     $org = makeOrganization();
     $manager = makeMember($org, 'campaign_manager');

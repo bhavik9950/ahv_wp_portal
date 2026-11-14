@@ -34,11 +34,17 @@
                             <td>{{ $c->template?->name ?? '—' }}</td>
                             <td data-order="{{ $c->recipients_count }}">{{ number_format($c->recipients_count) }}</td>
                             <td class="text-xs opacity-60" data-order="{{ $c->scheduled_at?->timestamp ?? 0 }}">{{ $c->scheduled_at?->timezone($c->timezone)->format('d M H:i') ?? '—' }}</td>
-                            <td class="text-right">
+                            <td class="text-right flex items-center justify-end gap-1">
                                 @if ($c->status === \App\Enums\CampaignStatus::Draft)
                                     <a href="{{ route('whatsapp.campaigns.edit', $c) }}" class="btn btn-xs btn-ghost">Edit</a>
                                 @else
                                     <a href="{{ route('whatsapp.campaigns.report', $c) }}" class="btn btn-xs btn-ghost">Report</a>
+                                @endif
+                                @if ($canManage && $c->status !== \App\Enums\CampaignStatus::Processing)
+                                    <form method="POST" action="{{ route('whatsapp.campaigns.destroy', $c) }}" data-confirm="Delete campaign '{{ $c->name }}' and all its recipient history?">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-xs btn-ghost text-error" title="Delete campaign history"><i class="ti ti-trash"></i></button>
+                                    </form>
                                 @endif
                             </td>
                         </tr>

@@ -172,3 +172,37 @@ it('clears contacts by group name via artisan contacts:clear command', function 
     expect(Contact::count())->toBe(1)
         ->and(Contact::first()->id)->toBe($c2->id);
 });
+
+it('bulk deletes selected contacts via http endpoint', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    $contacts = Contact::factory()->for($org)->count(3)->create();
+
+    expect(Contact::count())->toBe(3);
+
+    $this->actingAs($manager)
+        ->post(route('whatsapp.contacts.bulk-delete'), [
+            'contact_ids' => [$contacts[0]->id, $contacts[1]->id],
+        ])
+        ->assertRedirect();
+
+    expect(Contact::count())->toBe(1)
+        ->and(Contact::first()->id)->toBe($contacts[2]->id);
+});
+
+it('updates group name and description', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    $group = ContactGroup::factory()->for($org)->create(['name' => 'Original Name', 'description' => 'Original Desc']);
+
+    $this->actingAs($manager)
+        ->put(route('whatsapp.groups.update', $group), [
+            'name' => 'Renamed Group',
+            'description' => 'New Description',
+        ])
+        ->assertRedirect();
+
+    $group->refresh();
+    expect($group->name)->toBe('Renamed Group')
+        ->and($group->description)->toBe('New Description');
+});

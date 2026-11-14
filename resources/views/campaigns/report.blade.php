@@ -14,6 +14,13 @@
                 </p>
             </div>
             <div class="flex items-center gap-2">
+                @if ($live)
+                    <button type="button" data-auto-refresh-toggle class="btn btn-xs btn-outline gap-1" title="Click to pause or resume live updates">
+                        <span class="w-2 h-2 rounded-full bg-success animate-pulse" data-auto-refresh-indicator></span>
+                        <span data-auto-refresh-label class="text-[11px]">Auto-refresh: ON (10s)</span>
+                    </button>
+                @endif
+
                 @php($m = ['completed'=>'badge-success','processing'=>'badge-info','paused'=>'badge-warning','failed'=>'badge-error','cancelled'=>'badge-ghost','scheduled'=>'badge-ghost'])
                 <span class="badge {{ $m[$campaign->status->value] ?? 'badge-ghost' }}">{{ ucfirst($campaign->status->value) }}</span>
 
@@ -28,6 +35,12 @@
                             @csrf<button class="btn btn-xs btn-error btn-outline">Cancel</button>
                         </form>
                     @endif
+                @endif
+                @if (auth()->user()->can(\App\Enums\Permission::CampaignManage->value) && $campaign->status !== \App\Enums\CampaignStatus::Processing)
+                    <form method="POST" action="{{ route('whatsapp.campaigns.destroy', $campaign) }}" data-confirm="Delete campaign '{{ $campaign->name }}' and all its history?">
+                        @csrf @method('DELETE')
+                        <button class="btn btn-xs btn-outline btn-error gap-1"><i class="ti ti-trash"></i> Delete</button>
+                    </form>
                 @endif
                 @if ($canExport)
                     <div class="dropdown dropdown-end">

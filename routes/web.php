@@ -116,9 +116,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('contacts/create', [ContactController::class, 'create'])->name('contacts.create');
         Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
+        Route::get('contacts/{contact}/edit', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::put('contacts/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
         Route::post('contacts/bulk-opt-in', [ContactController::class, 'bulkOptIn'])->name('contacts.bulk-opt-in');
+        Route::post('contacts/bulk-delete', [ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
         Route::post('contacts/{contact}/opt-in', [ContactController::class, 'optIn'])->name('contacts.opt-in');
         Route::post('contacts/{contact}/opt-out', [ContactController::class, 'optOut'])->name('contacts.opt-out');
 

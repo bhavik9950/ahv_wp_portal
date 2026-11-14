@@ -61,8 +61,15 @@ function wireFilter(ctrl) {
     if (col === null) return;
 
     const contains = ctrl.dataset.dtMatch === 'contains';
+    const storageKey = `dt_filter_${window.location.pathname}_${selector || ''}_${col}`;
+    const saved = sessionStorage.getItem(storageKey);
+    if (saved !== null && saved !== '' && ctrl.querySelector(`option[value="${CSS.escape(saved)}"]`)) {
+        ctrl.value = saved;
+    }
+
     const apply = () => {
         const value = ctrl.value.trim();
+        sessionStorage.setItem(storageKey, value);
         const term = value === ''
             ? ''
             : (contains ? escapeRegExp(value) : `^\\s*${escapeRegExp(value)}\\s*$`);

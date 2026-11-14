@@ -136,3 +136,20 @@ it('exports filtered campaign report: only success, failed, and inbound', functi
     $contentInbound = $respInbound->streamedContent();
     expect($contentInbound)->toContain('919876500001', 'Ji zaroor aayenge');
 });
+
+it('allows deleting a completed or dummy campaign', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    $campaign = Campaign::factory()->for($org)->status(CampaignStatus::Completed)->create();
+    CampaignRecipient::factory()->forCampaign($campaign)->count(2)->create();
+
+    expect(Campaign::count())->toBe(1)
+        ->and(CampaignRecipient::count())->toBe(2);
+
+    $this->actingAs($manager)
+        ->delete(route('whatsapp.campaigns.destroy', $campaign))
+        ->assertRedirect(route('whatsapp.campaigns.index'));
+
+    expect(Campaign::count())->toBe(0)
+        ->and(CampaignRecipient::count())->toBe(0);
+});

@@ -32,16 +32,17 @@ final class DashboardMetrics
      *   trend: list<array{date: string, outbound: int, delivered: int, failed: int}>
      * }
      */
-    public function forRange(Carbon $from, Carbon $to, string $key = 'custom'): array
+    public function forRange(Carbon $from, Carbon $to, string $key = 'custom', ?string $campaignId = null): array
     {
         $from = $from->copy()->startOfDay();
         $to = $to->copy()->endOfDay();
 
-        $messages = $this->messageCounts($from, $to);
+        $messages = $this->messageCounts($from, $to, $campaignId);
         $sentish = $messages['sent'] + $messages['delivered'] + $messages['read'];
 
         return [
             'range' => ['from' => $from->toDateString(), 'to' => $to->toDateString(), 'key' => $key],
+            'campaign_id' => $campaignId,
             'messages' => $messages,
             'rates' => [
                 'delivery' => $this->pct($messages['delivered'] + $messages['read'], max(1, $sentish)),
@@ -67,17 +68,18 @@ final class DashboardMetrics
                 'rejected' => WhatsappTemplate::query()->where('status', 'REJECTED')->count(),
             ],
             'scheduled_messages' => ScheduledMessage::query()->where('status', 'pending')->count(),
-            'trend' => $this->trend($from, $to),
+            'trend' => $this->trend($from, $to, $campaignId),
         ];
     }
 
     /**
      * @return array<string, int>
      */
-    private function messageCounts(Carbon $from, Carbon $to): array
+    private function messageCounts(Carbon $from, Carbon $to, ?string $campaignId = null): array
     {
         $rows = Message::query()
             ->where('direction', 'outbound')
+            ->when($campaignId, fn ($q) => $q->where('campaign_id', $campaignId))
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw('status, count(*) as c')
             ->groupBy('status')
@@ -97,10 +99,11 @@ final class DashboardMetrics
      *
      * @return list<array{date: string, outbound: int, delivered: int, failed: int}>
      */
-    private function trend(Carbon $from, Carbon $to): array
+    private function trend(Carbon $from, Carbon $to, ?string $campaignId = null): array
     {
         $rows = Message::query()
             ->where('direction', 'outbound')
+            ->when($campaignId, fn ($q) => $q->where('campaign_id', $campaignId))
             ->whereBetween('created_at', [$from, $to])
             ->selectRaw('DATE(created_at) as d')
             ->selectRaw('count(*) as outbound')

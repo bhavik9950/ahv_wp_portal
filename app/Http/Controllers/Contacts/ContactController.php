@@ -161,4 +161,39 @@ class ContactController extends Controller
             'message' => $contacts->count().' contact(s) marked as '.($data['action'] === 'opt_in' ? 'opted in' : 'opted out').'.',
         ]);
     }
+
+    public function edit(Contact $contact): View
+    {
+        $this->authorize('update', $contact);
+
+        return view('contacts.edit', [
+            'contact' => $contact->load('groups'),
+            'groups' => ContactGroup::query()->orderBy('name')->get(),
+        ]);
+    }
+
+    public function bulkDelete(Request $request): RedirectResponse
+    {
+        abort_unless(
+            (bool) $request->user()?->can(Permission::ContactManage->value),
+            403,
+        );
+
+        $data = $request->validate([
+            'contact_ids' => ['required', 'array', 'min:1', 'max:5000'],
+            'contact_ids.*' => ['string', Scoped::exists('contacts')],
+        ]);
+
+        $count = count($data['contact_ids']);
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($data): void {
+            \Illuminate\Support\Facades\DB::table('contact_group_contact')->whereIn('contact_id', $data['contact_ids'])->delete();
+            Contact::query()->withoutGlobalScopes()->whereIn('id', $data['contact_ids'])->forceDelete();
+        });
+
+        return back()->with('flash_notify', [
+            'type' => 'success',
+            'message' => "{$count} contact(s) deleted permanently.",
+        ]);
+    }
 }

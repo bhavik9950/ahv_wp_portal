@@ -73,6 +73,18 @@
                     </button>
                     <span class="text-xs opacity-50">consent record — needed before a MARKETING campaign can reach them</span>
                 </form>
+
+                {{-- Delete Selected --}}
+                <div class="divider my-1"></div>
+                <form method="POST" action="{{ route('whatsapp.contacts.bulk-delete') }}" data-bulk-ids
+                      class="flex items-center gap-2"
+                      data-confirm="Are you sure you want to permanently delete all selected contacts? This cannot be undone.">
+                    @csrf
+                    <button class="btn btn-sm btn-error btn-outline gap-1">
+                        <i class="ti ti-trash"></i> Delete selected contacts
+                    </button>
+                    <span class="text-xs opacity-50">Permanently removes selected contacts and detaches their groups</span>
+                </form>
             </div>
             @error('contact_ids')<p class="text-error text-xs">{{ $message }}</p>@enderror
             @error('group_id')<p class="text-error text-xs">{{ $message }}</p>@enderror
@@ -85,10 +97,11 @@
         <div class="card bg-base-100 border border-base-300 overflow-x-auto">
             <table class="table" id="contacts-table" data-datatable
                    @if ($canManage) data-bulk @endif
-                   data-order='[[{{ $canManage ? 5 : 4 }},"desc"]]' data-no-sort="{{ $canManage ? '0' : '' }}">
+                   data-order='[[{{ $canManage ? 5 : 4 }},"desc"]]' data-no-sort="{{ $canManage ? '0,6' : '' }}">
                 <thead><tr>
                     @if ($canManage)<th class="w-8"><input type="checkbox" class="checkbox checkbox-sm js-bulk-all" title="Select all (every page)"></th>@endif
                     <th>Name</th><th>Phone</th><th>Opt-in</th><th>Groups</th><th>Added</th>
+                    @if ($canManage)<th class="w-20"></th>@endif
                 </tr></thead>
                 <tbody>
                     @foreach ($contacts as $c)
@@ -96,7 +109,7 @@
                             @if ($canManage)
                                 <td><input type="checkbox" class="checkbox checkbox-sm js-bulk-row" value="{{ $c->id }}"></td>
                             @endif
-                            <td><a class="link link-hover" href="{{ route('whatsapp.contacts.show', $c) }}">{{ $c->name ?: '—' }}</a></td>
+                            <td><a class="link link-hover font-medium" href="{{ route('whatsapp.contacts.show', $c) }}">{{ $c->name ?: '—' }}</a></td>
                             <td class="font-mono">+{{ $c->phone_e164 }}</td>
                             <td>
                                 @php($m = [\App\Enums\OptInStatus::OptedIn->value => 'badge-success', \App\Enums\OptInStatus::OptedOut->value => 'badge-error'])
@@ -104,6 +117,17 @@
                             </td>
                             <td class="text-xs">{{ $c->groups->pluck('name')->implode(', ') ?: '—' }}</td>
                             <td class="text-xs opacity-60" data-order="{{ $c->created_at?->timestamp ?? 0 }}">{{ $c->created_at?->diffForHumans() }}</td>
+                            @if ($canManage)
+                                <td class="text-right flex items-center justify-end gap-1">
+                                    <a href="{{ route('whatsapp.contacts.edit', $c) }}" class="btn btn-xs btn-ghost" title="Edit contact">
+                                        <i class="ti ti-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ route('whatsapp.contacts.destroy', $c) }}" data-confirm="Delete contact '{{ $c->name ?: $c->phone_e164 }}'?">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-xs btn-ghost text-error" title="Delete contact"><i class="ti ti-trash"></i></button>
+                                    </form>
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>

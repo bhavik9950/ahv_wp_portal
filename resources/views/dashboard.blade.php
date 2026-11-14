@@ -4,20 +4,57 @@
     @php($m = $metrics)
 
     <div class="space-y-6" @if ($range->key === 'today') data-auto-refresh="60" @endif>
-        {{-- Date range --}}
-        <div class="flex items-center gap-2 flex-wrap">
-            @foreach ($presets as $p)
-                <a href="{{ route('dashboard', ['range' => $p['key']]) }}"
-                   class="btn btn-sm {{ $range->key === $p['key'] ? 'btn-primary' : 'btn-ghost' }}">{{ $p['label'] }}</a>
-            @endforeach
-            <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-1">
-                <input type="hidden" name="range" value="custom">
-                <input type="date" name="from" value="{{ $m['range']['from'] }}" class="input input-bordered input-sm">
-                <span class="opacity-50">–</span>
-                <input type="date" name="to" value="{{ $m['range']['to'] }}" class="input input-bordered input-sm">
-                <button class="btn btn-sm">Apply</button>
+        {{-- Date range & Campaign Filter --}}
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap">
+                @foreach ($presets as $p)
+                    <a href="{{ route('dashboard', array_filter(['range' => $p['key'], 'campaign_id' => $selectedCampaignId])) }}"
+                       class="btn btn-sm {{ $range->key === $p['key'] ? 'btn-primary' : 'btn-ghost' }}">{{ $p['label'] }}</a>
+                @endforeach
+                <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-1">
+                    <input type="hidden" name="range" value="custom">
+                    @if ($selectedCampaignId)
+                        <input type="hidden" name="campaign_id" value="{{ $selectedCampaignId }}">
+                    @endif
+                    <input type="date" name="from" value="{{ $m['range']['from'] }}" class="input input-bordered input-sm">
+                    <span class="opacity-50">–</span>
+                    <input type="date" name="to" value="{{ $m['range']['to'] }}" class="input input-bordered input-sm">
+                    <button class="btn btn-sm">Apply</button>
+                </form>
+            </div>
+
+            {{-- Campaign filter dropdown --}}
+            <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-1.5">
+                <input type="hidden" name="range" value="{{ $range->key }}">
+                @if ($range->key === 'custom')
+                    <input type="hidden" name="from" value="{{ $m['range']['from'] }}">
+                    <input type="hidden" name="to" value="{{ $m['range']['to'] }}">
+                @endif
+                <select name="campaign_id" onchange="this.form.submit()" class="select select-bordered select-sm max-w-xs">
+                    <option value="">All Campaigns</option>
+                    @foreach ($campaigns as $camp)
+                        <option value="{{ $camp->id }}" @selected($selectedCampaignId === $camp->id)>
+                            {{ $camp->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @if ($selectedCampaignId)
+                    <a href="{{ route('dashboard', ['range' => $range->key]) }}" class="btn btn-xs btn-ghost text-error" title="Clear campaign filter">
+                        <i class="ti ti-x"></i>
+                    </a>
+                @endif
             </form>
         </div>
+
+        @if ($selectedCampaign)
+            <div class="alert alert-info py-2 px-3 text-xs flex items-center justify-between">
+                <span class="flex items-center gap-2">
+                    <i class="ti ti-filter"></i>
+                    Filtered by campaign: <strong>{{ $selectedCampaign->name }}</strong>
+                </span>
+                <a href="{{ route('whatsapp.campaigns.report', $selectedCampaign) }}" class="link link-hover font-semibold">View Campaign Report →</a>
+            </div>
+        @endif
 
         {{-- Headline tiles --}}
         <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">

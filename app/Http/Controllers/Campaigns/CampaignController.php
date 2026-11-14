@@ -24,6 +24,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -177,11 +178,19 @@ class CampaignController extends Controller
     {
         $this->authorize('delete', $campaign);
 
-        abort_unless($campaign->isEditable(), 409, 'Only draft campaigns can be deleted.');
-        $campaign->delete();
+        abort_if(
+            $campaign->status === \App\Enums\CampaignStatus::Processing,
+            409,
+            'Cannot delete an actively running campaign. Please pause or cancel it first.'
+        );
+
+        DB::transaction(function () use ($campaign): void {
+            $campaign->recipients()->delete();
+            $campaign->delete();
+        });
 
         return redirect()->route('whatsapp.campaigns.index')
-            ->with('flash_notify', ['type' => 'success', 'message' => 'Draft campaign deleted.']);
+            ->with('flash_notify', ['type' => 'success', 'message' => "Campaign '{$campaign->name}' deleted."]);
     }
 
     private function buildPreview(Campaign $campaign, mixed $contact): string
