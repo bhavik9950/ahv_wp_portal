@@ -98,21 +98,31 @@ final class MessageStatusUpdater
      */
     private function recordEvent(Message $message, MessageStatus $status, Carbon $occurredAt, array $meta): void
     {
-        MessageStatusEvent::query()->firstOrCreate(
-            [
-                'message_id' => $message->getKey(),
-                'status' => $status->value,
-                'occurred_at' => $occurredAt,
-            ],
-            [
-                'organization_id' => $message->organization_id,
-                'wamid' => $meta['wamid'] ?? $message->wamid,
-                'error_code' => $meta['error_code'] ?? null,
-                'error_title' => $meta['error_title'] ?? null,
-                'error_message' => $meta['error_message'] ?? null,
-                'webhook_event_id' => $meta['webhook_event_id'] ?? null,
-            ],
-        );
+        $normalizedTime = $occurredAt->format('Y-m-d H:i:s');
+
+        try {
+            MessageStatusEvent::query()->firstOrCreate(
+                [
+                    'message_id' => $message->getKey(),
+                    'status' => $status->value,
+                    'occurred_at' => $normalizedTime,
+                ],
+                [
+                    'organization_id' => $message->organization_id,
+                    'wamid' => $meta['wamid'] ?? $message->wamid,
+                    'error_code' => $meta['error_code'] ?? null,
+                    'error_title' => $meta['error_title'] ?? null,
+                    'error_message' => $meta['error_message'] ?? null,
+                    'webhook_event_id' => $meta['webhook_event_id'] ?? null,
+                ],
+            );
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Duplicate entry (1062 / 23000) on msg_status_dedupe is normal when Meta
+            // redelivers a webhook or queue workers retry. Safely ignore it.
+            if (! str_contains($e->getMessage(), 'Duplicate entry') && $e->getCode() !== '23000') {
+                throw $e;
+            }
+        }
     }
 
     /**
