@@ -239,6 +239,22 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         $response = $this->client($creds)->get("/{$creds->wabaId}/phone_numbers", [
             'fields' => 'id,display_phone_number,verified_name,quality_rating,messaging_limit_tier',
         ]);
+
+        if ($response->failed()) {
+            // Fallback without secondary fields in case of Meta Graph API v22 field changes
+            $fallback = $this->client($creds)->get("/{$creds->wabaId}/phone_numbers", [
+                'fields' => 'id,display_phone_number,verified_name',
+            ]);
+            if ($fallback->ok()) {
+                $response = $fallback;
+            } else {
+                $basic = $this->client($creds)->get("/{$creds->wabaId}/phone_numbers");
+                if ($basic->ok()) {
+                    $response = $basic;
+                }
+            }
+        }
+
         $this->throwUnlessOk($response);
 
         return $response->json('data') ?? [];

@@ -30,17 +30,17 @@ class PhoneNumberController extends Controller
 
     public function sync(): RedirectResponse
     {
-        $account = WhatsappBusinessAccount::query()->orderBy('created_at')->first();
-        if (! $account) {
-            return back()->with('flash_notify', [
-                'type' => 'error',
-                'message' => 'Please configure and save your WhatsApp settings first before syncing phone numbers.',
-            ]);
-        }
-
-        $this->authorize('update', $account);
-
         try {
+            $account = WhatsappBusinessAccount::query()->orderBy('created_at')->first();
+            if (! $account) {
+                return back()->with('flash_notify', [
+                    'type' => 'error',
+                    'message' => 'Please configure and save your WhatsApp settings first before syncing phone numbers.',
+                ]);
+            }
+
+            $this->authorize('update', $account);
+
             $count = $this->service->syncPhoneNumbers($account);
 
             if ($count === 0) {
@@ -57,13 +57,11 @@ class PhoneNumberController extends Controller
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Phone numbers sync failed', [
                 'error' => $e->getMessage(),
-                'account_id' => $account->getKey(),
-                'waba_id' => $account->waba_id,
             ]);
 
             return back()->with('flash_notify', [
                 'type' => 'error',
-                'message' => 'Meta Phone Number Sync Failed: '.$e->getMessage(),
+                'message' => 'Phone Sync Error: '.$e->getMessage(),
             ]);
         }
     }
