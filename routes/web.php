@@ -166,39 +166,27 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('assistant/conversations/{conversation}/mode', [AssistantController::class, 'setMode'])->name('assistant.conversation.mode');
     });
 
-    Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('health', [HealthController::class, 'show'])
-            ->middleware('can:'.Permission::OrgManage->value)
-            ->name('health');
+    Route::prefix('admin')->name('admin.')->middleware('super-admin')->group(function () {
+        Route::get('health', [HealthController::class, 'show'])->name('health');
 
-        Route::middleware('can:'.Permission::OrgManage->value)->group(function () {
-            Route::get('controls', [SystemControlController::class, 'index'])->name('controls');
-            Route::post('controls/sending', [SystemControlController::class, 'toggleSending'])->name('controls.sending');
-            Route::post('controls/pause-campaigns', [SystemControlController::class, 'pauseAllCampaigns'])->name('controls.pause-campaigns');
-        });
+        Route::get('controls', [SystemControlController::class, 'index'])->name('controls');
+        Route::post('controls/sending', [SystemControlController::class, 'toggleSending'])->name('controls.sending');
+        Route::post('controls/pause-campaigns', [SystemControlController::class, 'pauseAllCampaigns'])->name('controls.pause-campaigns');
+        Route::post('controls/revoke/{account}', [SystemControlController::class, 'revokeIntegration'])->name('controls.revoke');
 
-        Route::middleware('can:'.Permission::AuditView->value)->group(function () {
-            Route::get('webhook-events', [WebhookEventController::class, 'index'])->name('webhook-events.index');
-            Route::get('webhook-events/{webhookEvent}', [WebhookEventController::class, 'show'])->name('webhook-events.show');
-        });
-
-        // Platform-level destructive action.
-        Route::post('controls/revoke/{account}', [SystemControlController::class, 'revokeIntegration'])
-            ->middleware('super-admin')
-            ->name('controls.revoke');
+        Route::get('webhook-events', [WebhookEventController::class, 'index'])->name('webhook-events.index');
+        Route::get('webhook-events/{webhookEvent}', [WebhookEventController::class, 'show'])->name('webhook-events.show');
 
         // Super-admin only: Subscriptions, UTR verification, and Organization Management
-        Route::middleware('super-admin')->group(function () {
-            Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
-            Route::post('subscriptions/{subscriptionRequest}/approve', [AdminSubscriptionController::class, 'approve'])->name('subscriptions.approve');
-            Route::post('subscriptions/{subscriptionRequest}/reject', [AdminSubscriptionController::class, 'reject'])->name('subscriptions.reject');
-            Route::post('subscriptions/settings', [AdminSubscriptionController::class, 'updateSettings'])->name('subscriptions.settings');
+        Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
+        Route::post('subscriptions/{subscriptionRequest}/approve', [AdminSubscriptionController::class, 'approve'])->name('subscriptions.approve');
+        Route::post('subscriptions/{subscriptionRequest}/reject', [AdminSubscriptionController::class, 'reject'])->name('subscriptions.reject');
+        Route::post('subscriptions/settings', [AdminSubscriptionController::class, 'updateSettings'])->name('subscriptions.settings');
 
-            Route::get('organizations', [AdminOrganizationController::class, 'index'])->name('organizations.index');
-            Route::post('organizations', [AdminOrganizationController::class, 'store'])->name('organizations.store');
-            Route::get('organizations/{organization}/edit', [AdminOrganizationController::class, 'edit'])->name('organizations.edit');
-            Route::put('organizations/{organization}', [AdminOrganizationController::class, 'update'])->name('organizations.update');
-        });
+        Route::get('organizations', [AdminOrganizationController::class, 'index'])->name('organizations.index');
+        Route::post('organizations', [AdminOrganizationController::class, 'store'])->name('organizations.store');
+        Route::get('organizations/{organization}/edit', [AdminOrganizationController::class, 'edit'])->name('organizations.edit');
+        Route::put('organizations/{organization}', [AdminOrganizationController::class, 'update'])->name('organizations.update');
     });
 });
 

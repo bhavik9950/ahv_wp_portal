@@ -39,20 +39,15 @@
     @php
         $user = auth()->user();
         $isSuper = $user?->isSuperAdmin() ?? false;
-        $canSeeAdmin = $user && ($isSuper || $user->can(\App\Enums\Permission::OrgManage->value) || $user->can(\App\Enums\Permission::AuditView->value));
     @endphp
 
-    @if ($canSeeAdmin)
-        <li class="menu-title mt-3">Admin</li>
-        {!! $nav('Users', 'ti-user-cog', 'admin.users.index', \App\Enums\Permission::OrgManage->value) !!}
-        {!! $nav('Roles &amp; Permissions', 'ti-shield-lock', 'admin.roles.index', \App\Enums\Permission::OrgManage->value) !!}
-        {!! $nav('Audit Logs', 'ti-history', 'admin.audit.index', \App\Enums\Permission::AuditView->value) !!}
-        @if ($isSuper)
-            {!! $nav('Subscriptions &amp; UTRs', 'ti-receipt-2', 'admin.subscriptions.index') !!}
-            {!! $nav('Client Organizations', 'ti-building', 'admin.organizations.index') !!}
-            {!! $nav('Webhook Events', 'ti-webhook', 'admin.webhook-events.index', \App\Enums\Permission::AuditView->value) !!}
-            {!! $nav('System Health', 'ti-heartbeat', 'admin.health', \App\Enums\Permission::OrgManage->value) !!}
-            {!! $nav('Emergency Controls', 'ti-alert-triangle', 'admin.controls', \App\Enums\Permission::OrgManage->value) !!}
-        @endif
+    {{-- Admin section is strictly for Platform Super Admins only --}}
+    @if ($isSuper)
+        <li class="menu-title mt-3">Platform Admin</li>
+        {!! $nav('Subscriptions &amp; UTRs', 'ti-receipt-2', 'admin.subscriptions.index') !!}
+        {!! $nav('Client Organizations', 'ti-building', 'admin.organizations.index') !!}
+        {!! $nav('Webhook Events', 'ti-webhook', 'admin.webhook-events.index') !!}
+        {!! $nav('System Health', 'ti-heartbeat', 'admin.health') !!}
+        {!! $nav('Emergency Controls', 'ti-alert-triangle', 'admin.controls') !!}
     @endif
 </ul>
