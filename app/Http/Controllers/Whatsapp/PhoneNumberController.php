@@ -30,15 +30,42 @@ class PhoneNumberController extends Controller
 
     public function sync(): RedirectResponse
     {
-        $account = WhatsappBusinessAccount::query()->orderBy('created_at')->firstOrFail();
+        $account = WhatsappBusinessAccount::query()->orderBy('created_at')->first();
+        if (! $account) {
+            return back()->with('flash_notify', [
+                'type' => 'error',
+                'message' => 'Please configure and save your WhatsApp settings first before syncing phone numbers.',
+            ]);
+        }
+
         $this->authorize('update', $account);
 
-        $count = $this->service->syncPhoneNumbers($account);
+        try {
+            $count = $this->service->syncPhoneNumbers($account);
 
-        return back()->with('flash_notify', [
-            'type' => 'success',
-            'message' => "Synced {$count} phone number(s) from Meta.",
-        ]);
+            if ($count === 0) {
+                return back()->with('flash_notify', [
+                    'type' => 'info',
+                    'message' => 'No phone numbers found on this Meta WABA. Please add and verify a phone number in Meta Developer Console > WhatsApp > API Setup first.',
+                ]);
+            }
+
+            return back()->with('flash_notify', [
+                'type' => 'success',
+                'message' => "Synced {$count} phone number(s) from Meta.",
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Phone numbers sync failed', [
+                'error' => $e->getMessage(),
+                'account_id' => $account->getKey(),
+                'waba_id' => $account->waba_id,
+            ]);
+
+            return back()->with('flash_notify', [
+                'type' => 'error',
+                'message' => 'Meta Phone Number Sync Failed: '.$e->getMessage(),
+            ]);
+        }
     }
 
     /**
