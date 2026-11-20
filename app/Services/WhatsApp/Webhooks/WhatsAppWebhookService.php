@@ -126,6 +126,7 @@ final class WhatsAppWebhookService
     {
         $secrets = WhatsappBusinessAccount::query()->withoutGlobalScopes()
             ->whereNotNull('app_secret')
+            ->get()
             ->pluck('app_secret')
             ->filter()
             ->values()
