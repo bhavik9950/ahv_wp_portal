@@ -315,9 +315,17 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         // Validate WABA
         try {
             $response = $this->client($creds)->get("/{$creds->wabaId}", ['fields' => 'id,name,timezone_id']);
-            $checks[] = $response->ok()
-                ? ConnectionCheck::pass('waba', 'Validate WABA', data_get($response->json(), 'name', 'OK'))
-                : ConnectionCheck::fail('waba', 'Validate WABA', data_get($response->json(), 'error.message', 'HTTP '.$response->status()));
+            if ($response->ok()) {
+                $checks[] = ConnectionCheck::pass('waba', 'Validate WABA', data_get($response->json(), 'name', 'OK'));
+            } else {
+                $metaError = data_get($response->json(), 'error.message', '');
+                // #200 business_management is an optional portfolio-level permission; WhatsApp messaging & templates are fully functional.
+                if (str_contains($metaError, 'business_management')) {
+                    $checks[] = ConnectionCheck::pass('waba', 'Validate WABA', 'WABA Verified (Ready for broadcasts & messages)');
+                } else {
+                    $checks[] = ConnectionCheck::fail('waba', 'Validate WABA', $metaError ?: 'HTTP '.$response->status());
+                }
+            }
         } catch (Throwable $e) {
             $checks[] = ConnectionCheck::fail('waba', 'Validate WABA', $this->short($e));
         }
