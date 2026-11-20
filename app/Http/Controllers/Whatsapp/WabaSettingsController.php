@@ -23,21 +23,26 @@ class WabaSettingsController extends Controller
 
         $this->authorize($account ? 'view' : 'viewAny', $account ?? WhatsappBusinessAccount::class);
 
+        // Only the root platform organization (id 1) falls back to .env prefill.
+        // Client organizations must configure their own credentials in the UI.
+        $currentOrg = app(\App\Support\CurrentOrganization::class)->resolve();
+        $isPrimaryOrg = ($currentOrg && $currentOrg->getKey() === 1);
+
         $boot = (array) config('services.whatsapp.bootstrap');
 
         return view('whatsapp.settings.edit', [
             'account' => $account,
             'checks' => $request->session()->get('connection_checks', []),
             // When nothing is configured yet, prefill the form from the .env
-            // bootstrap values so the admin can review and save them.
-            'prefill' => $account !== null ? null : [
+            // bootstrap values ONLY for the primary system org (Acme Traders).
+            'prefill' => ($account === null && $isPrimaryOrg) ? [
                 'waba_id' => (string) ($boot['business_account_id'] ?? ''),
                 'meta_business_account_id' => (string) ($boot['meta_business_id'] ?? ''),
                 'app_id' => (string) ($boot['app_id'] ?? ''),
                 'has_token' => filled($boot['access_token'] ?? null),
                 'has_app_secret' => filled($boot['app_secret'] ?? null),
                 'has_verify_token' => filled($boot['webhook_verify_token'] ?? null),
-            ],
+            ] : null,
         ]);
     }
 

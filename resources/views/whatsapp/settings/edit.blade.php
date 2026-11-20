@@ -8,13 +8,24 @@
             <div class="alert alert-info text-sm">
                 <i class="ti ti-info-circle"></i>
                 <span>
-                    Bootstrap values were found in <code>.env</code> and pre-filled below.
+                    Bootstrap values were found in <code>.env</code> and pre-filled below for Primary Admin.
                     @if (blank($prefill['waba_id']))
                         <strong>Add your WhatsApp Business Account ID</strong> (Meta ▸ App ▸ WhatsApp ▸ API Setup — the number above "Phone number ID"),
                     @endif
                     then <strong>Save</strong> to activate. Leave the secret fields blank to use the ones from <code>.env</code>.
                     You can also run <code>php artisan waba:setup --waba-id=&lt;id&gt;</code>.
                 </span>
+            </div>
+        @elseif (! $account)
+            <div class="alert alert-info text-sm shadow-sm border border-info/30 flex items-start gap-3">
+                <i class="ti ti-shield-lock text-2xl text-info shrink-0 mt-0.5"></i>
+                <div class="space-y-1">
+                    <div class="font-bold text-base-content">Connect Meta WhatsApp Cloud API</div>
+                    <div class="text-xs opacity-90 leading-relaxed">
+                        Enter your Meta WhatsApp Business Account ID and Permanent System User Access Token below.
+                        Credentials entered here are encrypted at rest and isolated exclusively to <strong>{{ app(\App\Support\CurrentOrganization::class)->resolve()?->name ?? 'your organization' }}</strong>.
+                    </div>
+                </div>
             </div>
         @endif
 

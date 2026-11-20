@@ -98,36 +98,36 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
         // Media library
         Route::get('media', [MediaController::class, 'index'])->name('media.index');
-        Route::post('media', [MediaController::class, 'store'])->name('media.store');
+        Route::post('media', [MediaController::class, 'store'])->middleware('subscription.active')->name('media.store');
         Route::get('media/{media}', [MediaController::class, 'show'])->name('media.show');
         Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
         // Contacts
         Route::get('contacts/export', ContactExportController::class)->name('contacts.export');
         Route::get('contacts/import', [ContactImportController::class, 'create'])->name('contacts.import.create');
-        Route::post('contacts/import', [ContactImportController::class, 'store'])->name('contacts.import.store');
+        Route::post('contacts/import', [ContactImportController::class, 'store'])->middleware('subscription.active')->name('contacts.import.store');
         Route::get('contacts/import/{import}/map', [ContactImportController::class, 'map'])->name('contacts.import.map');
         Route::post('contacts/import/{import}/analyze', [ContactImportController::class, 'analyze'])->name('contacts.import.analyze');
         Route::get('contacts/import/{import}', [ContactImportController::class, 'show'])->name('contacts.import.show');
-        Route::post('contacts/import/{import}/commit', [ContactImportController::class, 'commit'])->name('contacts.import.commit');
+        Route::post('contacts/import/{import}/commit', [ContactImportController::class, 'commit'])->middleware('subscription.active')->name('contacts.import.commit');
         Route::get('contacts/import/{import}/errors', [ContactImportController::class, 'errors'])->name('contacts.import.errors');
 
         Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
         Route::get('contacts/create', [ContactController::class, 'create'])->name('contacts.create');
-        Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
+        Route::post('contacts', [ContactController::class, 'store'])->middleware('subscription.active')->name('contacts.store');
         Route::get('contacts/{contact}', [ContactController::class, 'show'])->name('contacts.show');
         Route::get('contacts/{contact}/edit', [ContactController::class, 'edit'])->name('contacts.edit');
-        Route::put('contacts/{contact}', [ContactController::class, 'update'])->name('contacts.update');
+        Route::put('contacts/{contact}', [ContactController::class, 'update'])->middleware('subscription.active')->name('contacts.update');
         Route::delete('contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
-        Route::post('contacts/bulk-opt-in', [ContactController::class, 'bulkOptIn'])->name('contacts.bulk-opt-in');
+        Route::post('contacts/bulk-opt-in', [ContactController::class, 'bulkOptIn'])->middleware('subscription.active')->name('contacts.bulk-opt-in');
         Route::post('contacts/bulk-delete', [ContactController::class, 'bulkDelete'])->name('contacts.bulk-delete');
         Route::post('contacts/{contact}/opt-in', [ContactController::class, 'optIn'])->name('contacts.opt-in');
         Route::post('contacts/{contact}/opt-out', [ContactController::class, 'optOut'])->name('contacts.opt-out');
 
         // Groups
         Route::get('groups', [ContactGroupController::class, 'index'])->name('groups.index');
-        Route::post('groups', [ContactGroupController::class, 'store'])->name('groups.store');
-        Route::put('groups/{group}', [ContactGroupController::class, 'update'])->name('groups.update');
+        Route::post('groups', [ContactGroupController::class, 'store'])->middleware('subscription.active')->name('groups.store');
+        Route::put('groups/{group}', [ContactGroupController::class, 'update'])->middleware('subscription.active')->name('groups.update');
         Route::delete('groups/{group}', [ContactGroupController::class, 'destroy'])->name('groups.destroy');
         Route::post('groups/assign', [ContactGroupController::class, 'assign'])->name('groups.assign');
 
@@ -137,7 +137,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaigns.edit');
         Route::put('campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
         Route::get('campaigns/{campaign}/audience-preview', [CampaignController::class, 'audiencePreview'])->name('campaigns.audience-preview');
-        Route::post('campaigns/{campaign}/test', [CampaignController::class, 'test'])->name('campaigns.test');
+        Route::post('campaigns/{campaign}/test', [CampaignController::class, 'test'])->middleware('subscription.active')->name('campaigns.test');
         Route::post('campaigns/{campaign}/launch', [CampaignController::class, 'launch'])->middleware('subscription.active')->name('campaigns.launch');
         Route::post('campaigns/{campaign}/pause', [CampaignController::class, 'pause'])->name('campaigns.pause');
         Route::post('campaigns/{campaign}/resume', [CampaignController::class, 'resume'])->name('campaigns.resume');

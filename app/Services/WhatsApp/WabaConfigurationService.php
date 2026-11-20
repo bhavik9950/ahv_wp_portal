@@ -48,25 +48,29 @@ final class WabaConfigurationService
         ];
         $boot = (array) config('services.whatsapp.bootstrap');
 
+        $targetOrgId = $account->organization_id ?? $this->tenant->id();
+        $isPrimaryOrg = ($targetOrgId === 1);
+
         foreach (self::SECRET_FIELDS as $field) {
             if (filled($data[$field] ?? null)) {
                 continue;
             }
-            // Blank on a NEW account → take the .env value if present.
-            if ($isNew && filled($boot[$bootstrapMap[$field]] ?? null)) {
+            // Blank on a NEW account → take the .env value ONLY for the primary platform org (ID 1).
+            // For client organizations, do NOT pull super admin secrets.
+            if ($isNew && $isPrimaryOrg && filled($boot[$bootstrapMap[$field]] ?? null)) {
                 $data[$field] = $boot[$bootstrapMap[$field]];
             } else {
                 unset($data[$field]); // blank on update → keep the stored value
             }
         }
 
-        if ($isNew && blank($data['waba_id'] ?? null) && filled($boot['business_account_id'] ?? null)) {
+        if ($isNew && $isPrimaryOrg && blank($data['waba_id'] ?? null) && filled($boot['business_account_id'] ?? null)) {
             $data['waba_id'] = $boot['business_account_id'];
         }
-        if ($isNew && blank($data['app_id'] ?? null) && filled($boot['app_id'] ?? null)) {
+        if ($isNew && $isPrimaryOrg && blank($data['app_id'] ?? null) && filled($boot['app_id'] ?? null)) {
             $data['app_id'] = $boot['app_id'];
         }
-        if ($isNew && blank($data['meta_business_account_id'] ?? null) && filled($boot['meta_business_id'] ?? null)) {
+        if ($isNew && $isPrimaryOrg && blank($data['meta_business_account_id'] ?? null) && filled($boot['meta_business_id'] ?? null)) {
             $data['meta_business_account_id'] = $boot['meta_business_id'];
         }
 
