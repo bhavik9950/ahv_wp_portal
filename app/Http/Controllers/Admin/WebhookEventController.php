@@ -39,19 +39,33 @@ class WebhookEventController extends Controller
                 ->filter()
                 ->all();
 
-            $query->where(function ($q) use ($orgId, $wabaIds, $phoneIds) {
-                $q->where('organization_id', $orgId);
-                foreach ($wabaIds as $wid) {
-                    if (filled($wid)) {
-                        $q->orWhere('payload', 'like', "%{$wid}%");
+            // Auto-assign any unassigned events that match this tenant's WABA or Phone IDs
+            if (! empty($wabaIds) || ! empty($phoneIds)) {
+                $unassigned = WebhookEvent::query()->whereNull('organization_id')->limit(100)->get();
+                foreach ($unassigned as $evt) {
+                    $payloadStr = json_encode($evt->payload);
+                    $matched = false;
+                    foreach ($wabaIds as $wid) {
+                        if (filled($wid) && str_contains($payloadStr, (string) $wid)) {
+                            $matched = true;
+                            break;
+                        }
+                    }
+                    if (! $matched) {
+                        foreach ($phoneIds as $pid) {
+                            if (filled($pid) && str_contains($payloadStr, (string) $pid)) {
+                                $matched = true;
+                                break;
+                            }
+                        }
+                    }
+                    if ($matched) {
+                        $evt->update(['organization_id' => $orgId]);
                     }
                 }
-                foreach ($phoneIds as $pid) {
-                    if (filled($pid)) {
-                        $q->orWhere('payload', 'like', "%{$pid}%");
-                    }
-                }
-            });
+            }
+
+            $query->where('organization_id', $orgId);
         }
 
         $events = $query->get();

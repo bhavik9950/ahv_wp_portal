@@ -7,6 +7,7 @@ namespace App\Services\WhatsApp\Webhooks;
 use App\Jobs\ProcessWhatsAppWebhookJob;
 use App\Models\WebhookEvent;
 use App\Models\WhatsappBusinessAccount;
+use App\Models\WhatsappPhoneNumber;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -65,8 +66,36 @@ final class WhatsAppWebhookService
     private function store(string $rawBody, array $headers, bool $signatureValid, string $status, ?string $fingerprint = null): WebhookEvent
     {
         $payload = json_decode($rawBody, true);
+        $organizationId = null;
+
+        if (is_array($payload)) {
+            foreach (data_get($payload, 'entry', []) as $entry) {
+                $entryWabaId = $entry['id'] ?? null;
+                if (filled($entryWabaId)) {
+                    $organizationId = WhatsappBusinessAccount::query()->withoutGlobalScopes()
+                        ->where('waba_id', (string) $entryWabaId)
+                        ->value('organization_id');
+                    if ($organizationId) {
+                        break;
+                    }
+                }
+
+                foreach (data_get($entry, 'changes', []) as $change) {
+                    $pid = data_get($change, 'value.metadata.phone_number_id');
+                    if (filled($pid)) {
+                        $organizationId = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                            ->where('phone_number_id', (string) $pid)
+                            ->value('organization_id');
+                        if ($organizationId) {
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
 
         return WebhookEvent::query()->create([
+            'organization_id' => $organizationId,
             'source' => 'meta',
             'event_fingerprint' => $fingerprint ?? hash('sha256', $rawBody.'|'.microtime(true).random_bytes(4)),
             'signature_valid' => $signatureValid,
