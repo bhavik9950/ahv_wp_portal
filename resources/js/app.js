@@ -15,6 +15,7 @@ import './trend-chart';
 import './template-preview';
 import './nav-active';
 import './bulk-select';
+import './dashboard-filter';
 
 import Alpine from 'alpinejs';
 

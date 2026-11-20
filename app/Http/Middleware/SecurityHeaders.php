@@ -47,12 +47,12 @@ final class SecurityHeaders
 
     private function csp(): string
     {
-        // Assets are bundled by Vite (same-origin) — no CDN hosts are allowed.
-        // 'unsafe-eval' is required by the standard Alpine.js build; everything
-        // else is locked to 'self'.
-        $script = "script-src 'self' 'unsafe-eval'";
+        // Assets are bundled by Vite (same-origin).
+        // 'unsafe-inline' and 'unsafe-eval' allow Blade inline event handlers, Alpine.js, and dynamic modals.
+        $script = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net";
         $connect = "connect-src 'self'";
-        $style = "style-src 'self' 'unsafe-inline'"; // Tailwind/daisyUI/DataTables inject some inline styles
+        $style = "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net";
+        $font = "font-src 'self' data: https://fonts.bunny.net https://cdn.jsdelivr.net";
 
         if (app()->environment('local')) {
             // Vite dev server (HMR).
@@ -68,7 +68,7 @@ final class SecurityHeaders
             "form-action 'self'",
             "object-src 'none'",
             "img-src 'self' data: blob:",
-            "font-src 'self' data:",
+            $font,
             $style,
             $script,
             $connect,
