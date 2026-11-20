@@ -195,6 +195,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
             Route::post('subscriptions/settings', [AdminSubscriptionController::class, 'updateSettings'])->name('subscriptions.settings');
 
             Route::get('organizations', [AdminOrganizationController::class, 'index'])->name('organizations.index');
+            Route::post('organizations', [AdminOrganizationController::class, 'store'])->name('organizations.store');
             Route::get('organizations/{organization}/edit', [AdminOrganizationController::class, 'edit'])->name('organizations.edit');
             Route::put('organizations/{organization}', [AdminOrganizationController::class, 'update'])->name('organizations.update');
         });

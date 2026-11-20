@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\OrganizationRole;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
+use App\Models\User;
+use App\Models\WhatsappBusinessAccount;
+use App\Services\Organizations\OrganizationProvisioner;
 use App\Services\System\SystemSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AdminOrganizationController extends Controller
@@ -33,6 +39,71 @@ class AdminOrganizationController extends Controller
         return view('admin.organizations.index', [
             'organizations' => $organizations,
             'search' => $search,
+            'plans' => $this->settings->billingPlans(),
+        ]);
+    }
+
+    public function store(Request $request, OrganizationProvisioner $provisioner): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'admin_name' => ['required', 'string', 'max:100'],
+            'admin_email' => ['required', 'email', 'max:150'],
+            'password' => ['nullable', 'string', 'min:6'],
+            'plan' => ['required', 'string', 'in:monthly,half_yearly,yearly,lifetime'],
+            'waba_id' => ['nullable', 'string', 'max:100'],
+            'timezone' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $password = ! empty($validated['password']) ? $validated['password'] : Str::password(10);
+        $timezone = $validated['timezone'] ?: 'Asia/Kolkata';
+
+        // 1. Provision organization
+        $organization = $provisioner->create([
+            'name' => $validated['name'],
+            'timezone' => $timezone,
+        ]);
+
+        // 2. Set plan validity
+        $organization->extendSubscription($validated['plan']);
+
+        // 3. Find or create user
+        $user = User::query()->firstWhere('email', $validated['admin_email']);
+        $isNewUser = $user === null;
+        if ($isNewUser) {
+            $user = (new User)->forceFill([
+                'name' => $validated['admin_name'],
+                'email' => $validated['admin_email'],
+                'password' => Hash::make($password),
+                'email_verified_at' => now(),
+            ]);
+            $user->save();
+        }
+
+        // 4. Assign OrgAdmin role in this organization
+        $provisioner->addMember($organization, $user, OrganizationRole::OrgAdmin);
+
+        // 5. Optional WABA ID
+        if (! empty($validated['waba_id'])) {
+            (new WhatsappBusinessAccount)->forceFill([
+                'organization_id' => $organization->getKey(),
+                'name' => "{$organization->name} WhatsApp",
+                'waba_id' => $validated['waba_id'],
+                'is_active' => false,
+                'default_country_code' => '91',
+            ])->save();
+        }
+
+        $msg = "Organization '{$organization->name}' created! Admin: {$user->email}";
+
+        return redirect()->route('admin.organizations.index')->with('created_credentials', [
+            'org_name' => $organization->name,
+            'email' => $user->email,
+            'password' => $password,
+            'is_new_user' => $isNewUser,
+        ])->with('flash_notify', [
+            'type' => 'success',
+            'message' => $msg,
         ]);
     }
 
