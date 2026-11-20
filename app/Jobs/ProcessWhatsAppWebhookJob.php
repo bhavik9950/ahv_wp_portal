@@ -58,9 +58,25 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
             $organizationId = null;
 
             foreach (data_get($event->payload, 'entry', []) as $entry) {
+                $entryWabaId = $entry['id'] ?? null;
+                if (filled($entryWabaId)) {
+                    $waba = \App\Models\WhatsappBusinessAccount::query()->withoutGlobalScopes()
+                        ->where('waba_id', (string) $entryWabaId)
+                        ->first();
+                    $organizationId ??= $waba?->organization_id;
+                }
+
                 foreach (data_get($entry, 'changes', []) as $change) {
                     $value = $change['value'] ?? [];
                     $field = $change['field'] ?? null;
+
+                    $phoneNumberId = data_get($value, 'metadata.phone_number_id');
+                    if (filled($phoneNumberId)) {
+                        $phone = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                            ->where('phone_number_id', (string) $phoneNumberId)
+                            ->first();
+                        $organizationId ??= $phone?->organization_id;
+                    }
 
                     $organizationId ??= $this->handleStatuses($value, $event, $statuses);
                     $organizationId ??= $this->handleInboundMessages($value, $event);

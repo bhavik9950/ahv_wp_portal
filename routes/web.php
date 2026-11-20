@@ -103,6 +103,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('media/{media}', [MediaController::class, 'show'])->name('media.show');
         Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
+        // Webhooks event viewer (scoped to tenant organization)
+        Route::get('webhooks', [\App\Http\Controllers\Admin\WebhookEventController::class, 'index'])->name('webhooks.index');
+        Route::get('webhooks/{webhookEvent}', [\App\Http\Controllers\Admin\WebhookEventController::class, 'show'])->name('webhooks.show');
+
         // Contacts
         Route::get('contacts/export', ContactExportController::class)->name('contacts.export');
         Route::get('contacts/import', [ContactImportController::class, 'create'])->name('contacts.import.create');

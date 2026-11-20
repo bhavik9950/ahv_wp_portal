@@ -25,7 +25,21 @@ class WebhookEventController extends Controller
         $query = WebhookEvent::query()->orderByDesc('received_at')->limit(500);
 
         if (! $request->user()?->isSuperAdmin()) {
-            $query->where('organization_id', $tenant->id());
+            $orgId = $tenant->id();
+            $wabaId = $tenant->organization()?->whatsappBusinessAccount?->waba_id;
+            $phoneIds = $tenant->organization()?->whatsappPhoneNumbers()->pluck('phone_number_id')->filter()->all() ?? [];
+
+            $query->where(function ($q) use ($orgId, $wabaId, $phoneIds) {
+                $q->where('organization_id', $orgId);
+                if (filled($wabaId)) {
+                    $q->orWhere('payload', 'like', "%{$wabaId}%");
+                }
+                foreach ($phoneIds as $pid) {
+                    if (filled($pid)) {
+                        $q->orWhere('payload', 'like', "%{$pid}%");
+                    }
+                }
+            });
         }
 
         $events = $query->get();
@@ -48,11 +62,23 @@ class WebhookEventController extends Controller
 
     public function show(Request $request, WebhookEvent $webhookEvent, TenantContext $tenant): View
     {
-        abort_unless(
-            $request->user()?->isSuperAdmin()
-                || ((int) $webhookEvent->organization_id === (int) $tenant->id() && $webhookEvent->organization_id !== null),
-            404,
-        );
+        $isSuper = $request->user()?->isSuperAdmin() ?? false;
+        $orgId = (int) $tenant->id();
+        $isOwner = ((int) $webhookEvent->organization_id === $orgId && $webhookEvent->organization_id !== null);
+
+        if (! $isSuper && ! $isOwner) {
+            $wabaId = $tenant->organization()?->whatsappBusinessAccount?->waba_id;
+            $phoneIds = $tenant->organization()?->whatsappPhoneNumbers()->pluck('phone_number_id')->filter()->all() ?? [];
+            $payloadStr = json_encode($webhookEvent->payload);
+
+            if (filled($wabaId) && str_contains((string) $payloadStr, (string) $wabaId)) {
+                $isOwner = true;
+            } elseif (collect($phoneIds)->contains(fn ($pid) => filled($pid) && str_contains((string) $payloadStr, (string) $pid))) {
+                $isOwner = true;
+            }
+        }
+
+        abort_unless($isSuper || $isOwner, 404);
 
         return view('admin.webhook-events.show', [
             'event' => $webhookEvent,

@@ -4,6 +4,8 @@
     @php
         $live = (bool) request('live');
         $fresh = $lastAt && $lastAt->gt(now()->subSeconds(60));
+        $indexRoute = request()->routeIs('whatsapp.webhooks.*') ? 'whatsapp.webhooks.index' : 'admin.webhook-events.index';
+        $showRoute = request()->routeIs('whatsapp.webhooks.*') ? 'whatsapp.webhooks.show' : 'admin.webhook-events.show';
 
         // icon + colour per event kind
         $badge = function (string $kind): array {
@@ -42,15 +44,15 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <a href="{{ route('admin.webhook-events.index') }}" class="btn btn-xs btn-ghost gap-1">
+                <a href="{{ route($indexRoute) }}" class="btn btn-xs btn-ghost gap-1">
                     <i class="ti ti-refresh"></i> Refresh
                 </a>
                 @if ($live)
-                    <a href="{{ route('admin.webhook-events.index') }}" class="btn btn-xs btn-primary gap-1">
+                    <a href="{{ route($indexRoute) }}" class="btn btn-xs btn-primary gap-1">
                         <span class="loading loading-ring loading-xs"></span> Live · stop
                     </a>
                 @else
-                    <a href="{{ route('admin.webhook-events.index', ['live' => 1]) }}" class="btn btn-xs btn-ghost gap-1">
+                    <a href="{{ route($indexRoute, ['live' => 1]) }}" class="btn btn-xs btn-ghost gap-1">
                         <i class="ti ti-player-play"></i> Go live
                     </a>
                 @endif
@@ -121,7 +123,7 @@
                 <tbody>
                     @foreach ($events as $e)
                         @php([$ki, $kc, $kbg] = $badge($e->kind()))
-                        <tr class="hover cursor-pointer" data-href="{{ route('admin.webhook-events.show', $e) }}">
+                        <tr class="hover cursor-pointer" data-href="{{ route($showRoute, $e) }}">
                             <td class="whitespace-nowrap text-xs opacity-70" data-order="{{ $e->received_at?->timestamp ?? 0 }}"
                                 title="{{ $e->received_at?->format('d M Y H:i:s') }}">
                                 {{ $e->received_at?->diffForHumans() ?? '—' }}

@@ -9,11 +9,12 @@
             default                                      => ['ti-webhook', 'text-base-content/50', 'bg-base-300/60'],
         };
         $sm = ['processed'=>'badge-success','failed'=>'badge-error','processing'=>'badge-info','ignored'=>'badge-ghost'];
+        $indexRoute = request()->routeIs('whatsapp.webhooks.*') ? 'whatsapp.webhooks.index' : 'admin.webhook-events.index';
     @endphp
 
     <div class="max-w-3xl space-y-4" x-data="{ payload: {{ json_encode(json_encode($event->payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) }} }">
         <div class="flex items-center justify-between">
-            <a href="{{ route('admin.webhook-events.index') }}" class="btn btn-sm btn-ghost">
+            <a href="{{ route($indexRoute) }}" class="btn btn-sm btn-ghost">
                 <i class="ti ti-arrow-left"></i> Back
             </a>
             @if ($event->phone() && \Illuminate\Support\Facades\Route::has('whatsapp.conversations.show'))

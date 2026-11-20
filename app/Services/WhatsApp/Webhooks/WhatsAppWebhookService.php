@@ -23,9 +23,15 @@ final class WhatsAppWebhookService
     public function ingest(string $rawBody, array $headers): array
     {
         $signatureHeader = $headers['x-hub-signature-256'] ?? null;
-        $appSecret = $this->resolveAppSecret();
+        $appSecrets = $this->resolveAppSecrets();
 
-        $signatureValid = WebhookSignature::isValid($rawBody, $signatureHeader, (string) $appSecret);
+        $signatureValid = false;
+        foreach ($appSecrets as $secret) {
+            if (filled($secret) && WebhookSignature::isValid($rawBody, $signatureHeader, (string) $secret)) {
+                $signatureValid = true;
+                break;
+            }
+        }
         $requireSignature = (bool) config('services.whatsapp.webhook.require_signature', true);
 
         if (! $signatureValid && $requireSignature) {
@@ -84,16 +90,23 @@ final class WhatsAppWebhookService
             ->all();
     }
 
-    private function resolveAppSecret(): ?string
+    /**
+     * @return list<string>
+     */
+    private function resolveAppSecrets(): array
     {
-        $account = WhatsappBusinessAccount::query()->withoutGlobalScopes()
+        $secrets = WhatsappBusinessAccount::query()->withoutGlobalScopes()
             ->whereNotNull('app_secret')
-            ->first();
+            ->pluck('app_secret')
+            ->filter()
+            ->values()
+            ->all();
 
-        if ($account !== null && filled($account->app_secret)) {
-            return $account->app_secret;
+        $bootstrap = config('services.whatsapp.bootstrap.app_secret');
+        if (filled($bootstrap)) {
+            $secrets[] = (string) $bootstrap;
         }
 
-        return config('services.whatsapp.bootstrap.app_secret');
+        return array_values(array_unique(array_filter($secrets)));
     }
 }
