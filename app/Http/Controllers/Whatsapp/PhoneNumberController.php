@@ -28,6 +28,62 @@ class PhoneNumberController extends Controller
         ]);
     }
 
+    public function store(Request $request, WhatsAppManager $manager): RedirectResponse
+    {
+        $account = WhatsappBusinessAccount::query()->orderBy('created_at')->first();
+        if (! $account) {
+            return back()->with('flash_notify', [
+                'type' => 'error',
+                'message' => 'Please configure your WhatsApp settings first.',
+            ]);
+        }
+
+        $this->authorize('update', $account);
+
+        $validated = $request->validate([
+            'phone_number_id' => ['required', 'string', 'max:50', 'regex:/^[0-9]+$/'],
+            'display_phone_number' => ['nullable', 'string', 'max:50'],
+            'verified_name' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $phoneNumberId = trim($validated['phone_number_id']);
+        $display = $validated['display_phone_number'] ?? null;
+        $name = $validated['verified_name'] ?? null;
+        $quality = null;
+        $tier = null;
+
+        try {
+            $creds = $manager->credentialsFor($account);
+            $metaData = $manager->driver()->getPhoneNumber($creds, $phoneNumberId);
+            $display = $metaData['display_phone_number'] ?? $display;
+            $name = $metaData['verified_name'] ?? $name;
+            $quality = $metaData['quality_rating'] ?? null;
+            $tier = $metaData['messaging_limit_tier'] ?? null;
+        } catch (\Throwable) {
+            // Keep user-supplied or default values if Meta call fails
+        }
+
+        $number = $account->phoneNumbers()->firstOrNew(['phone_number_id' => $phoneNumberId]);
+        $number->organization_id = $account->organization_id;
+        $number->display_phone_number = $display;
+        $number->verified_name = $name;
+        $number->quality_rating = $quality;
+        $number->messaging_limit_tier = $tier;
+        $number->status = 'available';
+        $number->last_synced_at = now();
+
+        if ($account->phoneNumbers()->where('is_default', true)->doesntExist()) {
+            $number->is_default = true;
+        }
+
+        $number->save();
+
+        return back()->with('flash_notify', [
+            'type' => 'success',
+            'message' => "Phone Number ID {$phoneNumberId} saved successfully.",
+        ]);
+    }
+
     public function sync(): RedirectResponse
     {
         try {
