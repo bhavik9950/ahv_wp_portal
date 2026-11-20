@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\WebhookEvent;
+use App\Models\WhatsappBusinessAccount;
+use App\Models\WhatsappPhoneNumber;
 use App\Support\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -26,13 +28,23 @@ class WebhookEventController extends Controller
 
         if (! $request->user()?->isSuperAdmin()) {
             $orgId = $tenant->id();
-            $wabaId = $tenant->organization()?->whatsappBusinessAccount?->waba_id;
-            $phoneIds = $tenant->organization()?->whatsappPhoneNumbers()->pluck('phone_number_id')->filter()->all() ?? [];
+            $wabaIds = WhatsappBusinessAccount::query()->withoutGlobalScopes()
+                ->where('organization_id', $orgId)
+                ->pluck('waba_id')
+                ->filter()
+                ->all();
+            $phoneIds = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                ->where('organization_id', $orgId)
+                ->pluck('phone_number_id')
+                ->filter()
+                ->all();
 
-            $query->where(function ($q) use ($orgId, $wabaId, $phoneIds) {
+            $query->where(function ($q) use ($orgId, $wabaIds, $phoneIds) {
                 $q->where('organization_id', $orgId);
-                if (filled($wabaId)) {
-                    $q->orWhere('payload', 'like', "%{$wabaId}%");
+                foreach ($wabaIds as $wid) {
+                    if (filled($wid)) {
+                        $q->orWhere('payload', 'like', "%{$wid}%");
+                    }
                 }
                 foreach ($phoneIds as $pid) {
                     if (filled($pid)) {
@@ -67,14 +79,31 @@ class WebhookEventController extends Controller
         $isOwner = ((int) $webhookEvent->organization_id === $orgId && $webhookEvent->organization_id !== null);
 
         if (! $isSuper && ! $isOwner) {
-            $wabaId = $tenant->organization()?->whatsappBusinessAccount?->waba_id;
-            $phoneIds = $tenant->organization()?->whatsappPhoneNumbers()->pluck('phone_number_id')->filter()->all() ?? [];
+            $wabaIds = WhatsappBusinessAccount::query()->withoutGlobalScopes()
+                ->where('organization_id', $orgId)
+                ->pluck('waba_id')
+                ->filter()
+                ->all();
+            $phoneIds = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                ->where('organization_id', $orgId)
+                ->pluck('phone_number_id')
+                ->filter()
+                ->all();
             $payloadStr = json_encode($webhookEvent->payload);
 
-            if (filled($wabaId) && str_contains((string) $payloadStr, (string) $wabaId)) {
-                $isOwner = true;
-            } elseif (collect($phoneIds)->contains(fn ($pid) => filled($pid) && str_contains((string) $payloadStr, (string) $pid))) {
-                $isOwner = true;
+            foreach ($wabaIds as $wid) {
+                if (filled($wid) && str_contains((string) $payloadStr, (string) $wid)) {
+                    $isOwner = true;
+                    break;
+                }
+            }
+            if (! $isOwner) {
+                foreach ($phoneIds as $pid) {
+                    if (filled($pid) && str_contains((string) $payloadStr, (string) $pid)) {
+                        $isOwner = true;
+                        break;
+                    }
+                }
             }
         }
 

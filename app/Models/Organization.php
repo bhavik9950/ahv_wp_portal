@@ -59,6 +59,11 @@ class Organization extends Model
         return $this->hasMany(WhatsappBusinessAccount::class);
     }
 
+    public function whatsappPhoneNumbers(): HasMany
+    {
+        return $this->hasMany(WhatsappPhoneNumber::class);
+    }
+
     /** @return HasMany<SubscriptionRequest, $this> */
     public function subscriptionRequests(): HasMany
     {
