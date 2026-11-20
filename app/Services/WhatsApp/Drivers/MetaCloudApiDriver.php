@@ -291,7 +291,7 @@ final class MetaCloudApiDriver implements WhatsAppDriver
                     'quality_rating' => $phone['quality_rating'] ?? null,
                     'messaging_limit_tier' => $phone['messaging_limit_tier'] ?? null,
                 ])
-                : ConnectionCheck::fail('phone_number', 'Validate Phone Number', 'No phone number id configured');
+                : ConnectionCheck::fail('phone_number', 'Validate Phone Number', 'No phone number synced yet. Click "Sync Phone Numbers" in WhatsApp > Phone Numbers.');
         } catch (Throwable $e) {
             $checks[] = ConnectionCheck::fail('connection', 'Test Connection', $this->short($e));
         }
@@ -301,7 +301,7 @@ final class MetaCloudApiDriver implements WhatsAppDriver
             $response = $this->client($creds)->get("/{$creds->wabaId}", ['fields' => 'id,name,timezone_id,message_template_namespace']);
             $checks[] = $response->ok()
                 ? ConnectionCheck::pass('waba', 'Validate WABA', data_get($response->json(), 'name', 'OK'))
-                : ConnectionCheck::fail('waba', 'Validate WABA', 'HTTP '.$response->status());
+                : ConnectionCheck::fail('waba', 'Validate WABA', data_get($response->json(), 'error.message', 'HTTP '.$response->status()));
         } catch (Throwable $e) {
             $checks[] = ConnectionCheck::fail('waba', 'Validate WABA', $this->short($e));
         }
@@ -333,9 +333,22 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         try {
             $response = $this->client($creds)->get("/{$creds->wabaId}/subscribed_apps");
             $subscribed = ! empty($response->json('data'));
+
+            // If not subscribed yet, attempt auto-subscription via Meta Graph API
+            if (! $subscribed) {
+                try {
+                    $subResp = $this->client($creds)->post("/{$creds->wabaId}/subscribed_apps");
+                    if ($subResp->ok() && (bool) data_get($subResp->json(), 'success', false)) {
+                        $subscribed = true;
+                    }
+                } catch (Throwable) {
+                    // Suppress and fallback to reporting status
+                }
+            }
+
             $checks[] = $subscribed
                 ? ConnectionCheck::pass('webhook', 'Check Webhook Configuration', 'App subscribed to WABA')
-                : ConnectionCheck::fail('webhook', 'Check Webhook Configuration', 'No app subscribed to this WABA');
+                : ConnectionCheck::fail('webhook', 'Check Webhook Configuration', 'No app subscribed to this WABA (Subscribe in Meta App > WhatsApp > Configuration)');
         } catch (Throwable $e) {
             $checks[] = ConnectionCheck::fail('webhook', 'Check Webhook Configuration', $this->short($e));
         }

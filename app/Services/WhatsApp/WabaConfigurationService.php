@@ -116,8 +116,9 @@ final class WabaConfigurationService
         $creds = $this->manager->credentialsFor($account, $defaultNumber);
 
         // Not synced any phone numbers yet? Fall back to the .env bootstrap phone
-        // id so the "Validate Phone Number" check can still run.
-        if ($defaultNumber === null && filled(config('services.whatsapp.bootstrap.phone_number_id'))) {
+        // id ONLY for the primary system org (ID 1). For client orgs, leave null so they sync their own.
+        $isPrimaryOrg = ($account->organization_id === 1);
+        if ($defaultNumber === null && $isPrimaryOrg && filled(config('services.whatsapp.bootstrap.phone_number_id'))) {
             $creds = WabaCredentials::fromModel($account, (string) config('services.whatsapp.bootstrap.phone_number_id'));
         }
 
