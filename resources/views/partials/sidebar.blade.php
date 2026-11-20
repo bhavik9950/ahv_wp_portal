@@ -46,7 +46,6 @@
         <li class="menu-title mt-3">Platform Admin</li>
         {!! $nav('Subscriptions &amp; UTRs', 'ti-receipt-2', 'admin.subscriptions.index') !!}
         {!! $nav('Client Organizations', 'ti-building', 'admin.organizations.index') !!}
-        {!! $nav('Webhook Events', 'ti-webhook', 'admin.webhook-events.index') !!}
         {!! $nav('System Health', 'ti-heartbeat', 'admin.health') !!}
         {!! $nav('Emergency Controls', 'ti-alert-triangle', 'admin.controls') !!}
     @endif

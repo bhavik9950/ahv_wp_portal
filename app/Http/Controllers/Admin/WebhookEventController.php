@@ -24,51 +24,52 @@ class WebhookEventController extends Controller
 {
     public function index(Request $request, TenantContext $tenant): View
     {
-        $query = WebhookEvent::query()->orderByDesc('received_at')->limit(500);
+        $orgId = $tenant->id();
 
-        if (! $request->user()?->isSuperAdmin()) {
-            $orgId = $tenant->id();
-            $wabaIds = WhatsappBusinessAccount::query()->withoutGlobalScopes()
-                ->where('organization_id', $orgId)
-                ->pluck('waba_id')
-                ->filter()
-                ->all();
-            $phoneIds = WhatsappPhoneNumber::query()->withoutGlobalScopes()
-                ->where('organization_id', $orgId)
-                ->pluck('phone_number_id')
-                ->filter()
-                ->all();
+        $wabaIds = WhatsappBusinessAccount::query()->withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->pluck('waba_id')
+            ->filter()
+            ->all();
+        $phoneIds = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->pluck('phone_number_id')
+            ->filter()
+            ->all();
 
-            // Auto-assign any unassigned events that match this tenant's WABA or Phone IDs
-            if (! empty($wabaIds) || ! empty($phoneIds)) {
-                $unassigned = WebhookEvent::query()->whereNull('organization_id')->limit(100)->get();
-                foreach ($unassigned as $evt) {
-                    $payloadStr = json_encode($evt->payload);
-                    $matched = false;
-                    foreach ($wabaIds as $wid) {
-                        if (filled($wid) && str_contains($payloadStr, (string) $wid)) {
+        // Auto-assign any unassigned events that match this tenant's WABA or Phone IDs
+        if (! empty($wabaIds) || ! empty($phoneIds)) {
+            $unassigned = WebhookEvent::query()->whereNull('organization_id')->limit(100)->get();
+            foreach ($unassigned as $evt) {
+                $payloadStr = json_encode($evt->payload);
+                $matched = false;
+                foreach ($wabaIds as $wid) {
+                    if (filled($wid) && str_contains($payloadStr, (string) $wid)) {
+                        $matched = true;
+                        break;
+                    }
+                }
+                if (! $matched) {
+                    foreach ($phoneIds as $pid) {
+                        if (filled($pid) && str_contains($payloadStr, (string) $pid)) {
                             $matched = true;
                             break;
                         }
                     }
-                    if (! $matched) {
-                        foreach ($phoneIds as $pid) {
-                            if (filled($pid) && str_contains($payloadStr, (string) $pid)) {
-                                $matched = true;
-                                break;
-                            }
-                        }
-                    }
-                    if ($matched) {
-                        $evt->update(['organization_id' => $orgId]);
-                    }
+                }
+                if ($matched) {
+                    $evt->update(['organization_id' => $orgId]);
                 }
             }
-
-            $query->where('organization_id', $orgId);
         }
 
-        $events = $query->get();
+        // Strictly scoped to the currently active organization:
+        // No client or admin ever sees another tenant's webhook events.
+        $events = WebhookEvent::query()
+            ->where('organization_id', $orgId)
+            ->orderByDesc('received_at')
+            ->limit(500)
+            ->get();
 
         return view('admin.webhook-events.index', [
             'events' => $events,
@@ -79,49 +80,16 @@ class WebhookEventController extends Controller
                 'failed' => $events->where('status', 'failed')->count(),
                 'bad_signature' => $events->where('signature_valid', false)->count(),
             ],
-            // Unprocessed count is just a number (no content) — useful to flag a
-            // dead queue worker regardless of org.
-            'pending' => WebhookEvent::query()->whereNotIn('status', ['processed', 'ignored'])->count(),
+            // Scoped strictly to current organization
+            'pending' => WebhookEvent::query()->where('organization_id', $orgId)->whereNotIn('status', ['processed', 'ignored'])->count(),
             'lastAt' => $events->max('received_at'),
         ]);
     }
 
     public function show(Request $request, WebhookEvent $webhookEvent, TenantContext $tenant): View
     {
-        $isSuper = $request->user()?->isSuperAdmin() ?? false;
         $orgId = (int) $tenant->id();
-        $isOwner = ((int) $webhookEvent->organization_id === $orgId && $webhookEvent->organization_id !== null);
-
-        if (! $isSuper && ! $isOwner) {
-            $wabaIds = WhatsappBusinessAccount::query()->withoutGlobalScopes()
-                ->where('organization_id', $orgId)
-                ->pluck('waba_id')
-                ->filter()
-                ->all();
-            $phoneIds = WhatsappPhoneNumber::query()->withoutGlobalScopes()
-                ->where('organization_id', $orgId)
-                ->pluck('phone_number_id')
-                ->filter()
-                ->all();
-            $payloadStr = json_encode($webhookEvent->payload);
-
-            foreach ($wabaIds as $wid) {
-                if (filled($wid) && str_contains((string) $payloadStr, (string) $wid)) {
-                    $isOwner = true;
-                    break;
-                }
-            }
-            if (! $isOwner) {
-                foreach ($phoneIds as $pid) {
-                    if (filled($pid) && str_contains((string) $payloadStr, (string) $pid)) {
-                        $isOwner = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        abort_unless($isSuper || $isOwner, 404);
+        abort_unless((int) $webhookEvent->organization_id === $orgId, 404);
 
         return view('admin.webhook-events.show', [
             'event' => $webhookEvent,

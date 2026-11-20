@@ -179,8 +179,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('controls/pause-campaigns', [SystemControlController::class, 'pauseAllCampaigns'])->name('controls.pause-campaigns');
         Route::post('controls/revoke/{account}', [SystemControlController::class, 'revokeIntegration'])->name('controls.revoke');
 
-        Route::get('webhook-events', [WebhookEventController::class, 'index'])->name('webhook-events.index');
-        Route::get('webhook-events/{webhookEvent}', [WebhookEventController::class, 'show'])->name('webhook-events.show');
+        Route::redirect('webhook-events', '/whatsapp/webhooks')->name('webhook-events.index');
 
         // Super-admin only: Subscriptions, UTR verification, and Organization Management
         Route::get('subscriptions', [AdminSubscriptionController::class, 'index'])->name('subscriptions.index');
