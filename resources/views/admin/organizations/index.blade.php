@@ -132,6 +132,17 @@
 
             <form method="POST" action="{{ route('admin.organizations.store') }}" class="space-y-4 pt-4">
                 @csrf
+                <input type="hidden" name="timezone" value="Asia/Kolkata">
+
+                @if ($errors->any())
+                    <div class="alert alert-error text-xs p-3">
+                        <ul class="list-disc list-inside">
+                            @foreach ($errors->all() as $err)
+                                <li>{{ $err }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
                 <div class="space-y-1">
                     <label class="label text-xs font-semibold py-0">Company / Organization Name <span class="text-error">*</span></label>
