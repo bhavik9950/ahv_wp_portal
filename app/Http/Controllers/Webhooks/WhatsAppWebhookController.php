@@ -22,12 +22,26 @@ class WhatsAppWebhookController extends Controller
     public function verify(Request $request): Response
     {
         $mode = $request->query('hub_mode');
-        $token = $request->query('hub_verify_token');
+        $token = (string) $request->query('hub_verify_token', '');
         $challenge = (string) $request->query('hub_challenge', '');
 
-        $expected = (string) ($this->resolveVerifyToken() ?? '');
+        if ($mode !== 'subscribe') {
+            return response('forbidden', 403);
+        }
 
-        if ($mode === 'subscribe' && WebhookSignature::verifyTokenMatches($token, $expected)) {
+        // 1. Check bootstrap verify token (.env)
+        $expectedBootstrap = (string) config('services.whatsapp.bootstrap.webhook_verify_token');
+        if (filled($expectedBootstrap) && WebhookSignature::verifyTokenMatches($token, $expectedBootstrap)) {
+            return response($challenge, 200)->header('Content-Type', 'text/plain');
+        }
+
+        // 2. Check if any tenant organization has set this verify token
+        $matched = WhatsappBusinessAccount::query()->withoutGlobalScopes()
+            ->whereNotNull('webhook_verify_token')
+            ->get()
+            ->contains(fn ($acc) => WebhookSignature::verifyTokenMatches($token, (string) $acc->webhook_verify_token));
+
+        if ($matched) {
             return response($challenge, 200)->header('Content-Type', 'text/plain');
         }
 
