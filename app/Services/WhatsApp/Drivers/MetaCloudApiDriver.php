@@ -298,7 +298,7 @@ final class MetaCloudApiDriver implements WhatsAppDriver
 
         // Validate WABA
         try {
-            $response = $this->client($creds)->get("/{$creds->wabaId}", ['fields' => 'id,name,timezone_id,message_template_namespace']);
+            $response = $this->client($creds)->get("/{$creds->wabaId}", ['fields' => 'id,name,timezone_id']);
             $checks[] = $response->ok()
                 ? ConnectionCheck::pass('waba', 'Validate WABA', data_get($response->json(), 'name', 'OK'))
                 : ConnectionCheck::fail('waba', 'Validate WABA', data_get($response->json(), 'error.message', 'HTTP '.$response->status()));
