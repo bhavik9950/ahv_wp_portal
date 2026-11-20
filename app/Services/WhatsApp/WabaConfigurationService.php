@@ -93,6 +93,7 @@ final class WabaConfigurationService
             $account->organization_id = $this->tenant->id();
         }
 
+        $account->is_active = true;
         $account->save();
 
         $this->audit->log($isNew ? 'waba.created' : 'waba.updated', $account, [

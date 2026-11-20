@@ -105,29 +105,27 @@ class TemplateController extends Controller
 
     public function sync(): RedirectResponse
     {
-        $this->authorize('viewAny', WhatsappTemplate::class);
-
-        $account = WhatsappBusinessAccount::query()->orderBy('created_at')->first();
-        if (! $account) {
-            return back()->with('flash_notify', [
-                'type' => 'error',
-                'message' => 'Please save your WhatsApp settings before syncing templates.',
-            ]);
-        }
-
         try {
+            $account = WhatsappBusinessAccount::query()->orderBy('created_at')->first();
+            if (! $account) {
+                return redirect()->route('whatsapp.templates.index')->with('flash_notify', [
+                    'type' => 'error',
+                    'message' => 'Please save your WhatsApp settings before syncing templates.',
+                ]);
+            }
+
             SyncTemplatesJob::dispatchSync($account->getKey());
 
-            return back()->with('flash_notify', ['type' => 'success', 'message' => 'Templates synced from Meta.']);
+            return redirect()->route('whatsapp.templates.index')->with('flash_notify', ['type' => 'success', 'message' => 'Templates synced from Meta.']);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Template sync failed', [
                 'error' => $e->getMessage(),
-                'account_id' => $account->getKey(),
+                'account_id' => $account->getKey() ?? null,
             ]);
 
-            return back()->with('flash_notify', [
+            return redirect()->route('whatsapp.templates.index')->with('flash_notify', [
                 'type' => 'error',
-                'message' => 'Template sync failed: '.$e->getMessage(),
+                'message' => 'Template sync: '.$e->getMessage(),
             ]);
         }
     }

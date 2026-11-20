@@ -11,7 +11,7 @@
                     <button type="button" onclick="document.getElementById('add-phone-modal').showModal()" class="btn btn-sm btn-primary">
                         <i class="ti ti-plus"></i> Add Phone ID
                     </button>
-                    <form method="POST" action="{{ route('whatsapp.phone-numbers.sync') }}">
+                    <form method="POST" action="{{ route('whatsapp.phone-numbers.sync') }}" data-turbo="false">
                         @csrf
                         <button class="btn btn-sm btn-outline"><i class="ti ti-refresh"></i> Sync from Meta</button>
                     </form>

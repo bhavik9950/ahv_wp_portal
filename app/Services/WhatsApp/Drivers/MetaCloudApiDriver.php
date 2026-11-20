@@ -68,13 +68,23 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         $templates = [];
         $url = "/{$creds->wabaId}/message_templates?limit=100";
 
-        do {
-            $response = $this->client($creds)->get($url);
-            $this->throwUnlessOk($response);
-            $json = $response->json();
-            $templates = array_merge($templates, $json['data'] ?? []);
-            $url = data_get($json, 'paging.next');
-        } while (is_string($url) && $url !== '');
+        try {
+            do {
+                $response = str_starts_with($url, 'http')
+                    ? $this->http->withToken($creds->accessToken)->timeout(30)->get($url)
+                    : $this->client($creds)->get($url);
+
+                if (! $response->ok()) {
+                    break;
+                }
+
+                $json = $response->json();
+                $templates = array_merge($templates, $json['data'] ?? []);
+                $url = data_get($json, 'paging.next');
+            } while (is_string($url) && $url !== '');
+        } catch (\Throwable $e) {
+            Log::channel((string) config('services.whatsapp.log_channel'))->warning('fetchTemplates failed', ['error' => $e->getMessage()]);
+        }
 
         return $templates;
     }

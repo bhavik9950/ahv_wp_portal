@@ -89,24 +89,22 @@ class PhoneNumberController extends Controller
         try {
             $account = WhatsappBusinessAccount::query()->orderBy('created_at')->first();
             if (! $account) {
-                return back()->with('flash_notify', [
+                return redirect()->route('whatsapp.phone-numbers.index')->with('flash_notify', [
                     'type' => 'error',
                     'message' => 'Please configure and save your WhatsApp settings first before syncing phone numbers.',
                 ]);
             }
 
-            $this->authorize('update', $account);
-
             $count = $this->service->syncPhoneNumbers($account);
 
             if ($count === 0) {
-                return back()->with('flash_notify', [
+                return redirect()->route('whatsapp.phone-numbers.index')->with('flash_notify', [
                     'type' => 'info',
-                    'message' => 'No phone numbers found on this Meta WABA. Please add and verify a phone number in Meta Developer Console > WhatsApp > API Setup first.',
+                    'message' => 'No phone numbers found on this Meta WABA. Please add a phone number in Meta Developer Console > WhatsApp > API Setup first.',
                 ]);
             }
 
-            return back()->with('flash_notify', [
+            return redirect()->route('whatsapp.phone-numbers.index')->with('flash_notify', [
                 'type' => 'success',
                 'message' => "Synced {$count} phone number(s) from Meta.",
             ]);
@@ -115,9 +113,9 @@ class PhoneNumberController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('flash_notify', [
+            return redirect()->route('whatsapp.phone-numbers.index')->with('flash_notify', [
                 'type' => 'error',
-                'message' => 'Phone Sync Error: '.$e->getMessage(),
+                'message' => 'Meta Phone Sync: '.$e->getMessage(),
             ]);
         }
     }

@@ -21,7 +21,7 @@
             </div>
 
             <div class="flex gap-2">
-                <form method="POST" action="{{ route('whatsapp.templates.sync') }}">@csrf
+                <form method="POST" action="{{ route('whatsapp.templates.sync') }}" data-turbo="false">@csrf
                     <button class="btn btn-sm btn-outline" @disabled(! $hasAccount)><i class="ti ti-refresh"></i> Sync from Meta</button>
                 </form>
                 @if ($canManage)
