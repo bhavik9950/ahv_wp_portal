@@ -79,3 +79,66 @@ it('forbids a member with no role from viewing conversations', function () {
 
     $this->actingAs($user)->get(route('whatsapp.conversations.index'))->assertForbidden();
 });
+
+it('sends a direct reply when the 24-hour window is active', function () {
+    $org = makeOrganization();
+    $admin = makeMember($org, 'org_admin');
+    $waba = \App\Models\WhatsappBusinessAccount::factory()->for($org)->create();
+    $phone = \App\Models\WhatsappPhoneNumber::factory()->forAccount($waba)->create(['is_default' => true]);
+
+    Message::factory()->for($org)->create([
+        'whatsapp_phone_number_id' => $phone->id,
+        'to_phone' => '919876500555',
+        'direction' => 'inbound',
+        'type' => 'text',
+        'payload' => ['text' => ['body' => 'Need pricing details']],
+        'created_at' => now()->subMinutes(10),
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->from(route('whatsapp.conversations.show', '919876500555'))
+        ->post(route('whatsapp.conversations.reply', '919876500555'), [
+            'body' => 'Hello! Our plan starts at Rs 649/mo.',
+        ]);
+
+    $response->assertRedirect(route('whatsapp.conversations.show', '919876500555'));
+
+    $reply = Message::query()
+        ->where('to_phone', '919876500555')
+        ->where('direction', 'outbound')
+        ->first();
+
+    expect($reply)->not->toBeNull()
+        ->and($reply->bodyText())->toBe('Hello! Our plan starts at Rs 649/mo.');
+});
+
+it('rejects free-text reply if the 24-hour service window is expired', function () {
+    $org = makeOrganization();
+    $admin = makeMember($org, 'org_admin');
+    $waba = \App\Models\WhatsappBusinessAccount::factory()->for($org)->create();
+    $phone = \App\Models\WhatsappPhoneNumber::factory()->forAccount($waba)->create(['is_default' => true]);
+
+    Message::factory()->for($org)->create([
+        'whatsapp_phone_number_id' => $phone->id,
+        'to_phone' => '919876500666',
+        'direction' => 'inbound',
+        'type' => 'text',
+        'payload' => ['text' => ['body' => 'Old message']],
+        'created_at' => now()->subHours(25),
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->from(route('whatsapp.conversations.show', '919876500666'))
+        ->post(route('whatsapp.conversations.reply', '919876500666'), [
+            'body' => 'Checking in after a long time',
+        ]);
+
+    $response->assertRedirect(route('whatsapp.conversations.show', '919876500666'));
+
+    $reply = Message::query()
+        ->where('to_phone', '919876500666')
+        ->where('direction', 'outbound')
+        ->first();
+
+    expect($reply)->toBeNull();
+});

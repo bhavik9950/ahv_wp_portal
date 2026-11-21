@@ -109,6 +109,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('conversations/{phone}', [MessageController::class, 'conversation'])
             ->where('phone', '[0-9]+')
             ->name('conversations.show');
+        Route::post('conversations/{phone}/reply', [MessageController::class, 'reply'])
+            ->where('phone', '[0-9]+')
+            ->middleware('subscription.active')
+            ->name('conversations.reply');
 
         // Media library
         Route::get('media', [MediaController::class, 'index'])->name('media.index');

@@ -172,8 +172,161 @@
             </div>
         </div>
 
-        <a href="{{ route('whatsapp.messages.index') }}" class="link link-hover text-xs opacity-60">
-            <i class="ti ti-list"></i> View raw message log
-        </a>
+        {{-- 24-Hour Customer Service Window Status Banner --}}
+        @if ($isWindowActive)
+            <div class="flex items-center justify-between text-xs px-3.5 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl shadow-2xs">
+                <div class="flex items-center gap-2 font-medium">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span><strong>24-Hour Service Window Active</strong> · Direct free-text reply permitted (₹0 Meta fee)</span>
+                </div>
+                <div class="text-[0.7rem] opacity-75 font-mono shrink-0 ml-2">
+                    Valid until {{ $windowExpiresAt?->timezone('Asia/Kolkata')->format('d M, h:i A') }}
+                </div>
+            </div>
+        @else
+            <div class="flex items-center justify-between text-xs px-3.5 py-2.5 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl shadow-2xs flex-wrap gap-2">
+                <div class="flex items-center gap-2 font-medium">
+                    <i class="ti ti-alert-triangle text-amber-600 text-base shrink-0"></i>
+                    <span><strong>24-Hour Service Window Inactive</strong> · Meta requires an approved template message to message this user.</span>
+                </div>
+                @if (isset($approvedTemplates) && $approvedTemplates->isNotEmpty())
+                    <button type="button" onclick="document.getElementById('send-template-modal').showModal()" class="btn btn-xs btn-warning gap-1 shadow-2xs font-bold">
+                        <i class="ti ti-template"></i> Send Template
+                    </button>
+                @endif
+            </div>
+        @endif
+
+        {{-- Chat Composer / Reply Bar --}}
+        @if ($canReply ?? true)
+            <div class="sticky bottom-3 z-30 bg-base-100/95 backdrop-blur-md p-3 rounded-2xl border border-base-300 shadow-md">
+                <form method="POST" action="{{ route('whatsapp.conversations.reply', $phone) }}" data-turbo="false" id="chat-reply-form" class="space-y-2">
+                    @csrf
+                    <div class="flex items-end gap-2 bg-base-200/50 p-2 rounded-xl border border-base-300 focus-within:border-primary focus-within:bg-base-100 transition-all">
+                        @if (isset($approvedTemplates) && $approvedTemplates->isNotEmpty())
+                            <button type="button" onclick="document.getElementById('send-template-modal').showModal()"
+                                    class="btn btn-sm btn-ghost btn-circle text-slate-500 hover:text-primary hover:bg-primary/10 shrink-0"
+                                    title="Send an approved WhatsApp template">
+                                <i class="ti ti-template text-lg"></i>
+                            </button>
+                        @endif
+
+                        <textarea name="body" id="reply-body-input" rows="1" required
+                                  placeholder="{{ $isWindowActive ? 'Type your reply to customer... (Press Enter to send, Shift+Enter for new line)' : '24-hr window expired. Click the template icon to send an approved template.' }}"
+                                  {{ ! $isWindowActive ? 'disabled' : '' }}
+                                  class="textarea textarea-ghost p-1.5 text-sm w-full leading-normal resize-none focus:outline-hidden min-h-[40px] max-h-36 bg-transparent"></textarea>
+
+                        <button type="submit" id="reply-send-btn"
+                                {{ ! $isWindowActive ? 'disabled' : '' }}
+                                class="btn btn-primary btn-sm rounded-xl px-4 gap-1.5 shrink-0 shadow-xs">
+                            <span class="hidden sm:inline font-bold">Send</span>
+                            <i class="ti ti-send"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between px-1 text-[0.7rem] opacity-60">
+                        <span>Press <strong>Enter</strong> to send &bull; <strong>Shift + Enter</strong> for new line</span>
+                        @if ($phoneNumber)
+                            <span>Sending via: <strong>+{{ $phoneNumber->display_phone_number ?? $phoneNumber->phone_number_id }}</strong></span>
+                        @endif
+                    </div>
+                </form>
+            </div>
+        @endif
+
+        {{-- Modal for Quick-Sending an Approved Template --}}
+        @if (isset($approvedTemplates) && $approvedTemplates->isNotEmpty())
+            <dialog id="send-template-modal" class="modal">
+                <div class="modal-box max-w-lg">
+                    <form method="dialog">
+                        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                    </form>
+                    <h3 class="font-bold text-base mb-1 flex items-center gap-2">
+                        <i class="ti ti-template text-primary"></i> Send Approved Template
+                    </h3>
+                    <p class="text-xs opacity-70 mb-4">
+                        Templates are approved by Meta and can be sent anytime, even when the 24-hour service window is closed.
+                    </p>
+
+                    <form method="POST" action="{{ route('whatsapp.conversations.reply', $phone) }}" data-turbo="false" class="space-y-4">
+                        @csrf
+                        <div class="form-control">
+                            <label class="label py-1" for="modal_template_select">
+                                <span class="label-text text-xs font-semibold">Select Approved Template</span>
+                            </label>
+                            <select name="template_id" id="modal_template_select" required class="select select-bordered select-sm w-full text-xs" onchange="previewSelectedTemplate(this)">
+                                <option value="" disabled selected>— Choose template —</option>
+                                @foreach ($approvedTemplates as $tpl)
+                                    <option value="{{ $tpl->id }}" data-body="{{ $tpl->bodyText() }}" data-lang="{{ $tpl->language }}">
+                                        {{ $tpl->name }} ({{ strtoupper($tpl->language) }} - {{ ucfirst(strtolower($tpl->category)) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div id="template-preview-container" class="hidden p-3 rounded-xl bg-base-200/60 border border-base-300 text-xs">
+                            <div class="font-semibold text-[0.7rem] opacity-60 uppercase mb-1">Template Content Preview:</div>
+                            <div id="template-preview-body" class="whitespace-pre-line text-slate-800"></div>
+                        </div>
+
+                        <div class="modal-action">
+                            <button type="button" onclick="document.getElementById('send-template-modal').close()" class="btn btn-sm btn-ghost">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary gap-1 font-bold">
+                                <i class="ti ti-send"></i> Send Template Now
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </dialog>
+        @endif
+
+        <div class="flex items-center justify-between pt-2">
+            <a href="{{ route('whatsapp.messages.index') }}" class="link link-hover text-xs opacity-60">
+                <i class="ti ti-list"></i> View raw message log
+            </a>
+            <span class="text-xs opacity-50">Total {{ $messages->count() }} message(s)</span>
+        </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto scroll to bottom
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+            const textarea = document.getElementById('reply-body-input');
+            const form = document.getElementById('chat-reply-form');
+
+            if (textarea && form) {
+                // Auto expand textarea
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+                });
+
+                // Enter to submit (Shift+Enter for newline)
+                textarea.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        if (this.value.trim().length > 0) {
+                            form.submit();
+                        }
+                    }
+                });
+            }
+        });
+
+        function previewSelectedTemplate(select) {
+            const selectedOpt = select.options[select.selectedIndex];
+            const body = selectedOpt.getAttribute('data-body');
+            const container = document.getElementById('template-preview-container');
+            const bodyElem = document.getElementById('template-preview-body');
+
+            if (body) {
+                bodyElem.textContent = body;
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+    </script>
 </x-app-layout>
