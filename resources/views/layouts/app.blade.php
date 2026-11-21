@@ -62,7 +62,9 @@
                 </div>
                 <div class="flex-1 flex items-center gap-3">
                     <span class="text-lg font-semibold">{{ $header ?? ($title ?? 'Dashboard') }}</span>
-                    @php($activeOrg = app(\App\Support\CurrentOrganization::class)->resolve())
+                    @php
+                        $activeOrg = app(\App\Support\CurrentOrganization::class)->resolve();
+                    @endphp
                     @if ($activeOrg)
                         <span class="badge badge-sm badge-outline gap-1 hidden sm:inline-flex text-xs opacity-80" title="Active Organization">
                             <i class="ti ti-building text-xs"></i> {{ $activeOrg->name }}
@@ -106,9 +108,13 @@
                         </ul>
                     </div>
 
-                    @php($currentUser = auth()->user())
+                    @php
+                        $currentUser = auth()->user();
+                    @endphp
                     @if ($currentUser)
-                        @php($availableOrgs = $currentUser->isSuperAdmin() ? \App\Models\Organization::withoutGlobalScopes()->orderBy('name')->get() : $currentUser->organizations)
+                        @php
+                            $availableOrgs = $currentUser->isSuperAdmin() ? \App\Models\Organization::withoutGlobalScopes()->orderBy('name')->get() : $currentUser->organizations;
+                        @endphp
                         @if ($availableOrgs->count() > 1)
                             <div class="dropdown dropdown-end">
                                 <div tabindex="0" role="button" class="btn btn-ghost btn-xs gap-1 border border-base-300">
@@ -156,7 +162,9 @@
             </header>
 
             <main class="p-4 sm:p-6 flex-1">
-                @php($currentOrg = app(\App\Support\CurrentOrganization::class)->resolve())
+                @php
+                    $currentOrg = app(\App\Support\CurrentOrganization::class)->resolve();
+                @endphp
                 @if ($currentOrg && $currentOrg->isSubscriptionExpired() && ! auth()->user()?->isSuperAdmin())
                     <div class="alert alert-error mb-4 shadow-sm border border-error/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div class="flex items-center gap-3">
