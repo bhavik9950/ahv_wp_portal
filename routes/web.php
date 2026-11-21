@@ -39,6 +39,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => auth()->check() ? redirect()->route('dashboard') : view('welcome'))->name('home');
 
+// Dedicated Public Multi-Page Site
+Route::view('/services', 'pages.services')->name('public.services');
+Route::view('/pricing', 'pages.pricing')->name('public.pricing');
+Route::view('/about', 'pages.about')->name('public.about');
+Route::view('/contact', 'pages.contact')->name('public.contact');
+Route::view('/faq', 'pages.faq')->name('public.faq');
+
 // Public health probe — no secrets, no auth.
 Route::get('/health', [HealthController::class, 'ping']);
 
