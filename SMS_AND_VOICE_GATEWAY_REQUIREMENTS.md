@@ -1,158 +1,176 @@
-# AH&V Portal: Recommended Cloud SMS & AI Voice Calling Blueprint
+# AH&V Portal: Multi-Channel Expansion Blueprint (WhatsApp + SMS + Voice)
 
-> **Executive Recommendation:** Build a **100% Zero-Hardware, Cloud CPaaS Reseller & Aggregator** service directly inside your existing AH&V Portal. Do not buy physical devices, SIM boxes, or telecom hardware. Use wholesale cloud REST APIs, charge clients upfront via a prepaid credit wallet with a 50–100% margin, and collect monthly portal SaaS fees.
-
----
-
-## 1. The Recommended Business Model
-
-```
-[Wholesale Cloud Providers]
-  • SMS: MSG91 Enterprise API (Wholesale: ~₹0.12 - ₹0.14 / SMS)
-  • Voice: Exotel / Vapi.ai Cloud API (Wholesale: ~₹1.80 / call min)
-                     ▲
-                     │ (Backend Cloud REST APIs)
-[AH&V Portal Multi-Tenant Platform]
-  • Multi-tenant campaigns, contact management, DLT template mapping
-  • Prepaid wallet (UPI / Razorpay auto-recharge)
-                     │
-                     ▼ (Billed to Clients)
-[Your Clients (e.g., Fit Ganganagar, Local Businesses)]
-  • Pay ₹0.22 - ₹0.25 per SMS (You keep ₹0.10 - ₹0.12 net profit per SMS)
-  • Pay ₹4.00 per Voice call minute (You keep ₹2.20 net profit per min)
-  • Pay ₹999 - ₹2,499 / month portal subscription fee
-```
-
-### Monthly Earning Projection (Example: 20 Active Clients)
-* **SMS Margin (5,00,000 total SMS):** Profit ₹0.11/SMS = **₹55,000 / month**
-* **AI Voice Calls (10,000 minutes):** Profit ₹2.20/min = **₹22,000 / month**
-* **Monthly SaaS Fees (20 clients × ₹1,499):** = **₹29,980 / month**
-* **Total Estimated Net Profit:** **₹1,06,980+ per month** *(Zero hardware overhead)*
+> **Design Goal:** Seamlessly add SMS and Voice modules to AH&V Portal without cluttering the existing WhatsApp dashboard. We implement a **Module Switcher (Suite Switcher)** pattern with **per-tenant subscription paywalls**, so clients only see and access the services they pay for.
 
 ---
 
-## 2. Recommended Cloud Partners
+## 1. UX Architecture: The "Module Switcher" Concept
 
-| Channel | Recommended Partner | Why This Partner? |
-|---|---|---|
-| **Bulk SMS (Transactional & OTP)** | **MSG91** (`msg91.com`) | Best-in-class developer APIs, instant DLT template pass-through, fast delivery (<2 sec for OTPs), native Indian business support. |
-| **Outbound Telephony (Calls)** | **Exotel** (`exotel.com`) | India’s leading compliant cloud telephony provider. Handles virtual caller IDs, 9 AM – 9 PM calling hours, and DND auto-filtering. |
-| **AI Voice Brain (Conversational Agent)** | **Vapi.ai / Retell AI** | Fully hosted, sub-600ms conversational AI pipeline. Connects to Exotel/Twilio numbers and handles Speech-to-Text, LLM logic, and natural Hindi/English voice synthesis without hosting your own PBX. |
+Instead of squeezing WhatsApp, SMS, and Voice into one messy dashboard, the portal uses a **Top-Level Suite Switcher** (similar to Google Workspace or Zoho):
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ AH&V Portal   [ Suite: WhatsApp ▾ ]   [ Org: FIT GANGANAGAR ▾ ]  (●) User Profile │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### When Switched to "WhatsApp Portal" Mode:
+* **Sidebar Shows:**
+  - WhatsApp Dashboard
+  - Phone Numbers & Overview
+  - WhatsApp Templates (Meta)
+  - WhatsApp Campaigns
+  - 2-Way Live Chats
+  - WhatsApp Reports & Webhooks
+* **Shared Modules:** Contacts, Contact Groups, Team Members, Settings.
+
+### When Switched to "SMS Portal" Mode:
+* **Sidebar Dynamically Changes To:**
+  - SMS Dashboard (Sent, Delivered, Failed, Balance)
+  - DLT Headers / Sender IDs (e.g., `FITGNR`)
+  - DLT Content Templates (e.g., OTP, Promo)
+  - SMS Campaigns (Bulk Dispatch)
+  - Quick SMS (Single / Test Message)
+  - SMS Reports & DLR Logs
+* **Shared Modules:** Contacts, Contact Groups, Wallet Recharge, Settings.
 
 ---
 
-## 3. How DLT is Handled (Zero Legal Liability for You)
+## 2. Multi-Tenant Subscription & Paywall Logic (Entitlements)
 
-You do **not** take the headache or liability of government telecom registration:
-1. **Client's Role:** Each client registers their own business on Jio DLT or Airtel DLT (standard one-time process for any Indian business). They get:
-   - `Principal Entity (PE) ID`
-   - `Sender Header` (e.g., `FITGNR`)
-   - `DLT Content Template ID`
-2. **Portal's Role:** Your portal simply gives them 3 input fields in their organization settings:
-   - Client pastes their `Entity ID`, `Sender ID`, and `Template ID`.
-   - When a campaign runs, your backend sends these 3 IDs along with the message to MSG91.
-   - The telecom operators verify the DLT chain automatically. If approved, the message delivers instantly; if not, the provider reports the error without affecting your company.
+When the Platform Admin creates or edits a Client Organization, the Admin selects which modules the client has purchased:
+
+```
+[✓] WhatsApp Service (Active)
+[ ] SMS Service (Inactive / Not Subscribed)
+[ ] Voice AI Calling (Private Preview)
+```
+
+### What Happens When a Client Tries to Switch?
+* **Case 1: Client is subscribed to both:**
+  - They click the suite switcher dropdown and switch smoothly between WhatsApp and SMS dashboards.
+* **Case 2: Client is subscribed to WhatsApp ONLY and clicks "SMS Portal":**
+  - Instead of a 404 or broken page, they land on a **Branded Paywall Page**:
+    > **🔒 SMS Service Not Subscribed**  
+    > *Your organization currently does not have an active SMS plan.*  
+    > *Features included in SMS:* DLT Sender ID, Transactional OTPs, Fast Bulk SMS to non-WhatsApp users.  
+    > **[ Contact AH&V Software to Activate ]** or **[ Upgrade Subscription ]**
+* **Case 3: Client is subscribed to SMS ONLY and clicks "WhatsApp Portal":**
+  - Shows the same friendly paywall for WhatsApp.
 
 ---
 
-## 4. Technical Implementation in AH&V Portal
+## 3. Code-Level Implementation Roadmap (Priority-Wise)
 
-Your current Laravel codebase is already prepared for multi-tenancy (`OrganizationScope`) and queued dispatch. Adding SMS requires 4 clean additions:
-
-### A. Database Migration: `sms_messages` & `wallet_balance`
-```php
-// Add wallet_balance to organizations
-Schema::table('organizations', function (Blueprint $table) {
-    $table->decimal('wallet_balance', 10, 2)->default(0.00);
-});
-
-// Create sms_messages table
-Schema::create('sms_messages', function (Blueprint $table) {
-    $table->ulid('id')->primary();
-    $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
-    $table->string('to_phone', 20);
-    $table->string('sender_id', 10);
-    $table->string('dlt_template_id', 50)->nullable();
-    $table->text('message_body');
-    $table->decimal('cost', 8, 4);          // Billed to client (e.g. 0.25)
-    $table->decimal('provider_cost', 8, 4); // Cost from MSG91 (e.g. 0.13)
-    $table->decimal('profit', 8, 4);        // Net gain (e.g. 0.12)
-    $table->string('status', 20)->default('queued'); // queued, sent, delivered, failed
-    $table->string('provider_message_id', 100)->nullable();
-    $table->timestamps();
-
-    $table->index(['organization_id', 'created_at']);
-});
 ```
-
-### B. Gateway Service: `app/Services/Sms/Msg91Gateway.php`
-```php
-namespace App\Services\Sms;
-
-use Illuminate\Support\Facades\Http;
-
-class Msg91Gateway
-{
-    public function send(string $toPhone, string $senderId, string $templateId, array $variables = []): array
-    {
-        $response = Http::withHeaders([
-            'authkey' => config('services.msg91.auth_key'),
-            'Content-Type' => 'application/json',
-        ])->post('https://control.msg91.com/api/v5/flow/', [
-            'template_id' => $templateId,
-            'sender' => $senderId,
-            'recipients' => [
-                array_merge(['mobiles' => $toPhone], $variables)
-            ]
-        ]);
-
-        return $response->json() ?? [];
-    }
-}
-```
-
-### C. Campaign Queue Job & Wallet Deduction
-```php
-// Before dispatching message:
-$costPerSms = 0.24;
-if ($organization->wallet_balance < $costPerSms) {
-    throw new InsufficientBalanceException("Please recharge your SMS wallet.");
-}
-
-// Deduct immediately in DB transaction:
-$organization->decrement('wallet_balance', $costPerSms);
-
-// Dispatch to MSG91 via queue
-SendSmsMessageJob::dispatch($messageId)->onQueue('sms-high');
-```
-
-### D. Delivery Report (DLR) Webhook: `routes/api.php`
-```php
-Route::post('webhooks/sms/dlr', function (Request $request) {
-    $providerMsgId = $request->input('requestId');
-    $status = strtolower($request->input('status')); // delivered, failed
-
-    Message::where('provider_message_id', $providerMsgId)
-        ->update([
-            'status' => $status === 'delivered' ? 'delivered' : 'failed',
-            'updated_at' => now(),
-        ]);
-
-    return response()->json(['status' => 'ok']);
-});
+Phase 0: Module Subscriptions & Paywall Gates
+   └── (Admin Org Edit + Middleware + Paywall View)
+Phase 1: UI Suite Switcher & Dynamic Sidebar
+   └── (Header Dropdown + Route Prefixes /whatsapp & /sms)
+Phase 2: SMS Core Engine & Prepaid Wallet
+   └── (DLT Models + MSG91 REST Driver + Wallet Deductions)
+Phase 3: SMS Campaigns & Queue Dispatcher
+   └── (Contact Selector + Async Jobs + DLT Variable Merger)
+Phase 4: Webhook DLR Engine & SMS Reports
+   └── (Delivery Status Callback + Funnel Analytics)
 ```
 
 ---
 
-## 5. Step-by-Step Launch Plan
+### Priority 0 (P0): Multi-Module Entitlements & Subscription Middleware
+* **Database Migration:**
+  - Add `enabled_channels` (JSON array: `['whatsapp', 'sms']`) or boolean flags (`has_whatsapp`, `has_sms`, `has_voice`) to `organizations` table.
+* **Platform Admin UI:**
+  - Update Client Organization Create/Edit form (`admin.organizations.edit`) to toggle module access with checkboxes.
+* **Middleware (`EnsureChannelSubscribed`):**
+  - Route groups wrapped with `channel.subscribed:sms` or `channel.subscribed:whatsapp`.
+  - Checks if `currentOrg()->hasChannel('sms')`. If false, renders the branded upgrade paywall view.
 
-1. **Step 1: Open an MSG91 Account**
-   - Register at `msg91.com`, complete KYC, and purchase ₹1,000 test credits.
-   - Obtain the API `authkey`.
-2. **Step 2: Add SMS Tab to AH&V Sidebar**
-   - Add **SMS Campaigns**, **SMS Templates (DLT)**, and **SMS Reports** in the left sidebar alongside WhatsApp.
-3. **Step 3: Integrate Prepaid Wallet**
-   - Use Razorpay / Cashfree UPI QR so clients can click "Recharge Wallet" and add ₹500, ₹1,000, or ₹5,000 instantly.
-4. **Step 4: AI Voice Module (Next Phase)**
-   - Sign up on `vapi.ai` or `exotel.com`.
-   - Setup automated phone calls that qualify leads and play voice responses using Gemini Flash + Sarvam AI Hindi voice.
+---
+
+### Priority 1 (P1): Suite Switcher UI & Dynamic Navigation
+* **Top Header Switcher Component:**
+  - A clean dropdown in the top navbar next to "Switch Org":
+    - `WhatsApp Portal` (Icon: Brand WhatsApp)
+    - `SMS Portal` (Icon: Message Dots)
+    - `Voice Calling` (Badge: Coming Soon)
+* **Route Separation:**
+  - All WhatsApp routes grouped under: `/whatsapp/...`
+  - All SMS routes grouped under: `/sms/...`
+  - Shared assets grouped under: `/contacts`, `/settings`, `/wallet`
+* **Dynamic Sidebar (`layouts/navigation.blade.php`):**
+  - Detects current active module from route (`request()->is('sms*')` vs `request()->is('whatsapp*')`).
+  - Renders the exact relevant navigation menu without visual clutter.
+
+---
+
+### Priority 2 (P2): SMS Core Engine & Prepaid Wallet
+* **Zero-Hardware Cloud Driver (`Msg91Gateway`):**
+  - Simple Guzzle/HTTP service in Laravel calling MSG91 REST API.
+  - Zero telecom hardware, zero SMPP complexity.
+* **Prepaid Wallet (`organizations.wallet_balance`):**
+  - Real-time balance check before dispatch.
+  - Cost calculated: `Audience Count × ₹0.24`.
+  - Atomically decrements balance inside DB transaction.
+* **DLT Header & Template Management:**
+  - Client stores their approved DLT `Principal Entity ID`, `Sender Header` (e.g., `FITGNR`), and `Template ID`.
+
+---
+
+### Priority 3 (P3): SMS Campaigns & Queue Dispatch
+* **Models:** `SmsCampaign`, `SmsMessage`.
+* **Asynchronous Queue Worker (`SendSmsCampaignJob`):**
+  - Chunks contact list (500 contacts per chunk).
+  - Posts to wholesale cloud API with rate limiting.
+  - Tracks individual message IDs.
+
+---
+
+### Priority 4 (P4): DLR Webhook & Reporting
+* **Webhook Endpoint:** `/api/webhooks/sms/dlr`
+  - Receives delivery confirmation from MSG91.
+  - Updates `sms_messages.status` to `delivered` or `failed`.
+* **SMS Reports Dashboard:**
+  - Delivery funnel: Total, Sent, Delivered, Failed.
+  - Filter by date range, sender ID, or campaign.
+
+---
+
+## 4. External Work Checklist (Outside Code / Business Tasks)
+
+Before or during the coding phase, the following non-technical tasks must be done:
+
+### 1. Wholesale Cloud Account Setup
+* Register a master business account on **[MSG91.com](https://msg91.com)**.
+* Complete AH&V Software business KYC (PAN, GST, Bank details).
+* Purchase an initial test credit pack (₹1,000 to ₹5,000) to obtain live API keys (`authkey`).
+
+### 2. Payment Gateway for Wallet Auto-Recharge
+* Activate **Razorpay** or **Cashfree** on your business account.
+* Clients can click **"Recharge SMS Wallet"** $\rightarrow$ Scan UPI QR / Netbanking $\rightarrow$ Instant wallet top-up via webhook.
+
+### 3. Client DLT Onboarding SOP (1-Page Guide)
+* Create a simple 1-page PDF or Help Doc for your clients:
+  - *"How to register on Jio DLT or Airtel DLT in 15 minutes."*
+  - *"How to get your Sender Header (e.g. FITGNR)."*
+  - *"How to copy your DLT Template ID into AH&V Portal."*
+  - *(This saves you from spending hours explaining telecom rules to non-tech clients).*
+
+### 4. Pricing & Margin Strategy
+* **Wholesale Purchase Cost:** ~₹0.12 to ₹0.14 per SMS (from MSG91).
+* **Retail Selling Price:**
+  - **Plan A (Pay As You Go):** ₹0.25 per SMS (100% margin).
+  - **Plan B (High Volume Recharge):** 50,000 SMS pack @ ₹0.20 per SMS (60% margin).
+  - **Platform Monthly Fee:** ₹999/mo for SMS only, or ₹1,999/mo for Combo (WhatsApp + SMS).
+
+---
+
+## 5. Summary Recommendation
+
+| Step | What To Build | Effort | Who Owns It |
+|---|---|---|---|
+| **Step 1** | Module Switcher UI + Entitlements Middleware + Paywall View | 1 - 2 Days | Developer |
+| **Step 2** | MSG91 Account KYC & Test API Key | 1 Day | Business / Admin |
+| **Step 3** | SMS DLT Templates + Prepaid Wallet + Campaign Dispatch | 2 - 3 Days | Developer |
+| **Step 4** | Webhook DLR + SMS Reports & Analytics | 1 - 2 Days | Developer |
+| **Step 5** | Launch to First Pilot Client (e.g., FIT Ganganagar) | 1 Day | Business + Developer |
