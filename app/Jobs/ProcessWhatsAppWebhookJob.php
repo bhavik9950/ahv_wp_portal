@@ -176,20 +176,53 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
      */
     private function handleInboundMessages(array $value, WebhookEvent $event): ?int
     {
-        $organizationId = null;
+        $organizationId = $event->organization_id;
 
         foreach ($value['messages'] ?? [] as $incoming) {
             $phoneNumberId = data_get($value, 'metadata.phone_number_id');
-            $localNumber = WhatsappPhoneNumber::query()->withoutGlobalScopes()
-                ->where('phone_number_id', $phoneNumberId)->first();
-
-            if ($localNumber === null) {
-                continue;
+            $localNumber = null;
+            if (filled($phoneNumberId)) {
+                $localNumber = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                    ->where('phone_number_id', (string) $phoneNumberId)->first();
             }
 
-            $organizationId ??= $localNumber->organization_id;
+            $organizationId ??= $localNumber?->organization_id;
             $from = (string) ($incoming['from'] ?? '');
             $wamid = $incoming['id'] ?? null;
+
+            // Fallback organization resolution: match customer phone number against outbound messages or contacts
+            if (! $organizationId && filled($from)) {
+                $cleanFrom = ltrim($from, '+');
+                $matchedMsg = Message::query()->withoutGlobalScopes()
+                    ->where(function ($q) use ($cleanFrom) {
+                        $q->where('to_phone', $cleanFrom)
+                            ->orWhere('to_phone', '+'.$cleanFrom);
+                    })
+                    ->latest()
+                    ->first();
+                $organizationId = $matchedMsg?->organization_id;
+
+                if (! $organizationId) {
+                    $matchedContact = Contact::query()->withoutGlobalScopes()
+                        ->where(function ($q) use ($cleanFrom) {
+                            $q->where('phone_e164', '+'.$cleanFrom)
+                                ->orWhere('phone_e164', $cleanFrom);
+                        })
+                        ->first();
+                    $organizationId = $matchedContact?->organization_id;
+                }
+            }
+
+            if (! $localNumber && $organizationId) {
+                $localNumber = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                    ->where('organization_id', $organizationId)
+                    ->orderByDesc('is_default')
+                    ->first();
+            }
+
+            if (! $organizationId) {
+                continue;
+            }
 
             $exists = Message::query()->withoutGlobalScopes()
                 ->where('wamid', $wamid)
@@ -200,17 +233,21 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 continue;
             }
 
+            $cleanFrom = ltrim($from, '+');
             $contact = Contact::query()->withoutGlobalScopes()
-                ->where('organization_id', $localNumber->organization_id)
-                ->where('phone_e164', $from)
+                ->where('organization_id', $organizationId)
+                ->where(function ($q) use ($cleanFrom) {
+                    $q->where('phone_e164', '+'.$cleanFrom)
+                        ->orWhere('phone_e164', $cleanFrom);
+                })
                 ->first();
 
             $rawType = (string) ($incoming['type'] ?? 'text');
-            $messageType = MessageType::tryFrom($rawType) ?? MessageType::Unsupported;
+            $messageType = MessageType::tryFrom($rawType) ?? MessageType::Text;
 
             $message = (new Message)->forceFill([
-                'organization_id' => $localNumber->organization_id,
-                'whatsapp_phone_number_id' => $localNumber->getKey(),
+                'organization_id' => $organizationId,
+                'whatsapp_phone_number_id' => $localNumber?->getKey(),
                 'contact_id' => $contact?->getKey(),
                 'wamid' => $wamid,
                 'direction' => 'inbound',
@@ -220,6 +257,8 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 'payload' => $incoming,
                 'idempotency_key' => 'inbound:'.($wamid ?? Str::uuid()->toString()),
                 'status' => MessageStatus::Delivered->value,
+                'created_at' => $event->received_at ?? now(),
+                'updated_at' => $event->received_at ?? now(),
             ]);
             $message->save();
 
@@ -231,7 +270,7 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                 HandleInboundMessageJob::dispatch($message->getKey())->onQueue('bot');
             }
 
-            $this->maybeHandleStopKeyword($incoming, $from, $localNumber->organization_id);
+            $this->maybeHandleStopKeyword($incoming, $from, $organizationId);
         }
 
         return $organizationId;

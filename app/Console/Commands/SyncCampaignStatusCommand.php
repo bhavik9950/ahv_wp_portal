@@ -6,12 +6,16 @@ namespace App\Console\Commands;
 
 use App\Enums\CampaignRecipientStatus;
 use App\Enums\MessageStatus;
+use App\Enums\MessageType;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Models\Contact;
 use App\Models\Message;
 use App\Models\MessageStatusEvent;
 use App\Models\Organization;
 use App\Models\WebhookEvent;
+use App\Models\WhatsappBusinessAccount;
+use App\Models\WhatsappPhoneNumber;
 use App\Support\TenantContext;
 use Illuminate\Console\Command;
 
@@ -290,7 +294,142 @@ class SyncCampaignStatusCommand extends Command
         }
 
         $this->line("  Updated {$directUpdated} direct/outbound messages to their latest status.");
-        $this->info('Message & Campaign status sync complete.');
+
+        // Now sync and backfill Inbound Messages from Webhook Events
+        $this->info('Syncing inbound customer replies from webhook events...');
+        $inboundEvents = WebhookEvent::query()->withoutGlobalScopes()
+            ->where('payload', 'like', '%"messages":%')
+            ->orderBy('received_at')
+            ->get();
+
+        $inboundSynced = 0;
+        foreach ($inboundEvents as $event) {
+            $entries = data_get($event->payload, 'entry', []);
+            foreach ($entries as $entry) {
+                $wabaId = $entry['id'] ?? null;
+                foreach (data_get($entry, 'changes', []) as $change) {
+                    $value = $change['value'] ?? [];
+                    $messages = $value['messages'] ?? [];
+                    if (empty($messages)) {
+                        continue;
+                    }
+
+                    $phoneNumberId = data_get($value, 'metadata.phone_number_id');
+                    $localNumber = null;
+                    if (filled($phoneNumberId)) {
+                        $localNumber = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                            ->where('phone_number_id', (string) $phoneNumberId)
+                            ->first();
+                    }
+
+                    $orgId = $localNumber?->organization_id ?? $event->organization_id;
+
+                    if (! $orgId && filled($wabaId)) {
+                        $orgId = WhatsappBusinessAccount::query()->withoutGlobalScopes()
+                            ->where('waba_id', (string) $wabaId)
+                            ->value('organization_id');
+                    }
+
+                    foreach ($messages as $incoming) {
+                        $from = (string) ($incoming['from'] ?? '');
+                        $wamid = $incoming['id'] ?? null;
+
+                        if (! $wamid) {
+                            continue;
+                        }
+
+                        // If orgId is still null, match $from with outbound messages or contacts
+                        if (! $orgId && filled($from)) {
+                            $cleanPhone = ltrim($from, '+');
+                            $matchedMsg = Message::query()->withoutGlobalScopes()
+                                ->where(function ($q) use ($cleanPhone) {
+                                    $q->where('to_phone', $cleanPhone)
+                                        ->orWhere('to_phone', '+'.$cleanPhone);
+                                })
+                                ->latest()
+                                ->first();
+                            $orgId = $matchedMsg?->organization_id;
+
+                            if (! $orgId) {
+                                $matchedContact = Contact::query()->withoutGlobalScopes()
+                                    ->where(function ($q) use ($cleanPhone) {
+                                        $q->where('phone_e164', '+'.$cleanPhone)
+                                            ->orWhere('phone_e164', $cleanPhone);
+                                    })
+                                    ->first();
+                                $orgId = $matchedContact?->organization_id;
+                            }
+                        }
+
+                        if (! $orgId) {
+                            continue;
+                        }
+
+                        if (! $localNumber) {
+                            $localNumber = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                                ->where('organization_id', $orgId)
+                                ->orderByDesc('is_default')
+                                ->first();
+                        }
+
+                        // Update event organization_id if not set
+                        if (! $event->organization_id) {
+                            $event->update(['organization_id' => $orgId]);
+                        }
+
+                        $cleanFrom = ltrim($from, '+');
+                        $contact = Contact::query()->withoutGlobalScopes()
+                            ->where('organization_id', $orgId)
+                            ->where(function ($q) use ($cleanFrom) {
+                                $q->where('phone_e164', '+'.$cleanFrom)
+                                    ->orWhere('phone_e164', $cleanFrom);
+                            })
+                            ->first();
+
+                        $rawType = (string) ($incoming['type'] ?? 'text');
+                        $messageType = MessageType::tryFrom($rawType) ?? MessageType::Text;
+
+                        $existingMsg = Message::query()->withoutGlobalScopes()
+                            ->where('wamid', $wamid)
+                            ->first();
+
+                        $eventReceivedAt = $event->received_at ?? now();
+
+                        if ($existingMsg) {
+                            if ($existingMsg->direction !== 'inbound') {
+                                $existingMsg->forceFill([
+                                    'direction' => 'inbound',
+                                    'organization_id' => $orgId,
+                                    'whatsapp_phone_number_id' => $localNumber?->getKey() ?? $existingMsg->whatsapp_phone_number_id,
+                                    'contact_id' => $contact?->getKey() ?? $existingMsg->contact_id,
+                                ])->save();
+                                $inboundSynced++;
+                            }
+                        } else {
+                            (new Message)->forceFill([
+                                'organization_id' => $orgId,
+                                'whatsapp_phone_number_id' => $localNumber?->getKey(),
+                                'contact_id' => $contact?->getKey(),
+                                'wamid' => $wamid,
+                                'direction' => 'inbound',
+                                'to_phone' => $from,
+                                'to_phone_hash' => hash('sha256', $from),
+                                'type' => $messageType,
+                                'payload' => $incoming,
+                                'idempotency_key' => 'inbound:'.$wamid,
+                                'status' => MessageStatus::Delivered->value,
+                                'created_at' => $eventReceivedAt,
+                                'updated_at' => $eventReceivedAt,
+                            ])->save();
+                            $inboundSynced++;
+                        }
+                    }
+                }
+            }
+        }
+
+        $this->line("  Synced {$inboundSynced} inbound messages from webhooks.");
+        $this->info('Message, Inbound & Campaign status sync complete.');
 
         return self::SUCCESS;
     }

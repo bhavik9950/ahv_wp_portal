@@ -140,7 +140,7 @@
                         })
                         <tr class="hover">
                             <td>
-                                <div class="font-mono text-xs">+{{ $dm->to_phone }}</div>
+                                <div class="font-mono text-xs">+{{ ltrim($dm->to_phone, '+') }}</div>
                                 @if ($dm->contact)<div class="text-[0.7rem] opacity-60">{{ $dm->contact->name }}</div>@endif
                             </td>
                             <td>
@@ -175,7 +175,7 @@
                                 @endif
                             </td>
                             <td class="text-right">
-                                <a href="{{ route('whatsapp.conversations.show', $dm->to_phone) }}" class="btn btn-xs btn-ghost gap-1">
+                                <a href="{{ route('whatsapp.conversations.show', ltrim($dm->to_phone, '+')) }}" class="btn btn-xs btn-ghost gap-1">
                                     <i class="ti ti-message-circle-2"></i> Chat
                                 </a>
                             </td>
@@ -207,19 +207,19 @@
                     @foreach ($inboundMessages as $im)
                         <tr class="hover">
                             <td>
-                                <div class="font-mono text-xs">+{{ $im->to_phone }}</div>
+                                <div class="font-mono text-xs">+{{ ltrim($im->to_phone, '+') }}</div>
                                 @if ($im->contact)<div class="text-[0.7rem] opacity-60">{{ $im->contact->name }}</div>@endif
                             </td>
                             <td class="max-w-md">
                                 <span class="text-xs truncate block">
-                                    {{ data_get($im->payload, 'text.body') ?? ($im->type->value ?? 'Message') }}
+                                    {{ $im->bodyText() ?? data_get($im->payload, 'text.body') ?? ($im->type->value ?? 'Message') }}
                                 </span>
                             </td>
                             <td class="text-xs text-nowrap opacity-75">
                                 {{ $im->created_at->format('d M, H:i') }}
                             </td>
                             <td class="text-right">
-                                <a href="{{ route('whatsapp.conversations.show', $im->to_phone) }}" class="btn btn-xs btn-ghost gap-1 text-primary">
+                                <a href="{{ route('whatsapp.conversations.show', ltrim($im->to_phone, '+')) }}" class="btn btn-xs btn-ghost gap-1 text-primary">
                                     <i class="ti ti-message-circle-2"></i> Open Chat
                                 </a>
                             </td>
