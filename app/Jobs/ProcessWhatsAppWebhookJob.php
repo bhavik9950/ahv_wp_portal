@@ -89,8 +89,9 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                         $organizationId ??= $phone?->organization_id;
                     }
 
-                    $organizationId ??= $this->handleStatuses($value, $event, $statuses, $organizationId);
-                    $organizationId ??= $this->handleInboundMessages($value, $event, $organizationId);
+                    $statusOrgId = $this->handleStatuses($value, $event, $statuses, $organizationId);
+                    $inboundOrgId = $this->handleInboundMessages($value, $event, $organizationId);
+                    $organizationId = $organizationId ?? $statusOrgId ?? $inboundOrgId;
 
                     if ($field === 'message_template_status_update') {
                         $organizationId ??= $this->handleTemplateUpdate($value);
