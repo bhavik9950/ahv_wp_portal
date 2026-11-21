@@ -98,11 +98,6 @@
                             </td>
                         </tr>
                     @endforeach
-                    @if (empty($campaigns) || count($campaigns) === 0)
-                        <tr>
-                            <td colspan="7" class="text-center py-6 text-sm opacity-50">No campaigns launched in this date range.</td>
-                        </tr>
-                    @endif
                 </tbody>
             </table>
         </div>
@@ -186,11 +181,6 @@
                             </td>
                         </tr>
                     @endforeach
-                    @if ($directMessages->isEmpty())
-                        <tr>
-                            <td colspan="6" class="text-center py-6 text-sm opacity-50">No direct messages sent in this date range.</td>
-                        </tr>
-                    @endif
                 </tbody>
             </table>
         </div>
@@ -235,11 +225,6 @@
                             </td>
                         </tr>
                     @endforeach
-                    @if ($inboundMessages->isEmpty())
-                        <tr>
-                            <td colspan="4" class="text-center py-6 text-sm opacity-50">No inbound messages received in this date range.</td>
-                        </tr>
-                    @endif
                 </tbody>
             </table>
         </div>
