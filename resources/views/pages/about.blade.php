@@ -58,9 +58,17 @@
             <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 A premier software development company specializing in cloud CPaaS, enterprise telephony, high-volume broadcast platforms, and conversational AI agents.
             </p>
-            <div class="pt-2">
-                <a href="{{ route('public.contact') }}" class="btn btn-primary min-h-[40px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-6 text-xs font-bold border-0 shadow-sm">
-                    Get in Touch With Us &rarr;
+            <div class="pt-3 flex flex-wrap items-center justify-center gap-3 text-xs">
+                <a href="https://wa.me/917878159887" target="_blank" rel="noopener noreferrer"
+                   class="btn btn-outline btn-sm rounded-xl border-slate-300 text-slate-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 gap-1.5">
+                    <i class="ti ti-brand-whatsapp text-emerald-600 text-base"></i> +91 78781 59887
+                </a>
+                <a href="mailto:contact@ahvsoftware.com"
+                   class="btn btn-outline btn-sm rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 gap-1.5">
+                    <i class="ti ti-mail text-base"></i> contact@ahvsoftware.com
+                </a>
+                <a href="{{ route('public.contact') }}" class="btn btn-primary btn-sm min-h-[38px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-5 text-xs font-bold border-0 shadow-sm">
+                    Open Contact Form &rarr;
                 </a>
             </div>
         </div>

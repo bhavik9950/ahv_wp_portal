@@ -67,7 +67,7 @@
                     <div class="text-[0.65rem] uppercase tracking-wider font-bold text-slate-400">Fixed Setup Charge</div>
                     <div class="text-3xl sm:text-4xl font-extrabold text-emerald-600 font-mono">₹4,500</div>
                     <div class="text-[0.7rem] text-slate-500 mb-2">One-Time Setup Fee (Fix)</div>
-                    <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20ready%20for%20the%20Meta%20WhatsApp%20Business%20Verification%20and%20API%20Integration%20Setup%20(₹4,500%20Fix)."
+                    <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20ready%20for%20the%20Meta%20WhatsApp%20Business%20Verification%20and%20API%20Integration%20Setup%20(₹4,500%20Fix)."
                        target="_blank" rel="noopener noreferrer"
                        class="btn btn-primary min-h-[42px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl w-full gap-1.5 text-xs font-bold justify-center border-0 shadow-sm">
                         <i class="ti ti-brand-whatsapp text-base"></i> Book Setup Onboarding
@@ -104,7 +104,7 @@
                         </ul>
                     </div>
                     <div class="pt-2 border-t border-slate-100">
-                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%20Monthly%20Plan%20(₹649)%20for%20WhatsApp%20Cloud%20Portal."
+                        <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%20Monthly%20Plan%20(₹649)%20for%20WhatsApp%20Cloud%20Portal."
                            target="_blank" rel="noopener noreferrer"
                            class="btn btn-primary min-h-[40px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl w-full gap-1.5 text-xs font-bold border-0 justify-center">
                             <i class="ti ti-brand-whatsapp text-base"></i> Get Monthly Plan
@@ -132,7 +132,7 @@
                         </ul>
                     </div>
                     <div class="pt-2 border-t border-slate-100">
-                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%206%20Months%20Plan%20(₹3,499)%20for%20WhatsApp%20Cloud%20Portal."
+                        <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%206%20Months%20Plan%20(₹3,499)%20for%20WhatsApp%20Cloud%20Portal."
                            target="_blank" rel="noopener noreferrer"
                            class="btn btn-outline min-h-[40px] border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl w-full gap-1.5 text-xs font-semibold justify-center">
                             <i class="ti ti-brand-whatsapp text-emerald-600 text-base"></i> Inquire for 6 Months
@@ -160,7 +160,7 @@
                         </ul>
                     </div>
                     <div class="pt-2 border-t border-slate-100">
-                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%201%20Year%20Plan%20(₹5,999)%20for%20WhatsApp%20Cloud%20Portal."
+                        <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%201%20Year%20Plan%20(₹5,999)%20for%20WhatsApp%20Cloud%20Portal."
                            target="_blank" rel="noopener noreferrer"
                            class="btn btn-outline min-h-[40px] border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl w-full gap-1.5 text-xs font-semibold justify-center">
                             <i class="ti ti-brand-whatsapp text-emerald-600 text-base"></i> Inquire for 1 Year
@@ -188,7 +188,7 @@
                         </ul>
                     </div>
                     <div class="pt-2 border-t border-slate-100">
-                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20want%20to%20claim%20the%20Lifetime%20Access%20License%20(₹14,999)%20for%20WhatsApp%20Cloud%20Portal."
+                        <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20want%20to%20claim%20the%20Lifetime%20Access%20License%20(₹14,999)%20for%20WhatsApp%20Cloud%20Portal."
                            target="_blank" rel="noopener noreferrer"
                            class="btn btn-primary min-h-[40px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl w-full gap-1.5 text-xs font-bold border-0 justify-center">
                             <i class="ti ti-brand-whatsapp text-base"></i> Get Lifetime Access

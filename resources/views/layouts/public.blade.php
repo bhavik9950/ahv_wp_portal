@@ -46,7 +46,8 @@
                     'logo' => 'https://wap.ahvsoftware.com/favicon.ico',
                     'contactPoint' => [
                         '@type' => 'ContactPoint',
-                        'telephone' => '+91-8104055511',
+                        'telephone' => '+91-7878159887',
+                        'email' => 'contact@ahvsoftware.com',
                         'contactType' => 'Customer Support and Sales',
                         'areaServed' => 'IN',
                         'availableLanguage' => ['en', 'hi']
@@ -183,7 +184,7 @@
                     <a href="{{ route('public.contact') }}" class="hidden sm:inline-flex btn btn-primary btn-sm px-4 bg-emerald-600 hover:bg-emerald-700 text-white border-0 text-xs font-bold rounded-xl gap-1.5 shadow-xs">
                         <i class="ti ti-mail-fast text-sm"></i> Request Access
                     </a>
-                    <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%20WhatsApp%20Cloud%20Portal."
+                    <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%20WhatsApp%20Cloud%20Portal."
                        target="_blank" rel="noopener noreferrer"
                        class="inline-flex sm:hidden p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-lg hover:bg-emerald-100 transition-colors"
                        aria-label="Direct WhatsApp Contact">
@@ -235,10 +236,10 @@
                             <a href="{{ route('public.contact') }}" class="btn btn-primary btn-sm w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs gap-1.5 border-0 shadow-sm">
                                 <i class="ti ti-mail-fast"></i> Request Workspace Access
                             </a>
-                            <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20would%20like%20to%20inquire%20about%20the%20WhatsApp%20Cloud%20Portal."
+                            <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20would%20like%20to%20inquire%20about%20the%20WhatsApp%20Cloud%20Portal."
                                target="_blank" rel="noopener noreferrer"
                                class="btn btn-outline btn-sm w-full border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold rounded-xl text-xs gap-1.5">
-                                <i class="ti ti-brand-whatsapp text-emerald-600"></i> WhatsApp (+91 81040 55511)
+                                <i class="ti ti-brand-whatsapp text-emerald-600"></i> WhatsApp (+91 78781 59887)
                             </a>
                         </div>
                     </div>
@@ -265,10 +266,10 @@
                         <span class="font-extrabold text-base text-white">AHV WhatsApp Portal</span>
                     </div>
                     <p class="text-xs text-slate-400 leading-relaxed">
-                        Enterprise cloud communication platform. Official Meta WhatsApp Cloud API software for broadcasting campaigns, customer live chat, and automated messaging.
+                        Official Meta WhatsApp Cloud API marketing software. High-deliverability broadcasts, 2-way live chat, and zero number ban risk.
                     </p>
                     <div class="text-[0.7rem] text-slate-500">
-                        A product of AHV Software Technologies.
+                        AHV Software Technologies
                     </div>
                 </div>
 
@@ -296,17 +297,27 @@
 
                 {{-- Col 4: Support & Contact --}}
                 <div class="space-y-3">
-                    <h4 class="font-bold text-sm text-white uppercase tracking-wider text-[0.75rem]">Enterprise Support</h4>
-                    <p class="text-xs text-slate-400">Direct technical onboarding assistance via WhatsApp and Phone:</p>
-                    <div>
-                        <a href="https://wa.me/918104055511" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-outline btn-sm text-white border-slate-700 hover:bg-emerald-600 hover:border-emerald-600 w-full gap-2 text-xs">
-                            <i class="ti ti-brand-whatsapp text-emerald-400 text-base"></i> +91 81040 55511
-                        </a>
-                    </div>
+                    <h4 class="font-bold text-sm text-white uppercase tracking-wider text-[0.75rem]">Contact &amp; Support</h4>
+                    <ul class="space-y-2 text-slate-400">
+                        <li>
+                            <a href="https://wa.me/917878159887" target="_blank" rel="noopener noreferrer" class="hover:text-white flex items-center gap-2">
+                                <i class="ti ti-brand-whatsapp text-emerald-400 text-sm"></i> +91 78781 59887
+                            </a>
+                        </li>
+                        <li>
+                            <a href="mailto:contact@ahvsoftware.com" class="hover:text-white flex items-center gap-2 truncate">
+                                <i class="ti ti-mail text-slate-400 text-sm"></i> contact@ahvsoftware.com
+                            </a>
+                        </li>
+                        <li>
+                            <a href="mailto:infoahvsoft@gmail.com" class="hover:text-white flex items-center gap-2 truncate">
+                                <i class="ti ti-at text-slate-400 text-sm"></i> infoahvsoft@gmail.com
+                            </a>
+                        </li>
+                    </ul>
                     <div class="pt-1">
-                        <a href="{{ route('public.contact') }}" class="btn btn-emerald bg-emerald-600 hover:bg-emerald-700 text-white btn-sm w-full text-xs border-0">
-                            Submit Onboarding Request &rarr;
+                        <a href="{{ route('public.contact') }}" class="btn btn-emerald bg-emerald-600 hover:bg-emerald-700 text-white btn-sm w-full text-xs border-0 rounded-xl">
+                            Request Workspace Access &rarr;
                         </a>
                     </div>
                 </div>

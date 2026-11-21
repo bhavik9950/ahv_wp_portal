@@ -27,7 +27,7 @@
 
             {{-- Action Buttons (Full-width on mobile, auto-width on tablet/desktop) --}}
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-2 max-w-md mx-auto sm:max-w-none">
-                <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20onboarding%20and%20accessing%20the%20WhatsApp%20Cloud%20Portal."
+                <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20onboarding%20and%20accessing%20the%20WhatsApp%20Cloud%20Portal."
                    target="_blank" rel="noopener noreferrer"
                    class="btn btn-primary min-h-[44px] px-6 sm:px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white border-0 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-emerald-600/20 gap-2 sm:gap-2.5 justify-center">
                     <i class="ti ti-brand-whatsapp text-xl"></i> Request Access on WhatsApp
@@ -369,10 +369,10 @@
                 <a href="{{ route('public.contact') }}" class="btn btn-white min-h-[44px] bg-white text-emerald-900 hover:bg-emerald-50 px-6 sm:px-8 font-extrabold rounded-xl border-0 shadow-md justify-center text-xs sm:text-sm">
                     <i class="ti ti-mail-fast text-base"></i> Request Workspace Access
                 </a>
-                <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20would%20like%20to%20inquire%20about%20the%20WhatsApp%20Cloud%20Portal."
+                <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20would%20like%20to%20inquire%20about%20the%20WhatsApp%20Cloud%20Portal."
                    target="_blank" rel="noopener noreferrer"
                    class="btn btn-outline min-h-[44px] border-white text-white hover:bg-white/10 px-6 sm:px-7 font-bold rounded-xl justify-center text-xs sm:text-sm">
-                    <i class="ti ti-brand-whatsapp text-lg"></i> Chat on WhatsApp (+91 81040 55511)
+                    <i class="ti ti-brand-whatsapp text-lg"></i> Chat on WhatsApp (+91 78781 59887)
                 </a>
             </div>
         </div>
