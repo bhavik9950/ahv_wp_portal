@@ -58,21 +58,83 @@ class ContactController extends Controller
     {
         $this->authorize('create', Contact::class);
 
-        try {
-            $contact = $this->contacts->create($request->validated());
-        } catch (DuplicateContactException $e) {
-            return back()->withInput()->withErrors(['phone' => $e->getMessage()]);
-        } catch (\RuntimeException $e) {
-            return back()->withInput()->withErrors(['phone' => $e->getMessage()]);
+        $rawInput = (string) $request->validated('phone');
+        $rawNumbers = preg_split('/[\r\n,;]+/', $rawInput, -1, PREG_SPLIT_NO_EMPTY);
+        $rawNumbers = array_values(array_unique(array_filter(array_map('trim', (array) $rawNumbers))));
+
+        if (empty($rawNumbers)) {
+            return back()->withInput()->withErrors(['phone' => 'Please provide at least one phone number.']);
         }
 
-        if ($request->filled('groups')) {
-            $contact->groups()->sync($request->validated('groups'));
+        $created = [];
+        $duplicates = [];
+        $invalid = [];
+
+        $isMultiple = count($rawNumbers) > 1;
+
+        foreach ($rawNumbers as $rawPhone) {
+            try {
+                $contact = $this->contacts->create([
+                    'name' => $isMultiple ? null : $request->validated('name'),
+                    'email' => $isMultiple ? null : $request->validated('email'),
+                    'country_code' => $request->validated('country_code'),
+                    'phone' => $rawPhone,
+                    'custom_fields' => $request->validated('custom_fields', []),
+                ]);
+
+                // Auto opt-in by default if checked (default is true)
+                if ($request->boolean('opt_in', true)) {
+                    $this->optIn->optIn($contact, [
+                        'source' => 'manual',
+                        'note' => 'Added manually via contact form',
+                    ]);
+                }
+
+                if ($request->filled('groups')) {
+                    $contact->groups()->sync($request->validated('groups'));
+                }
+
+                $created[] = $contact;
+            } catch (DuplicateContactException) {
+                $duplicates[] = $rawPhone;
+            } catch (\Throwable $e) {
+                $invalid[] = "{$rawPhone} ({$e->getMessage()})";
+            }
         }
+
+        if (empty($created) && ! empty($duplicates) && ! $isMultiple) {
+            return back()->withInput()->withErrors(['phone' => "Phone number {$rawNumbers[0]} already exists."]);
+        }
+
+        if (empty($created) && ! empty($invalid) && ! $isMultiple) {
+            return back()->withInput()->withErrors(['phone' => $invalid[0]]);
+        }
+
+        if (! $isMultiple && ! empty($created)) {
+            return redirect()
+                ->route('whatsapp.contacts.show', $created[0])
+                ->with('flash_notify', ['type' => 'success', 'message' => 'Contact added and opted in.']);
+        }
+
+        $msgParts = [];
+        if (! empty($created)) {
+            $msgParts[] = count($created).' contact(s) added and opted in';
+        }
+        if (! empty($duplicates)) {
+            $msgParts[] = count($duplicates).' skipped (already exist)';
+        }
+        if (! empty($invalid)) {
+            $msgParts[] = count($invalid).' invalid';
+        }
+
+        $flashType = ! empty($created) ? 'success' : 'error';
 
         return redirect()
-            ->route('whatsapp.contacts.show', $contact)
-            ->with('flash_notify', ['type' => 'success', 'message' => 'Contact added.']);
+            ->route('whatsapp.contacts.index')
+            ->with('flash_notify', [
+                'type' => $flashType,
+                'message' => implode(', ', $msgParts).'.',
+            ]);
     }
 
     public function show(Contact $contact): View

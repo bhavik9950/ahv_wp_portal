@@ -22,9 +22,10 @@ class StoreContactRequest extends FormRequest
     {
         return [
             'name' => ['nullable', 'string', 'max:120'],
-            'phone' => ['required', 'string', 'max:25'],
+            'phone' => ['required', 'string'],
             'country_code' => ['nullable', 'string', 'regex:/^[0-9]{1,4}$/'],
             'email' => ['nullable', 'email', 'max:180'],
+            'opt_in' => ['nullable', 'boolean'],
             'custom_fields' => ['nullable', 'array'],
             'custom_fields.*' => ['nullable', 'string', 'max:500'],
             'groups' => ['nullable', 'array'],
