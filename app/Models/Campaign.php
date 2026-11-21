@@ -103,6 +103,7 @@ class Campaign extends Model
     public function recomputeTotals(): array
     {
         $counts = $this->recipients()
+            ->withoutGlobalScopes()
             ->selectRaw('status, count(*) as c')
             ->groupBy('status')
             ->pluck('c', 'status')

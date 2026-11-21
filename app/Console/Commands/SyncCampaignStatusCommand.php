@@ -10,7 +10,9 @@ use App\Models\Campaign;
 use App\Models\CampaignRecipient;
 use App\Models\Message;
 use App\Models\MessageStatusEvent;
+use App\Models\Organization;
 use App\Models\WebhookEvent;
+use App\Support\TenantContext;
 use Illuminate\Console\Command;
 
 class SyncCampaignStatusCommand extends Command
@@ -41,6 +43,14 @@ class SyncCampaignStatusCommand extends Command
             foreach ($campaigns as $campaign) {
                 $this->info("Syncing campaign [{$campaign->id}] '{$campaign->name}' (Status: {$campaign->status->value})...");
 
+                // Bind tenant context for this campaign
+                if ($campaign->organization_id) {
+                    $org = Organization::query()->withoutGlobalScopes()->find($campaign->organization_id);
+                    if ($org) {
+                        app(TenantContext::class)->set($org);
+                    }
+                }
+
                 $recipients = CampaignRecipient::query()
                     ->withoutGlobalScopes()
                     ->where('campaign_id', $campaign->id)
@@ -49,6 +59,7 @@ class SyncCampaignStatusCommand extends Command
                 $updatedCount = 0;
 
                 foreach ($recipients as $recipient) {
+                    $cleanPhone = ltrim($recipient->phone_e164, '+');
                     $message = null;
 
                     if ($recipient->message_id) {
@@ -62,7 +73,6 @@ class SyncCampaignStatusCommand extends Command
                     }
 
                     if (! $message) {
-                        $cleanPhone = ltrim($recipient->phone_e164, '+');
                         $message = Message::query()->withoutGlobalScopes()
                             ->where('campaign_id', $campaign->id)
                             ->where(function ($q) use ($recipient, $cleanPhone) {
@@ -70,30 +80,72 @@ class SyncCampaignStatusCommand extends Command
                                     ->orWhere('to_phone', $cleanPhone)
                                     ->orWhere('to_phone', '+'.$cleanPhone);
                             })
-                            ->latest()
+                            ->latest('created_at')
                             ->first();
                     }
 
                     if (! $message) {
-                        continue;
+                        // Check if an outbound message exists anywhere for this campaign and phone
+                        $message = Message::query()->withoutGlobalScopes()
+                            ->where(function ($q) use ($recipient, $cleanPhone) {
+                                $q->where('to_phone', $recipient->phone_e164)
+                                    ->orWhere('to_phone', $cleanPhone)
+                                    ->orWhere('to_phone', '+'.$cleanPhone);
+                            })
+                            ->where('direction', 'outbound')
+                            ->latest('created_at')
+                            ->first();
                     }
 
-                    $events = MessageStatusEvent::query()->withoutGlobalScopes()
-                        ->where('message_id', $message->id)
-                        ->pluck('status')
-                        ->all();
+                    $events = [];
+                    $errorCode = $message?->error_code;
+                    $errorMessage = $message?->error_message;
+
+                    if ($message) {
+                        $events = MessageStatusEvent::query()->withoutGlobalScopes()
+                            ->where('message_id', $message->id)
+                            ->pluck('status')
+                            ->all();
+                    }
+
+                    // Check webhook_events payloads directly as fallback
+                    if (empty($events) || (! in_array('read', $events, true) && ! in_array('delivered', $events, true) && ! in_array('failed', $events, true))) {
+                        $webhooks = WebhookEvent::query()->withoutGlobalScopes()
+                            ->where(function ($q) use ($message, $cleanPhone) {
+                                if ($message && $message->wamid) {
+                                    $q->where('payload', 'like', '%'.$message->wamid.'%');
+                                }
+                                $q->orWhere('payload', 'like', '%'.$cleanPhone.'%');
+                            })
+                            ->latest('received_at')
+                            ->limit(10)
+                            ->get();
+
+                        foreach ($webhooks as $wh) {
+                            $statuses = data_get($wh->payload, 'entry.0.changes.0.value.statuses', []);
+                            foreach ($statuses as $st) {
+                                $stVal = $st['status'] ?? '';
+                                if ($stVal) {
+                                    $events[] = $stVal;
+                                    if ($stVal === 'failed') {
+                                        $err = $st['errors'][0] ?? [];
+                                        $errorCode ??= $err['code'] ?? null;
+                                        $errorMessage ??= $err['message'] ?? ($err['error_data']['details'] ?? null);
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     $highestStatus = null;
-                    $errorCode = $message->error_code;
-                    $errorMessage = $message->error_message;
 
-                    if (in_array('read', $events, true) || $message->status === MessageStatus::Read) {
+                    if (in_array('read', $events, true) || ($message && $message->status === MessageStatus::Read)) {
                         $highestStatus = CampaignRecipientStatus::Read;
-                    } elseif (in_array('delivered', $events, true) || $message->status === MessageStatus::Delivered) {
+                    } elseif (in_array('delivered', $events, true) || ($message && $message->status === MessageStatus::Delivered)) {
                         $highestStatus = CampaignRecipientStatus::Delivered;
-                    } elseif (in_array('failed', $events, true) || $message->status === MessageStatus::Failed) {
+                    } elseif (in_array('failed', $events, true) || ($message && $message->status === MessageStatus::Failed)) {
                         $highestStatus = CampaignRecipientStatus::Failed;
-                    } elseif (in_array('sent', $events, true) || $message->status === MessageStatus::Sent) {
+                    } elseif (in_array('sent', $events, true) || ($message && $message->status === MessageStatus::Sent)) {
                         $highestStatus = CampaignRecipientStatus::Sent;
                     }
 
@@ -106,7 +158,7 @@ class SyncCampaignStatusCommand extends Command
                             $shouldUpdate = true;
                         }
 
-                        if ($recipient->message_id !== $message->id) {
+                        if ($message && $recipient->message_id !== $message->id) {
                             $recipient->message_id = $message->id;
                             $shouldUpdate = true;
                         }
@@ -114,10 +166,25 @@ class SyncCampaignStatusCommand extends Command
                         if ($shouldUpdate) {
                             $recipient->forceFill([
                                 'status' => $highestStatus->value,
-                                'message_id' => $message->id,
+                                'message_id' => $message?->id ?? $recipient->message_id,
                                 'error_code' => $errorCode ?? $recipient->error_code,
                                 'error_message' => $errorMessage ?? $recipient->error_message,
                             ])->save();
+
+                            // Also sync back to message if available
+                            if ($message) {
+                                $mappedMsgStatus = match ($highestStatus) {
+                                    CampaignRecipientStatus::Read => MessageStatus::Read,
+                                    CampaignRecipientStatus::Delivered => MessageStatus::Delivered,
+                                    CampaignRecipientStatus::Failed => MessageStatus::Failed,
+                                    default => MessageStatus::Sent,
+                                };
+                                $message->forceFill([
+                                    'status' => $mappedMsgStatus,
+                                    'campaign_id' => $campaign->id,
+                                    'campaign_recipient_id' => $recipient->id,
+                                ])->save();
+                            }
 
                             $updatedCount++;
                         }
@@ -142,7 +209,6 @@ class SyncCampaignStatusCommand extends Command
 
         $directUpdated = 0;
         foreach ($outboundMessages as $msg) {
-            // Check status events first
             $events = MessageStatusEvent::query()->withoutGlobalScopes()
                 ->where('message_id', $msg->id)
                 ->orderBy('occurred_at')
@@ -182,40 +248,42 @@ class SyncCampaignStatusCommand extends Command
                 continue;
             }
 
-            // If not found in message_status_events, check webhook_events payload for this wamid or phone
-            if ($msg->wamid) {
-                $webhook = WebhookEvent::query()->withoutGlobalScopes()
-                    ->where('payload', 'like', '%'.$msg->wamid.'%')
-                    ->latest()
-                    ->first();
+            // Check webhook_events by wamid or phone
+            $cleanPhone = ltrim($msg->to_phone, '+');
+            $webhook = WebhookEvent::query()->withoutGlobalScopes()
+                ->where(function ($q) use ($msg, $cleanPhone) {
+                    if ($msg->wamid) {
+                        $q->where('payload', 'like', '%'.$msg->wamid.'%');
+                    }
+                    $q->orWhere('payload', 'like', '%'.$cleanPhone.'%');
+                })
+                ->latest('received_at')
+                ->first();
 
-                if ($webhook) {
-                    $statuses = data_get($webhook->payload, 'entry.0.changes.0.value.statuses', []);
-                    foreach ($statuses as $st) {
-                        if (($st['id'] ?? '') === $msg->wamid) {
-                            $stVal = $st['status'] ?? '';
-                            $ts = isset($st['timestamp']) ? \Illuminate\Support\Carbon::createFromTimestamp((int) $st['timestamp']) : now();
+            if ($webhook) {
+                $statuses = data_get($webhook->payload, 'entry.0.changes.0.value.statuses', []);
+                foreach ($statuses as $st) {
+                    $stVal = $st['status'] ?? '';
+                    $ts = isset($st['timestamp']) ? \Illuminate\Support\Carbon::createFromTimestamp((int) $st['timestamp']) : now();
 
-                            if ($stVal === 'read') {
-                                $msg->forceFill(['status' => MessageStatus::Read, 'read_at' => $ts, 'delivered_at' => $ts])->save();
-                                $directUpdated++;
-                                break;
-                            } elseif ($stVal === 'delivered') {
-                                $msg->forceFill(['status' => MessageStatus::Delivered, 'delivered_at' => $ts])->save();
-                                $directUpdated++;
-                                break;
-                            } elseif ($stVal === 'failed') {
-                                $err = $st['errors'][0] ?? [];
-                                $msg->forceFill([
-                                    'status' => MessageStatus::Failed,
-                                    'failed_at' => $ts,
-                                    'error_code' => $err['code'] ?? null,
-                                    'error_message' => $err['message'] ?? ($err['error_data']['details'] ?? null),
-                                ])->save();
-                                $directUpdated++;
-                                break;
-                            }
-                        }
+                    if ($stVal === 'read') {
+                        $msg->forceFill(['status' => MessageStatus::Read, 'read_at' => $ts, 'delivered_at' => $ts])->save();
+                        $directUpdated++;
+                        break;
+                    } elseif ($stVal === 'delivered') {
+                        $msg->forceFill(['status' => MessageStatus::Delivered, 'delivered_at' => $ts])->save();
+                        $directUpdated++;
+                        break;
+                    } elseif ($stVal === 'failed') {
+                        $err = $st['errors'][0] ?? [];
+                        $msg->forceFill([
+                            'status' => MessageStatus::Failed,
+                            'failed_at' => $ts,
+                            'error_code' => $err['code'] ?? null,
+                            'error_message' => $err['message'] ?? ($err['error_data']['details'] ?? null),
+                        ])->save();
+                        $directUpdated++;
+                        break;
                     }
                 }
             }
