@@ -175,9 +175,6 @@
                 <a href="#request-access" class="btn btn-primary btn-sm gap-1">
                     <i class="ti ti-mail-fast"></i> Request Access
                 </a>
-                <a href="{{ route('login') }}" class="btn btn-ghost btn-sm text-xs opacity-70 hover:opacity-100 gap-1" title="Authorized Client Login">
-                    <i class="ti ti-lock"></i> Client Portal
-                </a>
             @endauth
         </div>
     </header>
@@ -391,17 +388,43 @@
         </div>
     </section>
 
-    {{-- Upcoming Services Roadmap (AI Chatbot & Calling Agent) --}}
+    {{-- Upcoming Services Roadmap (AI Chatbot, Voice Calling & SMS Gateway) --}}
     <section id="coming-soon" class="py-16 px-4 sm:px-8 max-w-6xl mx-auto space-y-8">
         <div class="text-center space-y-2">
-            <span class="badge badge-warning badge-sm uppercase font-extrabold tracking-wider">Coming Soon · Private Beta</span>
-            <h2 class="text-3xl font-bold tracking-tight">Advanced AI Services in Pipeline</h2>
+            <span class="badge badge-warning badge-sm uppercase font-extrabold tracking-wider">Services Status &amp; Roadmap</span>
+            <h2 class="text-3xl font-bold tracking-tight">Active Platforms &amp; Upcoming Modules</h2>
             <p class="text-sm opacity-60 max-w-xl mx-auto">
-                Currently focusing on high-speed WhatsApp marketing broadcasts. As our dedicated clients expand, the following AI agent modules will be activated for early access!
+                Official WhatsApp Marketing is <strong>live and available today</strong>. In parallel, we are rolling out enterprise SMS and automated AI agent diallers for waitlist clients!
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {{-- SMS Gateway Card (Coming Soon) --}}
+            <div class="card bg-base-100 border border-amber-300/60 shadow-sm relative overflow-hidden">
+                <div class="absolute top-3 right-3">
+                    <span class="badge badge-warning badge-sm font-semibold gap-1">
+                        <i class="ti ti-clock"></i> Coming Soon
+                    </span>
+                </div>
+                <div class="card-body p-6 space-y-3">
+                    <div class="w-12 h-12 rounded-xl bg-warning/10 text-warning flex items-center justify-center font-bold text-2xl">
+                        <i class="ti ti-message-dots"></i>
+                    </div>
+                    <h3 class="font-bold text-lg">Enterprise SMS Cloud Gateway</h3>
+                    <p class="text-xs opacity-75 leading-relaxed">
+                        High-speed DLT-compliant SMS gateway engine. Register 6-character Alpha sender headers (DLT PE-IDs), approved content templates, and dispatch OTP alerts &amp; promotional messages across India with real-time carrier DLR tracking.
+                    </p>
+                    <div class="pt-2">
+                        <span class="text-xs font-semibold opacity-60">Planned Features:</span>
+                        <div class="flex flex-wrap gap-1.5 mt-1.5">
+                            <span class="badge badge-ghost badge-xs">DLT Header Registration</span>
+                            <span class="badge badge-ghost badge-xs">Fast Transactional OTPs</span>
+                            <span class="badge badge-ghost badge-xs">Carrier Delivery Receipts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- AI Chatbot Card --}}
             <div class="card bg-base-100 border border-amber-300/60 shadow-sm relative overflow-hidden">
                 <div class="absolute top-3 right-3">
@@ -460,9 +483,42 @@
     <section id="pricing" class="py-16 px-4 sm:px-8 bg-base-100 border-t border-base-300">
         <div class="max-w-6xl mx-auto space-y-12">
             <div class="text-center space-y-2">
-                <span class="text-xs uppercase font-extrabold tracking-widest text-emerald-600">Software Access Plans</span>
-                <h2 class="text-3xl font-bold tracking-tight">Simple, Transparent Pricing</h2>
-                <p class="text-sm opacity-60 max-w-xl mx-auto">No per-message markup. Pay a flat software access fee to AHV, and pay Meta official conversation fees directly on your card.</p>
+                <span class="text-xs uppercase font-extrabold tracking-widest text-emerald-600">Onboarding &amp; Software Pricing</span>
+                <h2 class="text-3xl font-bold tracking-tight">Transparent, Predictable Pricing</h2>
+                <p class="text-sm opacity-60 max-w-xl mx-auto">One-time fixed Meta API setup fee + straightforward software panel access. Zero per-message markup on Meta conversation fees.</p>
+            </div>
+
+            {{-- Fixed Setup & Meta Onboarding Card --}}
+            <div class="card bg-gradient-to-r from-emerald-500/10 via-base-100 to-primary/10 border-2 border-emerald-500/40 p-6 sm:p-8 rounded-2xl shadow-sm max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div class="space-y-2 max-w-xl">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-success badge-sm font-bold text-white">One-Time Setup (Fix)</span>
+                            <span class="badge badge-outline badge-sm font-semibold">Standard Mandatory Setup</span>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-bold">Meta Business Verification &amp; WhatsApp API Integration</h3>
+                        <p class="text-xs sm:text-sm opacity-75 leading-relaxed">
+                            Complete technical onboarding executed directly by AHV specialists: Meta WhatsApp Business Account (WABA) verification, Meta Cloud API integration, webhook callbacks, phone number registration, and broadcast template drafting.
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs">
+                            <div class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Meta WABA Verification Support</div>
+                            <div class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> WhatsApp Cloud API &amp; Webhook Setup</div>
+                            <div class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Official Green Tick Readiness</div>
+                            <div class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Template Approval Assistance</div>
+                        </div>
+                    </div>
+                    <div class="text-center md:text-right shrink-0 bg-base-100 p-5 rounded-2xl border border-base-300 w-full md:w-auto">
+                        <div class="text-[0.65rem] uppercase tracking-wider font-semibold opacity-60">Fixed Setup Charge</div>
+                        <div class="text-3xl sm:text-4xl font-extrabold text-emerald-600 font-mono">₹4,500</div>
+                        <div class="text-[0.7rem] opacity-60 mt-0.5">One-Time Setup Fee (Fix)</div>
+                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20am%20ready%20for%20the%20Meta%20WhatsApp%20Business%20Verification%20and%20API%20Integration%20Setup%20(₹4,500%20Fix)."
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-emerald bg-emerald-600 hover:bg-emerald-700 text-white btn-sm mt-3 w-full gap-1">
+                            <i class="ti ti-brand-whatsapp"></i> Book Setup Onboarding
+                        </a>
+                    </div>
+                </div>
+            </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -574,11 +630,16 @@
         </div>
     </section>
 
-    {{-- Request Access & Enterprise Onboarding --}}
+    {{-- Request Access & Enterprise Onboarding Form --}}
+    @php
+        $cNum1 = rand(2, 8);
+        $cNum2 = rand(1, 9);
+        session(['inquiry_captcha_num1' => $cNum1, 'inquiry_captcha_num2' => $cNum2]);
+    @endphp
     <section id="request-access" class="py-16 px-4 sm:px-8 max-w-5xl mx-auto space-y-8">
-        <div class="card bg-gradient-to-br from-emerald-500/10 via-base-100 to-base-100 border-2 border-emerald-500/30 p-8 sm:p-10 rounded-3xl shadow-sm">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div class="space-y-4">
+        <div class="card bg-gradient-to-br from-emerald-500/10 via-base-100 to-base-100 border-2 border-emerald-500/30 p-6 sm:p-10 rounded-3xl shadow-sm">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div class="lg:col-span-5 space-y-4">
                     <span class="badge badge-success badge-sm font-semibold text-white">Closed Enterprise Access</span>
                     <h2 class="text-3xl font-bold tracking-tight">Request Platform Onboarding</h2>
                     <p class="text-xs sm:text-sm opacity-75 leading-relaxed">
@@ -587,33 +648,123 @@
                     <p class="text-xs sm:text-sm opacity-75 leading-relaxed">
                         Each organization receives a dedicated workspace with verified WABA credentials, phone number routing, and custom sender isolation.
                     </p>
+
+                    <div class="p-4 rounded-2xl bg-base-100 border border-base-300 space-y-2.5">
+                        <div class="font-bold text-xs flex items-center gap-1.5 text-emerald-700">
+                            <i class="ti ti-brand-whatsapp text-lg"></i> Direct WhatsApp Inquiry
+                        </div>
+                        <p class="text-[0.75rem] opacity-75 leading-relaxed">
+                            Need immediate setup or have existing Meta Business Manager questions? Chat directly with our technical onboarding leads:
+                        </p>
+                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20would%20like%20to%20request%20onboarding%20access%20to%20the%20WhatsApp%20Cloud%20Portal."
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-emerald bg-emerald-600 hover:bg-emerald-700 text-white btn-xs w-full gap-1.5 shadow-xs py-1">
+                            <i class="ti ti-brand-whatsapp"></i> Chat on WhatsApp (+91 81040 55511)
+                        </a>
+                    </div>
+
                     <div class="pt-2 flex items-center gap-2 text-xs opacity-60">
-                        <i class="ti ti-shield-check text-emerald-600 text-lg"></i>
+                        <i class="ti ti-shield-check text-emerald-600 text-lg shrink-0"></i>
                         <span>Zero public signup spam &bull; Strict client data isolation</span>
                     </div>
                 </div>
 
-                <div class="card bg-base-100 border border-base-300 p-6 space-y-4 shadow-xs">
-                    <h3 class="font-bold text-sm">Direct Contact with AHV Team</h3>
-                    <p class="text-xs opacity-70 leading-relaxed">
-                        Get your WhatsApp Business Account (WABA) connected and broadcast templates approved within 24 hours.
-                    </p>
-
-                    <div class="space-y-2">
-                        <a href="https://wa.me/918104055511?text=Hello%20AHV%20Software,%20I%20would%20like%20to%20request%20access%20to%20the%20WhatsApp%20Cloud%20Portal."
-                           target="_blank" rel="noopener noreferrer"
-                           class="btn btn-emerald bg-emerald-600 hover:bg-emerald-700 text-white btn-sm w-full gap-2 shadow-xs">
-                            <i class="ti ti-brand-whatsapp text-lg"></i> Chat with Onboarding Team (+91 81040 55511)
-                        </a>
+                {{-- Contact Us Form with Bot Security (Captcha) --}}
+                <div id="contact-form" class="lg:col-span-7 card bg-base-100 border border-base-300 p-6 space-y-4 shadow-sm">
+                    <div>
+                        <h3 class="font-bold text-base">Contact Us &bull; Request Workspace Access</h3>
+                        <p class="text-xs opacity-70">Fill out your details below. Our onboarding team reviews and activates accounts within 2-4 hours.</p>
                     </div>
 
-                    <div class="divider my-1 text-[0.7rem] opacity-50">OR FOR EXISTING CLIENTS</div>
+                    @if (session('success'))
+                        <div class="alert alert-success text-xs text-white p-3 rounded-xl shadow-xs flex items-center gap-2">
+                            <i class="ti ti-circle-check text-lg shrink-0"></i>
+                            <span>{{ session('success') }}</span>
+                        </div>
+                    @endif
 
-                    <div class="text-center">
-                        <a href="{{ route('login') }}" class="btn btn-ghost btn-xs opacity-75 hover:opacity-100 gap-1 text-xs">
-                            <i class="ti ti-lock"></i> Sign In to Authorized Client Portal &rarr;
-                        </a>
-                    </div>
+                    @if ($errors->any())
+                        <div class="alert alert-error text-xs text-white p-3 rounded-xl shadow-xs">
+                            <ul class="list-disc list-inside space-y-0.5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('contact.inquiry.store') }}" class="space-y-3.5">
+                        @csrf
+                        {{-- Honeypot security field: hidden from humans, bots fill it out --}}
+                        <input type="text" name="b_hp_security_check" style="display:none !important;" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="form-control">
+                                <label class="label py-1 text-xs font-semibold">Your Name <span class="text-error">*</span></label>
+                                <input type="text" name="name" value="{{ old('name') }}" required placeholder="e.g. Rahul Sharma"
+                                       class="input input-sm input-bordered text-xs w-full">
+                            </div>
+                            <div class="form-control">
+                                <label class="label py-1 text-xs font-semibold">Phone / WhatsApp Number <span class="text-error">*</span></label>
+                                <input type="tel" name="phone" value="{{ old('phone') }}" required placeholder="e.g. +91 98765 43210"
+                                       class="input input-sm input-bordered text-xs w-full">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="form-control">
+                                <label class="label py-1 text-xs font-semibold">Business / Brand Name</label>
+                                <input type="text" name="business_name" value="{{ old('business_name') }}" placeholder="e.g. Fit Ganganagar"
+                                       class="input input-sm input-bordered text-xs w-full">
+                            </div>
+                            <div class="form-control">
+                                <label class="label py-1 text-xs font-semibold">Email Address</label>
+                                <input type="email" name="email" value="{{ old('email') }}" placeholder="e.g. contact@business.com"
+                                       class="input input-sm input-bordered text-xs w-full">
+                            </div>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label py-1 text-xs font-semibold">Service You Need <span class="text-error">*</span></label>
+                            <select name="service_interested" class="select select-sm select-bordered text-xs w-full" required>
+                                <option value="whatsapp" {{ old('service_interested') === 'whatsapp' ? 'selected' : '' }}>
+                                    WhatsApp Official Cloud API &amp; Broadcasts (Available &amp; Live)
+                                </option>
+                                <option value="sms" {{ old('service_interested') === 'sms' ? 'selected' : '' }}>
+                                    Enterprise SMS Gateway &amp; DLT Route (Coming Soon · Waitlist)
+                                </option>
+                                <option value="voice" {{ old('service_interested') === 'voice' ? 'selected' : '' }}>
+                                    AI Voice Calling Agent &amp; Dialler (Coming Soon · Waitlist)
+                                </option>
+                                <option value="all" {{ old('service_interested') === 'all' ? 'selected' : '' }}>
+                                    Full CPaaS Suite (WhatsApp + SMS + Voice)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label py-1 text-xs font-semibold">Message / Expected Volume</label>
+                            <textarea name="message" rows="2" placeholder="Tell us about your business, expected broadcast volume, or custom requirements..."
+                                      class="textarea textarea-bordered text-xs w-full">{{ old('message') }}</textarea>
+                        </div>
+
+                        {{-- Anti-Bot Security Captcha --}}
+                        <div class="p-3 rounded-xl bg-base-200 border border-base-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="flex items-center gap-2">
+                                <i class="ti ti-shield-check text-emerald-600 text-lg"></i>
+                                <span class="text-xs font-semibold">Bot Security Verification:</span>
+                                <span class="badge badge-neutral font-mono font-bold text-xs">{{ $cNum1 }} + {{ $cNum2 }} = ?</span>
+                            </div>
+                            <div class="w-full sm:w-32">
+                                <input type="number" name="captcha_answer" required placeholder="Answer"
+                                       class="input input-sm input-bordered text-xs w-full font-mono text-center font-bold">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm">
+                            <i class="ti ti-send"></i> Submit Onboarding Request
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -676,7 +827,7 @@
                 <a href="#features" class="hover:underline">Features</a>
                 <a href="#pricing" class="hover:underline">Pricing</a>
                 <a href="#faq" class="hover:underline">FAQ</a>
-                <a href="{{ route('login') }}" class="hover:underline">Client Portal</a>
+                <a href="#request-access" class="hover:underline">Contact Us</a>
             </div>
             <div>
                 &copy; {{ date('Y') }} AHV Software. All rights reserved. Official Meta Cloud API Partner.

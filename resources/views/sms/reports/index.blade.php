@@ -11,10 +11,10 @@
 
             {{-- Date Range Filter --}}
             <div class="flex items-center gap-2 flex-wrap">
-                @foreach ($presets as $k => $label)
-                    <a href="{{ route('sms.reports.index', ['range' => $k]) }}"
-                       class="btn btn-xs {{ $range->key === $k ? 'btn-primary' : 'btn-ghost border border-base-300' }}">
-                        {{ $label }}
+                @foreach ($presets as $p)
+                    <a href="{{ route('sms.reports.index', ['range' => $p['key']]) }}"
+                       class="btn btn-xs {{ $range->key === $p['key'] ? 'btn-primary' : 'btn-ghost border border-base-300' }}">
+                        {{ $p['label'] }}
                     </a>
                 @endforeach
             </div>

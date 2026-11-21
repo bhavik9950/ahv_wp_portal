@@ -78,8 +78,19 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
                         $organizationId ??= $phone?->organization_id;
                     }
 
-                    $organizationId ??= $this->handleStatuses($value, $event, $statuses);
-                    $organizationId ??= $this->handleInboundMessages($value, $event);
+                    $displayNumber = data_get($value, 'metadata.display_phone_number');
+                    if (! isset($phone) && filled($displayNumber)) {
+                        $cleanDisplay = preg_replace('/\D+/', '', (string) $displayNumber);
+                        $phone = WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                            ->where(function ($q) use ($cleanDisplay, $displayNumber) {
+                                $q->where('display_phone_number', (string) $displayNumber)
+                                  ->orWhereRaw("REPLACE(REPLACE(REPLACE(display_phone_number, '+', ''), ' ', ''), '-', '') = ?", [$cleanDisplay]);
+                            })->first();
+                        $organizationId ??= $phone?->organization_id;
+                    }
+
+                    $organizationId ??= $this->handleStatuses($value, $event, $statuses, $organizationId);
+                    $organizationId ??= $this->handleInboundMessages($value, $event, $organizationId);
 
                     if ($field === 'message_template_status_update') {
                         $organizationId ??= $this->handleTemplateUpdate($value);
@@ -101,9 +112,9 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
     /**
      * @param  array<string, mixed>  $value
      */
-    private function handleStatuses(array $value, WebhookEvent $event, MessageStatusUpdater $statuses): ?int
+    private function handleStatuses(array $value, WebhookEvent $event, MessageStatusUpdater $statuses, ?int $resolvedOrgId = null): ?int
     {
-        $organizationId = null;
+        $organizationId = $resolvedOrgId ?? $event->organization_id;
 
         foreach ($value['statuses'] ?? [] as $status) {
             $wamid = $status['id'] ?? null;
@@ -174,9 +185,9 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
     /**
      * @param  array<string, mixed>  $value
      */
-    private function handleInboundMessages(array $value, WebhookEvent $event): ?int
+    private function handleInboundMessages(array $value, WebhookEvent $event, ?int $resolvedOrgId = null): ?int
     {
-        $organizationId = $event->organization_id;
+        $organizationId = $resolvedOrgId ?? $event->organization_id;
 
         foreach ($value['messages'] ?? [] as $incoming) {
             $phoneNumberId = data_get($value, 'metadata.phone_number_id');

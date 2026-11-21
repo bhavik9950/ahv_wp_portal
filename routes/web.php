@@ -177,32 +177,29 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('assistant/conversations/{conversation}/mode', [AssistantController::class, 'setMode'])->name('assistant.conversation.mode');
     });
 
-    // SMS Gateway Suite (Protected by tenant context, active subscription, and channel subscription)
-    Route::prefix('sms')->name('sms.')->middleware(['channel.subscribed:sms'])->group(function () {
+    // SMS Gateway Suite (Browsing enabled; sending/creation strictly gated by channel subscription)
+    Route::prefix('sms')->name('sms.')->group(function () {
         Route::get('dashboard', [SmsDashboardController::class, 'index'])->name('dashboard');
-
-        // DLT Headers / Sender IDs
         Route::get('headers', [SmsSenderIdController::class, 'index'])->name('headers.index');
-        Route::post('headers', [SmsSenderIdController::class, 'store'])->name('headers.store');
-        Route::delete('headers/{header}', [SmsSenderIdController::class, 'destroy'])->name('headers.destroy');
-
-        // DLT Templates
         Route::get('templates', [SmsTemplateController::class, 'index'])->name('templates.index');
-        Route::post('templates', [SmsTemplateController::class, 'store'])->name('templates.store');
-        Route::delete('templates/{template}', [SmsTemplateController::class, 'destroy'])->name('templates.destroy');
-
-        // Quick SMS
-        Route::get('quick', [QuickSmsController::class, 'create'])->name('quick.create');
-        Route::post('quick', [QuickSmsController::class, 'send'])->middleware('subscription.active')->name('quick.send');
-
-        // SMS Campaigns
         Route::get('campaigns', [SmsCampaignController::class, 'index'])->name('campaigns.index');
-        Route::get('campaigns/create', [SmsCampaignController::class, 'create'])->name('campaigns.create');
-        Route::post('campaigns', [SmsCampaignController::class, 'store'])->middleware('subscription.active')->name('campaigns.store');
         Route::get('campaigns/{campaign}', [SmsCampaignController::class, 'show'])->name('campaigns.show');
-
-        // SMS Reports & DLR Logs
         Route::get('reports', [SmsReportController::class, 'index'])->name('reports.index');
+
+        // Gated actions (strictly requires active SMS subscription)
+        Route::middleware(['channel.subscribed:sms'])->group(function () {
+            Route::post('headers', [SmsSenderIdController::class, 'store'])->name('headers.store');
+            Route::delete('headers/{header}', [SmsSenderIdController::class, 'destroy'])->name('headers.destroy');
+
+            Route::post('templates', [SmsTemplateController::class, 'store'])->name('templates.store');
+            Route::delete('templates/{template}', [SmsTemplateController::class, 'destroy'])->name('templates.destroy');
+
+            Route::get('quick', [QuickSmsController::class, 'create'])->name('quick.create');
+            Route::post('quick', [QuickSmsController::class, 'send'])->middleware('subscription.active')->name('quick.send');
+
+            Route::get('campaigns/create', [SmsCampaignController::class, 'create'])->name('campaigns.create');
+            Route::post('campaigns', [SmsCampaignController::class, 'store'])->middleware('subscription.active')->name('campaigns.store');
+        });
     });
 
     Route::prefix('admin')->name('admin.')->middleware('super-admin')->group(function () {
@@ -225,7 +222,17 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('organizations', [AdminOrganizationController::class, 'store'])->name('organizations.store');
         Route::get('organizations/{organization}/edit', [AdminOrganizationController::class, 'edit'])->name('organizations.edit');
         Route::put('organizations/{organization}', [AdminOrganizationController::class, 'update'])->name('organizations.update');
+
+        // Lead Inquiries & Onboarding Requests
+        Route::get('inquiries', [\App\Http\Controllers\Admin\ContactInquiryAdminController::class, 'index'])->name('inquiries.index');
+        Route::patch('inquiries/{inquiry}', [\App\Http\Controllers\Admin\ContactInquiryAdminController::class, 'update'])->name('inquiries.update');
+        Route::delete('inquiries/{inquiry}', [\App\Http\Controllers\Admin\ContactInquiryAdminController::class, 'destroy'])->name('inquiries.destroy');
     });
 });
+
+// Public contact / lead inquiries with anti-bot throttling
+Route::post('contact-inquiry', [\App\Http\Controllers\ContactInquiryController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('contact.inquiry.store');
 
 require __DIR__.'/auth.php';

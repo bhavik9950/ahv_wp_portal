@@ -11,21 +11,26 @@ use Illuminate\Console\Command;
 
 class ReprocessWebhooksCommand extends Command
 {
-    protected $signature = 'whatsapp:reprocess-webhooks {--force : Force mark signatures valid and process ignored events} {--sync : Process immediately in current process instead of queuing}';
+    protected $signature = 'whatsapp:reprocess-webhooks {--force : Force mark signatures valid and process ignored events} {--sync : Process immediately in current process instead of queuing} {--all : Reprocess all events including previously processed ones}';
 
-    protected $description = 'Reprocess ignored or un-processed WhatsApp webhook events';
+    protected $description = 'Reprocess ignored, received, or all WhatsApp webhook events';
 
     public function handle(MessageStatusUpdater $statusUpdater): int
     {
         $force = (bool) $this->option('force');
         $sync = (bool) $this->option('sync');
+        $all = (bool) $this->option('all');
 
-        $query = WebhookEvent::query()->whereIn('status', ['ignored', 'received']);
+        $query = WebhookEvent::query();
+
+        if (! $all) {
+            $query->whereIn('status', ['ignored', 'received']);
+        }
 
         $events = $query->get();
 
         if ($events->isEmpty()) {
-            $this->info('No ignored or received webhook events found to reprocess.');
+            $this->info('No matching webhook events found to reprocess.');
             return self::SUCCESS;
         }
 

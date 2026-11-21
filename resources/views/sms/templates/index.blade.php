@@ -1,16 +1,37 @@
+@php
+    $user = auth()->user();
+    $org = app(\App\Support\CurrentOrganization::class)->resolve();
+    $isSmsSubscribed = $user?->isSuperAdmin() || ($org && $org->hasChannel('sms'));
+@endphp
+
 <x-app-layout>
     <x-slot name="title">DLT Templates</x-slot>
     <x-slot name="header">DLT Content Templates</x-slot>
 
     <div class="space-y-6">
+        @if (! $isSmsSubscribed)
+            <div class="alert alert-warning border border-warning/40 shadow-sm flex items-start gap-3">
+                <i class="ti ti-lock text-xl shrink-0 mt-0.5 text-warning"></i>
+                <div class="flex-1 text-xs">
+                    <span class="font-bold">Subscription Required:</span> You are viewing DLT Templates in preview mode. Registering or deleting templates requires an active SMS service subscription.
+                </div>
+            </div>
+        @endif
+
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
                 <h2 class="text-lg font-bold">Approved DLT Message Templates</h2>
                 <p class="text-xs opacity-70">Register content templates approved by your telecom DLT blockchain. Messages matching these templates will deliver instantly.</p>
             </div>
-            <button onclick="document.getElementById('new-template-modal').showModal()" class="btn btn-primary btn-sm gap-2">
-                <i class="ti ti-plus"></i> Add DLT Template
-            </button>
+            @if ($isSmsSubscribed)
+                <button onclick="document.getElementById('new-template-modal').showModal()" class="btn btn-primary btn-sm gap-2">
+                    <i class="ti ti-plus"></i> Add DLT Template
+                </button>
+            @else
+                <button type="button" onclick="alert('You are not subscribed to the SMS service. Please contact AH&V Software administrator to subscribe.');" class="btn btn-ghost border border-base-300 opacity-60 btn-sm gap-2" title="Subscription required">
+                    <i class="ti ti-lock"></i> Add DLT Template
+                </button>
+            @endif
         </div>
 
         <div class="card bg-base-100 border border-base-300">

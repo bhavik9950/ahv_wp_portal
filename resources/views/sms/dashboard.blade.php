@@ -1,8 +1,24 @@
+@php
+    $user = auth()->user();
+    $org = app(\App\Support\CurrentOrganization::class)->resolve();
+    $isSmsSubscribed = $user?->isSuperAdmin() || ($org && $org->hasChannel('sms'));
+@endphp
+
 <x-app-layout>
     <x-slot name="title">SMS Dashboard</x-slot>
     <x-slot name="header">SMS Gateway Dashboard</x-slot>
 
     <div class="space-y-6">
+        @if (! $isSmsSubscribed)
+            <div class="alert alert-warning border border-warning/40 shadow-sm flex items-start gap-3">
+                <i class="ti ti-lock text-2xl shrink-0 mt-0.5 text-warning"></i>
+                <div class="flex-1 text-xs">
+                    <div class="font-bold text-sm">SMS Gateway Preview Mode</div>
+                    <span class="opacity-90">Your organization is currently not subscribed to the SMS service. You can review the interface, DLT headers, templates, and analytics, but sending SMS campaigns and submitting templates is locked. Contact AH&V Software administrator to subscribe.</span>
+                </div>
+            </div>
+        @endif
+
         {{-- Suite Banner & Wallet Snapshot --}}
         <div class="card bg-gradient-to-r from-base-100 via-base-100 to-warning/5 border border-base-300 shadow-sm p-4 sm:p-6">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -13,9 +29,13 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <h2 class="text-lg font-bold">SMS Cloud Gateway</h2>
-                            <span class="badge badge-warning badge-sm font-semibold">Active</span>
+                            @if ($isSmsSubscribed)
+                                <span class="badge badge-success badge-sm font-semibold text-white">Active</span>
+                            @else
+                                <span class="badge badge-warning badge-sm font-semibold">Not Subscribed · Preview</span>
+                            @endif
                         </div>
-                        <p class="text-xs opacity-70">Wholesale Cloud CPaaS Engine · DLT Compliant · 100% Zero-Hardware</p>
+                        <p class="text-xs opacity-70">Enterprise SMS Gateway · Fast Transactional &amp; Promotional Delivery</p>
                     </div>
                 </div>
 
@@ -25,12 +45,21 @@
                         <div class="text-[0.65rem] uppercase tracking-wider opacity-60 font-semibold">Prepaid Balance</div>
                         <div class="text-base font-bold text-success font-mono">₹{{ number_format($stats['wallet_balance'], 2) }}</div>
                     </div>
-                    <a href="{{ route('sms.quick.create') }}" class="btn btn-sm btn-outline gap-1 text-xs">
-                        <i class="ti ti-send"></i> Quick SMS
-                    </a>
-                    <a href="{{ route('sms.campaigns.create') }}" class="btn btn-sm btn-primary gap-1 text-xs">
-                        <i class="ti ti-rocket"></i> New Campaign
-                    </a>
+                    @if ($isSmsSubscribed)
+                        <a href="{{ route('sms.quick.create') }}" class="btn btn-sm btn-outline gap-1 text-xs">
+                            <i class="ti ti-send"></i> Quick SMS
+                        </a>
+                        <a href="{{ route('sms.campaigns.create') }}" class="btn btn-sm btn-primary gap-1 text-xs">
+                            <i class="ti ti-rocket"></i> New Campaign
+                        </a>
+                    @else
+                        <button type="button" onclick="alert('You are not subscribed to the SMS service. Please contact AH&V Software administrator to subscribe.');" class="btn btn-sm btn-outline opacity-60 gap-1 text-xs" title="Subscription required">
+                            <i class="ti ti-lock"></i> Quick SMS
+                        </button>
+                        <button type="button" onclick="alert('You are not subscribed to the SMS service. Please contact AH&V Software administrator to subscribe.');" class="btn btn-sm btn-ghost border border-base-300 opacity-60 gap-1 text-xs" title="Subscription required">
+                            <i class="ti ti-lock"></i> New Campaign
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
