@@ -147,7 +147,7 @@
 
         <div class="drawer-side z-40">
             <label for="app-drawer" aria-label="Close menu" class="drawer-overlay"></label>
-            <aside id="app-sidebar" data-turbo-permanent
+            <aside id="app-sidebar"
                    class="bg-base-100 border-r border-base-300 w-72 min-h-full flex flex-col">
                 <div class="px-4 py-4 border-b border-base-300">
                     <a href="{{ url('/dashboard') }}" class="flex items-center gap-2">

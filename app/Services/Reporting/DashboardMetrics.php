@@ -86,7 +86,31 @@ final class DashboardMetrics
             ->pluck('c', 'status')
             ->all();
 
-        $counts = ['total' => array_sum($rows)];
+        $inbound = Message::query()
+            ->where('direction', 'inbound')
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
+
+        $directOutbound = Message::query()
+            ->where('direction', 'outbound')
+            ->whereNull('campaign_id')
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
+
+        $campaignOutbound = Message::query()
+            ->where('direction', 'outbound')
+            ->whereNotNull('campaign_id')
+            ->when($campaignId, fn ($q) => $q->where('campaign_id', $campaignId))
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
+
+        $counts = [
+            'total' => array_sum($rows),
+            'inbound' => $inbound,
+            'direct' => $directOutbound,
+            'campaign' => $campaignOutbound,
+        ];
+
         foreach (MessageStatus::cases() as $s) {
             $counts[$s->value] = (int) ($rows[$s->value] ?? 0);
         }

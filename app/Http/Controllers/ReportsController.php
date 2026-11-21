@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Permission;
 use App\Models\Campaign;
+use App\Models\Message;
 use App\Services\Reporting\DashboardMetrics;
 use App\Support\CurrentOrganization;
 use App\Support\DateRange;
@@ -22,6 +23,9 @@ class ReportsController extends Controller
         $org = $currentOrg->resolve();
         $tz = $org !== null ? $org->timezone : 'UTC';
         $range = DateRange::fromRequest($request->only(['range', 'from', 'to']), $tz);
+
+        $from = $range->from->copy()->startOfDay();
+        $to = $range->to->copy()->endOfDay();
 
         $campaigns = Campaign::query()
             ->whereIn('status', ['completed', 'processing', 'paused', 'failed'])
@@ -41,11 +45,40 @@ class ReportsController extends Controller
                 ];
             });
 
+        // Direct / Normal messages (non-campaign)
+        $directMessages = Message::query()
+            ->with(['contact', 'template'])
+            ->whereNull('campaign_id')
+            ->whereBetween('created_at', [$from, $to])
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        $directSummary = [
+            'total' => Message::query()->whereNull('campaign_id')->where('direction', 'outbound')->whereBetween('created_at', [$from, $to])->count(),
+            'delivered' => Message::query()->whereNull('campaign_id')->where('direction', 'outbound')->whereIn('status', ['delivered', 'read'])->whereBetween('created_at', [$from, $to])->count(),
+            'read' => Message::query()->whereNull('campaign_id')->where('direction', 'outbound')->where('status', 'read')->whereBetween('created_at', [$from, $to])->count(),
+            'failed' => Message::query()->whereNull('campaign_id')->where('direction', 'outbound')->where('status', 'failed')->whereBetween('created_at', [$from, $to])->count(),
+            'inbound' => Message::query()->where('direction', 'inbound')->whereBetween('created_at', [$from, $to])->count(),
+        ];
+
+        // Recent Inbound messages
+        $inboundMessages = Message::query()
+            ->with('contact')
+            ->where('direction', 'inbound')
+            ->whereBetween('created_at', [$from, $to])
+            ->latest()
+            ->limit(50)
+            ->get();
+
         return view('reports.index', [
             'range' => $range,
             'presets' => DateRange::presets(),
             'metrics' => $metrics->forRange($range->from, $range->to, $range->key),
             'campaigns' => $campaigns,
+            'directMessages' => $directMessages,
+            'directSummary' => $directSummary,
+            'inboundMessages' => $inboundMessages,
             'canExport' => $user->can(Permission::ReportExport->value),
         ]);
     }

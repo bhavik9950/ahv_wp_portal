@@ -113,6 +113,24 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
 
             /** @var Message|null $message */
             $message = Message::query()->withoutGlobalScopes()->where('wamid', $wamid)->first();
+
+            if ($message === null && ! empty($status['recipient_id'])) {
+                $recipientPhone = ltrim((string) $status['recipient_id'], '+');
+                $message = Message::query()->withoutGlobalScopes()
+                    ->where(function ($q) use ($recipientPhone) {
+                        $q->where('to_phone', $recipientPhone)
+                            ->orWhere('to_phone', '+'.$recipientPhone);
+                    })
+                    ->where('direction', 'outbound')
+                    ->latest()
+                    ->first();
+
+                if ($message && $message->wamid === null) {
+                    $message->wamid = $wamid;
+                    $message->save();
+                }
+            }
+
             if ($message === null) {
                 continue;
             }

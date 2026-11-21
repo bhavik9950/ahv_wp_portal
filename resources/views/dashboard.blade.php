@@ -144,14 +144,14 @@
             @else
                 {{-- Account-wide tiles --}}
                 @foreach ([
-                    ['Messages', number_format($m['messages']['total']), 'ti-messages', 'text-primary', null],
+                    ['Messages', number_format($m['messages']['total']), 'ti-messages', 'text-primary', route('whatsapp.messages.index')],
                     ['Delivery rate', $m['rates']['delivery'].'%', 'ti-checks', 'text-success', null],
                     ['Read rate', $m['rates']['read'].'%', 'ti-eye', 'text-info', null],
+                    ['Inbound replies', number_format($m['messages']['inbound'] ?? 0), 'ti-message-reply', 'text-warning', route('whatsapp.conversations.index')],
                     ['Failure rate', $m['rates']['failure'].'%', 'ti-alert-triangle', $m['rates']['failure'] > 5 ? 'text-error' : 'opacity-60', null],
+                    ['Direct / Normal', number_format($m['messages']['direct'] ?? 0), 'ti-message-share', 'text-accent', route('whatsapp.messages.index')],
                     ['Active campaigns', number_format($m['campaigns']['active']), 'ti-rocket', 'text-secondary', route('whatsapp.campaigns.index')],
                     ['Contacts', number_format($m['contacts']['total']), 'ti-address-book', 'opacity-70', route('whatsapp.contacts.index')],
-                    ['Opted-in', number_format($m['contacts']['opted_in']), 'ti-user-check', 'text-success', null],
-                    ['Scheduled', number_format($m['campaigns']['scheduled'] + $m['scheduled_messages']), 'ti-clock', 'opacity-70', null],
                 ] as [$label, $value, $icon, $color, $link])
                     <a @if ($link) href="{{ $link }}" @endif
                        class="card bg-base-100 border border-base-300 {{ $link ? 'hover:border-primary transition' : 'pointer-events-none' }}">
@@ -212,6 +212,10 @@
                                         <td class="text-right tabular-nums">{{ number_format($m['messages'][$k] ?? 0) }}</td>
                                     </tr>
                                 @endforeach
+                                <tr class="border-t border-base-300 font-medium">
+                                    <td class="text-warning flex items-center gap-1"><i class="ti ti-message-reply"></i> Inbound Replies</td>
+                                    <td class="text-right tabular-nums text-warning font-bold">{{ number_format($m['messages']['inbound'] ?? 0) }}</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
