@@ -22,7 +22,10 @@ class DashboardController extends Controller
 
         $campaigns = Campaign::query()->latest()->limit(50)->get(['id', 'name', 'status']);
         $selectedCampaign = $campaignId ? Campaign::query()->with('template')->find($campaignId) : null;
-        $campaignTotals = $selectedCampaign ? ($selectedCampaign->totals ?? $selectedCampaign->recomputeTotals()) : null;
+        $campaignTotals = $selectedCampaign ? $selectedCampaign->recomputeTotals() : null;
+        if ($selectedCampaign && $campaignTotals && $selectedCampaign->totals !== $campaignTotals) {
+            $selectedCampaign->forceFill(['totals' => $campaignTotals])->save();
+        }
 
         return view('dashboard', [
             'range' => $range,

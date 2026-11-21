@@ -119,6 +119,13 @@ class ProcessWhatsAppWebhookJob implements ShouldQueue
 
             $organizationId ??= $message->organization_id;
 
+            if ($message->organization_id) {
+                $org = Organization::query()->withoutGlobalScopes()->find($message->organization_id);
+                if ($org) {
+                    app(TenantContext::class)->set($org);
+                }
+            }
+
             $mapped = match ($status['status'] ?? '') {
                 'sent' => MessageStatus::Sent,
                 'delivered' => MessageStatus::Delivered,

@@ -29,7 +29,7 @@ class ReportsController extends Controller
             ->limit(50)
             ->get()
             ->map(function (Campaign $c) {
-                $t = $c->totals ?? $c->recomputeTotals();
+                $t = $c->recomputeTotals();
                 $sentish = ($t['sent'] ?? 0) + ($t['delivered'] ?? 0) + ($t['read'] ?? 0);
 
                 return [

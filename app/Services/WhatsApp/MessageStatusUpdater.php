@@ -6,6 +6,7 @@ namespace App\Services\WhatsApp;
 
 use App\Enums\CampaignRecipientStatus;
 use App\Enums\MessageStatus;
+use App\Models\Campaign;
 use App\Models\CampaignRecipient;
 use App\Models\Message;
 use App\Models\MessageStatusEvent;
@@ -77,10 +78,10 @@ final class MessageStatusUpdater
         }
 
         // Never regress a read recipient back to delivered.
-        $rank = fn (CampaignRecipientStatus $s) => match ($s) {
-            CampaignRecipientStatus::Sent => 1,
-            CampaignRecipientStatus::Delivered => 2,
-            CampaignRecipientStatus::Read => 3,
+        $rank = fn (mixed $s) => match ($s instanceof CampaignRecipientStatus ? $s->value : (string) $s) {
+            'sent' => 1,
+            'delivered' => 2,
+            'read' => 3,
             default => 0,
         };
 
@@ -90,6 +91,14 @@ final class MessageStatusUpdater
                 'error_code' => $meta['error_code'] ?? $recipient->error_code,
                 'error_message' => $meta['error_message'] ?? $recipient->error_message,
             ])->save();
+
+            $campaignId = $recipient->campaign_id ?? $message->campaign_id;
+            if ($campaignId) {
+                $campaign = Campaign::query()->withoutGlobalScopes()->find($campaignId);
+                if ($campaign) {
+                    $campaign->forceFill(['totals' => $campaign->recomputeTotals()])->save();
+                }
+            }
         }
     }
 
@@ -101,7 +110,7 @@ final class MessageStatusUpdater
         $normalizedTime = $occurredAt->format('Y-m-d H:i:s');
 
         try {
-            MessageStatusEvent::query()->firstOrCreate(
+            MessageStatusEvent::query()->withoutGlobalScopes()->firstOrCreate(
                 [
                     'message_id' => $message->getKey(),
                     'status' => $status->value,

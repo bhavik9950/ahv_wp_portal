@@ -21,7 +21,10 @@ class CampaignReportController extends Controller
         $this->authorize('view', $campaign);
 
         $live = ! in_array($campaign->status->value, ['completed', 'cancelled', 'failed', 'draft'], true);
-        $totals = $live ? $campaign->recomputeTotals() : ($campaign->totals ?? $campaign->recomputeTotals());
+        $totals = $campaign->recomputeTotals();
+        if ($campaign->totals !== $totals) {
+            $campaign->forceFill(['totals' => $totals])->save();
+        }
 
         $limit = 2000;
 
