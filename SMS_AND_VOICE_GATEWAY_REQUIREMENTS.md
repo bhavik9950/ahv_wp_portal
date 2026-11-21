@@ -1,147 +1,108 @@
-# Zero-Hardware Cloud SMS & Voice SaaS Guide: How to Earn as a 3rd-Party Provider
+# AH&V Portal: Recommended Cloud SMS & AI Voice Calling Blueprint
+
+> **Executive Recommendation:** Build a **100% Zero-Hardware, Cloud CPaaS Reseller & Aggregator** service directly inside your existing AH&V Portal. Do not buy physical devices, SIM boxes, or telecom hardware. Use wholesale cloud REST APIs, charge clients upfront via a prepaid credit wallet with a 50–100% margin, and collect monthly portal SaaS fees.
 
 ---
 
-## 1. The Core Vision: The "Zero-Hardware" Cloud Model
+## 1. The Recommended Business Model
 
-> **Key Principle:** Just like your WhatsApp portal uses Meta’s Cloud API without requiring physical phones or SIM cards, you can build your **SMS and Voice Calling business with ZERO physical hardware, ZERO telecom racks, and ZERO telecom licenses.**
+```
+[Wholesale Cloud Providers]
+  • SMS: MSG91 Enterprise API (Wholesale: ~₹0.12 - ₹0.14 / SMS)
+  • Voice: Exotel / Vapi.ai Cloud API (Wholesale: ~₹1.80 / call min)
+                     ▲
+                     │ (Backend Cloud REST APIs)
+[AH&V Portal Multi-Tenant Platform]
+  • Multi-tenant campaigns, contact management, DLT template mapping
+  • Prepaid wallet (UPI / Razorpay auto-recharge)
+                     │
+                     ▼ (Billed to Clients)
+[Your Clients (e.g., Fit Ganganagar, Local Businesses)]
+  • Pay ₹0.22 - ₹0.25 per SMS (You keep ₹0.10 - ₹0.12 net profit per SMS)
+  • Pay ₹4.00 per Voice call minute (You keep ₹2.20 net profit per min)
+  • Pay ₹999 - ₹2,499 / month portal subscription fee
+```
 
-You operate as a **Cloud CPaaS Aggregator / SaaS Provider**:
-* **Underlying Telecom Rail:** You connect via simple Cloud REST APIs to wholesale telecom aggregators (MSG91, Route Mobile, ValueFirst, Fast2SMS, Exotel).
-* **Your Value Proposition:** You provide the multi-tenant dashboard, contact management, campaign scheduler, credit wallet, analytics, and custom AI agents under your own brand (**AH&V Portal**).
-* **How You Earn Money:**
-  1. **Message Arbitrage Margin:** You buy wholesale SMS at ₹0.11 – ₹0.14 per SMS and sell to your clients at ₹0.20 – ₹0.28 per SMS (**50% to 100%+ profit margin**).
-  2. **Portal Monthly SaaS Subscription:** ₹999 – ₹2,999/month per organization for using your multi-channel marketing suite (WhatsApp + SMS + Voice).
-  3. **AI Voice Minutes Margin:** You pay ₹1.50/min for telephony + AI pipeline and charge your clients ₹3.50 – ₹5.00/min.
+### Monthly Earning Projection (Example: 20 Active Clients)
+* **SMS Margin (5,00,000 total SMS):** Profit ₹0.11/SMS = **₹55,000 / month**
+* **AI Voice Calls (10,000 minutes):** Profit ₹2.20/min = **₹22,000 / month**
+* **Monthly SaaS Fees (20 clients × ₹1,499):** = **₹29,980 / month**
+* **Total Estimated Net Profit:** **₹1,06,980+ per month** *(Zero hardware overhead)*
 
 ---
 
-## 2. Hardware vs. Zero-Hardware Cloud Model
+## 2. Recommended Cloud Partners
 
-| Feature | Old Hardware Model (Not Recommended) | Modern Zero-Hardware Cloud Model (Recommended) |
+| Channel | Recommended Partner | Why This Partner? |
 |---|---|---|
-| **Physical Devices** | SIM Boxes, GSM Modems, PRI telecom cables | **None.** Runs 100% on your existing cloud VPS. |
-| **Capital Expenditure** | ₹3,00,000 – ₹10,00,000 for PBX hardware & lines | **₹0.** Pay-as-you-go cloud credits. |
-| **Telecom License** | DOT OSP license, direct TRAI audits | **None required.** The wholesale provider handles telecom licenses. |
-| **Maintenance Burden** | High: SIM blockages, network downtime, hardware burn | **Zero.** The provider guarantees 99.9% uptime. |
-| **Scalability** | Limited by physical SIM slots and cables | **Infinite.** Can send 50,000 SMS in seconds via API. |
+| **Bulk SMS (Transactional & OTP)** | **MSG91** (`msg91.com`) | Best-in-class developer APIs, instant DLT template pass-through, fast delivery (<2 sec for OTPs), native Indian business support. |
+| **Outbound Telephony (Calls)** | **Exotel** (`exotel.com`) | India’s leading compliant cloud telephony provider. Handles virtual caller IDs, 9 AM – 9 PM calling hours, and DND auto-filtering. |
+| **AI Voice Brain (Conversational Agent)** | **Vapi.ai / Retell AI** | Fully hosted, sub-600ms conversational AI pipeline. Connects to Exotel/Twilio numbers and handles Speech-to-Text, LLM logic, and natural Hindi/English voice synthesis without hosting your own PBX. |
 
 ---
 
-## 3. Best Zero-Hardware Providers to Partner With
+## 3. How DLT is Handled (Zero Legal Liability for You)
 
-You don't need direct operator interconnects. You simply open an enterprise/reseller account with one or two wholesale cloud providers:
-
-### A. For SMS (India DLT Compliant APIs)
-1. **MSG91 (Recommended for Devs & Resellers):**
-   - Clean, lightning-fast JSON REST APIs.
-   - Native multi-tenant / white-label reseller support.
-   - Built-in DLT template mapping and automated DLR webhooks.
-   - Wholesale price: ~₹0.12 to ₹0.15 per SMS.
-2. **Route Mobile / ValueFirst:**
-   - India’s largest enterprise SMS aggregators.
-   - Best wholesale volume rates (< ₹0.12/SMS for high volume).
-3. **Fast2SMS / Textlocal:**
-   - Quickest onboarding with instant API keys for testing and low volume.
-
-### B. For AI Voice Calling (Zero-PBX Telephony)
-1. **Exotel Cloud Telephony API (India-native):**
-   - Fully cloud-hosted virtual numbers and outbound dialer.
-   - Compliant with Indian 9 AM – 9 PM calling rules.
-   - Cost: ~₹0.40 to ₹0.60 per call minute.
-2. **Vapi.ai / Retell AI (Turnkey Voice AI Cloud):**
-   - Complete cloud pipeline: Telephony + Deepgram STT + LLM + ElevenLabs TTS in one API.
-   - You provide your prompt & Twilio/Exotel credentials; they handle the sub-600ms conversational audio streaming.
-   - You white-label the agent interface on your AH&V portal.
+You do **not** take the headache or liability of government telecom registration:
+1. **Client's Role:** Each client registers their own business on Jio DLT or Airtel DLT (standard one-time process for any Indian business). They get:
+   - `Principal Entity (PE) ID`
+   - `Sender Header` (e.g., `FITGNR`)
+   - `DLT Content Template ID`
+2. **Portal's Role:** Your portal simply gives them 3 input fields in their organization settings:
+   - Client pastes their `Entity ID`, `Sender ID`, and `Template ID`.
+   - When a campaign runs, your backend sends these 3 IDs along with the message to MSG91.
+   - The telecom operators verify the DLT chain automatically. If approved, the message delivers instantly; if not, the provider reports the error without affecting your company.
 
 ---
 
-## 4. How Indian DLT Compliance Works Without the Headache
+## 4. Technical Implementation in AH&V Portal
 
-You do **not** need to register as a telecom operator. The burden of DLT compliance is shared cleanly:
+Your current Laravel codebase is already prepared for multi-tenancy (`OrganizationScope`) and queued dispatch. Adding SMS requires 4 clean additions:
 
-1. **Client's Responsibility (Principal Entity - PE):**
-   - Each client business (e.g., *Fit Ganganagar Society*, *Acme Traders*) registers their own business on any DLT portal (Jio DLT, Airtel DLT, or Vi DLT) once.
-   - They register their **Header / Sender ID** (e.g., `FITGNR`) and their **Message Templates**.
-2. **Your Platform's Responsibility:**
-   - In your portal's tenant settings, the client simply pastes:
-     - `DLT Entity ID`
-     - `Sender Header`
-     - `DLT Template ID`
-   - Your backend passes these three parameters in the JSON payload to MSG91/ValueFirst.
-   - The wholesale provider handles the telecom blockchain verification automatically!
+### A. Database Migration: `sms_messages` & `wallet_balance`
+```php
+// Add wallet_balance to organizations
+Schema::table('organizations', function (Blueprint $table) {
+    $table->decimal('wallet_balance', 10, 2)->default(0.00);
+});
 
----
+// Create sms_messages table
+Schema::create('sms_messages', function (Blueprint $table) {
+    $table->ulid('id')->primary();
+    $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
+    $table->string('to_phone', 20);
+    $table->string('sender_id', 10);
+    $table->string('dlt_template_id', 50)->nullable();
+    $table->text('message_body');
+    $table->decimal('cost', 8, 4);          // Billed to client (e.g. 0.25)
+    $table->decimal('provider_cost', 8, 4); // Cost from MSG91 (e.g. 0.13)
+    $table->decimal('profit', 8, 4);        // Net gain (e.g. 0.12)
+    $table->string('status', 20)->default('queued'); // queued, sent, delivered, failed
+    $table->string('provider_message_id', 100)->nullable();
+    $table->timestamps();
 
-## 5. How It Plugs Directly into AH&V WhatsApp Portal
-
-Your portal is already structured perfectly with multi-tenancy and background jobs. Adding SMS requires just **3 core components**:
-
-```
-[Client Dashboard] ──> [Compose SMS Campaign]
-                              │
-                              ▼
-                   [Prepaid Wallet Check]
-                 (e.g., Balance: ₹500. Deduct ₹50)
-                              │
-                              ▼
-                [Laravel Queue: SendSmsJob]
-                              │
-                              ▼ (HTTP POST JSON)
-                 [MSG91 / Wholesale Cloud API]
-                              │
-                              ▼ (Delivery Receipt Webhook)
-            [Route: /api/webhooks/sms/delivery-status]
-                              │
-                              ▼
-         [Update Message Status: Delivered / Failed]
+    $table->index(['organization_id', 'created_at']);
+});
 ```
 
-### 1. Database Table (`sms_messages`)
-```sql
-CREATE TABLE sms_messages (
-    id VARCHAR(36) PRIMARY KEY,
-    organization_id BIGINT UNSIGNED NOT NULL,
-    to_phone VARCHAR(20) NOT NULL,
-    sender_id VARCHAR(10) NOT NULL,
-    dlt_template_id VARCHAR(50) NULL,
-    message_text TEXT NOT NULL,
-    segments INT DEFAULT 1,
-    cost DECIMAL(8,4) NOT NULL,        -- What you charged the client (e.g., 0.25)
-    provider_cost DECIMAL(8,4) NOT NULL, -- What you paid provider (e.g., 0.13)
-    profit DECIMAL(8,4) NOT NULL,       -- cost - provider_cost (e.g., 0.12)
-    status VARCHAR(20) DEFAULT 'queued', -- queued, sent, delivered, failed
-    gateway_message_id VARCHAR(100) NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
-);
-```
-
-### 2. Simple Laravel Service (`app/Services/Sms/Msg91SmsGateway.php`)
+### B. Gateway Service: `app/Services/Sms/Msg91Gateway.php`
 ```php
 namespace App\Services\Sms;
 
 use Illuminate\Support\Facades\Http;
 
-class Msg91SmsGateway
+class Msg91Gateway
 {
-    protected string $authKey;
-
-    public function __construct()
-    {
-        $this->authKey = config('services.sms.msg91_key');
-    }
-
-    public function send(string $toPhone, string $senderId, string $dltTemplateId, string $message): array
+    public function send(string $toPhone, string $senderId, string $templateId, array $variables = []): array
     {
         $response = Http::withHeaders([
-            'authkey' => $this->authKey,
+            'authkey' => config('services.msg91.auth_key'),
             'Content-Type' => 'application/json',
         ])->post('https://control.msg91.com/api/v5/flow/', [
-            'template_id' => $dltTemplateId,
+            'template_id' => $templateId,
             'sender' => $senderId,
             'recipients' => [
-                ['mobiles' => $toPhone]
+                array_merge(['mobiles' => $toPhone], $variables)
             ]
         ]);
 
@@ -150,43 +111,48 @@ class Msg91SmsGateway
 }
 ```
 
-### 3. Prepaid Wallet & Automated Earning Logic
-1. Each tenant has a `wallet_balance` column in `organizations`.
-2. Tenant recharges their wallet online (via Razorpay/UPI gateway on your portal) for ₹1,000, ₹5,000, or ₹10,000.
-3. When triggering a campaign of 1,000 SMS:
-   - Portal calculates: `1,000 SMS * ₹0.25 = ₹250`.
-   - Checks: Does tenant have $\ge$ ₹250? If yes, deduct ₹250 immediately.
-   - Portal dispatches 1,000 API requests to wholesale provider (Cost to you: `1,000 * ₹0.13 = ₹130`).
-   - **Net Profit to You: ₹120 instantly deposited in your business bank account.**
+### C. Campaign Queue Job & Wallet Deduction
+```php
+// Before dispatching message:
+$costPerSms = 0.24;
+if ($organization->wallet_balance < $costPerSms) {
+    throw new InsufficientBalanceException("Please recharge your SMS wallet.");
+}
+
+// Deduct immediately in DB transaction:
+$organization->decrement('wallet_balance', $costPerSms);
+
+// Dispatch to MSG91 via queue
+SendSmsMessageJob::dispatch($messageId)->onQueue('sms-high');
+```
+
+### D. Delivery Report (DLR) Webhook: `routes/api.php`
+```php
+Route::post('webhooks/sms/dlr', function (Request $request) {
+    $providerMsgId = $request->input('requestId');
+    $status = strtolower($request->input('status')); // delivered, failed
+
+    Message::where('provider_message_id', $providerMsgId)
+        ->update([
+            'status' => $status === 'delivered' ? 'delivered' : 'failed',
+            'updated_at' => now(),
+        ]);
+
+    return response()->json(['status' => 'ok']);
+});
+```
 
 ---
 
-## 6. Financial Potential & Revenue Model
+## 5. Step-by-Step Launch Plan
 
-### Scenario: 20 Active Business Clients on Your Portal
-* **Average Monthly SMS Volume per Client:** 25,000 SMS
-* **Total Monthly SMS Volume:** $20 \times 25,000 = 500,000\text{ SMS}$
-* **Wholesale Cost to You:** $500,000 \times ₹0.13 = ₹65,000$
-* **Price Charged to Clients:** $500,000 \times ₹0.24 = ₹1,20,000$
-* **Monthly SMS Profit Margin:** **₹55,000 / month pure profit**
-
-### Add Monthly SaaS Subscription:
-* 20 clients $\times$ ₹1,499/month portal fee = **₹29,980 / month**
-
-### Add AI Voice Calling Campaigns:
-* 5 clients run automated voice calling (10,000 minutes total):
-  - Cost to you (Telephony + AI): $10,000 \times ₹1.80 = ₹18,000$
-  - Client billed: $10,000 \times ₹4.00 = ₹40,000$
-  - **Voice Profit: ₹22,000 / month**
-
-### **Total Estimated Net Profit: ₹1,06,980+ per month**
-*(With ZERO hardware maintenance, running entirely on your existing cloud VPS!)*
-
----
-
-## 7. Action Plan: What To Do Next
-
-1. **Step 1:** Create an account on a wholesale SMS aggregator (e.g., [MSG91.com](https://msg91.com) or [Fast2SMS](https://www.fast2sms.com)).
-2. **Step 2:** Get their API key and test sending 1 transactional SMS from a Laravel scratch route.
-3. **Step 3:** Add an `SMS` navigation tab in the sidebar of `c:\ahv_wp_portal` (Contacts, Campaigns, Reports, and Wallet Recharge), matching the exact UI design of the WhatsApp module.
-4. **Step 4:** Integrate your payment gateway (Razorpay / Cashfree / Stripe) so tenants can self-recharge SMS credits.
+1. **Step 1: Open an MSG91 Account**
+   - Register at `msg91.com`, complete KYC, and purchase ₹1,000 test credits.
+   - Obtain the API `authkey`.
+2. **Step 2: Add SMS Tab to AH&V Sidebar**
+   - Add **SMS Campaigns**, **SMS Templates (DLT)**, and **SMS Reports** in the left sidebar alongside WhatsApp.
+3. **Step 3: Integrate Prepaid Wallet**
+   - Use Razorpay / Cashfree UPI QR so clients can click "Recharge Wallet" and add ₹500, ₹1,000, or ₹5,000 instantly.
+4. **Step 4: AI Voice Module (Next Phase)**
+   - Sign up on `vapi.ai` or `exotel.com`.
+   - Setup automated phone calls that qualify leads and play voice responses using Gemini Flash + Sarvam AI Hindi voice.
