@@ -121,10 +121,12 @@ class AdminOrganizationController extends Controller
     public function edit(Organization $organization): View
     {
         $availableModules = [
-            'campaigns' => 'Broadcast Campaigns',
-            'voice_campaigns' => 'Voice Broadcast Calling',
-            'assistant' => 'AI Assistant Bot',
-            'templates' => 'Meta Templates Management',
+            'whatsapp' => '🟢 WhatsApp Cloud API Suite',
+            'sms' => '🔵 Bulk SMS & OTP Gateway Suite',
+            'voice_campaigns' => '🟣 Voice Broadcast Calling',
+            'campaigns' => 'WhatsApp Broadcast Campaigns',
+            'assistant' => 'WhatsApp AI Assistant Bot',
+            'templates' => 'WhatsApp Meta Templates',
             'contacts' => 'Contacts & CSV Import',
             'chats' => '1-on-1 Live Chat Inbox',
             'media' => 'Media Library',
@@ -148,6 +150,8 @@ class AdminOrganizationController extends Controller
             'subscription_expires_at' => ['nullable', 'date'],
             'allowed_modules' => ['nullable', 'array'],
             'allowed_modules.*' => ['string'],
+            'sms_wallet_balance' => ['nullable', 'numeric', 'min:0'],
+            'sms_rate_per_message' => ['nullable', 'numeric', 'min:0.01', 'max:10'],
         ]);
 
         $isLifetime = $request->boolean('is_lifetime') || $validated['plan'] === 'lifetime';
@@ -165,14 +169,24 @@ class AdminOrganizationController extends Controller
             $expiresAt = now()->addDays($days);
         }
 
-        $organization->update([
+        $updateData = [
             'name' => $validated['name'],
             'status' => $validated['status'],
             'plan' => $isLifetime ? 'lifetime' : $validated['plan'],
             'is_lifetime' => $isLifetime,
             'subscription_expires_at' => $isLifetime ? null : $expiresAt,
             'allowed_modules' => $validated['allowed_modules'] ?? null,
-        ]);
+        ];
+
+        if (isset($validated['sms_wallet_balance'])) {
+            $updateData['sms_wallet_balance'] = $validated['sms_wallet_balance'];
+        }
+
+        if (isset($validated['sms_rate_per_message'])) {
+            $updateData['sms_rate_per_message'] = $validated['sms_rate_per_message'];
+        }
+
+        $organization->update($updateData);
 
         return redirect()->route('admin.organizations.index')->with('flash_notify', [
             'type' => 'success',

@@ -20,6 +20,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrganizationSwitchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\Sms\QuickSmsController;
+use App\Http\Controllers\Sms\SmsCampaignController;
+use App\Http\Controllers\Sms\SmsDashboardController;
+use App\Http\Controllers\Sms\SmsReportController;
+use App\Http\Controllers\Sms\SmsSenderIdController;
+use App\Http\Controllers\Sms\SmsTemplateController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\Voice\VoiceCampaignController;
 use App\Http\Controllers\Whatsapp\MediaController;
@@ -169,6 +175,34 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('assistant/conversations', [AssistantController::class, 'conversations'])->name('assistant.conversations');
         Route::get('assistant/conversations/{conversation}', [AssistantController::class, 'conversation'])->name('assistant.conversation');
         Route::post('assistant/conversations/{conversation}/mode', [AssistantController::class, 'setMode'])->name('assistant.conversation.mode');
+    });
+
+    // SMS Gateway Suite (Protected by tenant context, active subscription, and channel subscription)
+    Route::prefix('sms')->name('sms.')->middleware(['channel.subscribed:sms'])->group(function () {
+        Route::get('dashboard', [SmsDashboardController::class, 'index'])->name('dashboard');
+
+        // DLT Headers / Sender IDs
+        Route::get('headers', [SmsSenderIdController::class, 'index'])->name('headers.index');
+        Route::post('headers', [SmsSenderIdController::class, 'store'])->name('headers.store');
+        Route::delete('headers/{header}', [SmsSenderIdController::class, 'destroy'])->name('headers.destroy');
+
+        // DLT Templates
+        Route::get('templates', [SmsTemplateController::class, 'index'])->name('templates.index');
+        Route::post('templates', [SmsTemplateController::class, 'store'])->name('templates.store');
+        Route::delete('templates/{template}', [SmsTemplateController::class, 'destroy'])->name('templates.destroy');
+
+        // Quick SMS
+        Route::get('quick', [QuickSmsController::class, 'create'])->name('quick.create');
+        Route::post('quick', [QuickSmsController::class, 'send'])->middleware('subscription.active')->name('quick.send');
+
+        // SMS Campaigns
+        Route::get('campaigns', [SmsCampaignController::class, 'index'])->name('campaigns.index');
+        Route::get('campaigns/create', [SmsCampaignController::class, 'create'])->name('campaigns.create');
+        Route::post('campaigns', [SmsCampaignController::class, 'store'])->middleware('subscription.active')->name('campaigns.store');
+        Route::get('campaigns/{campaign}', [SmsCampaignController::class, 'show'])->name('campaigns.show');
+
+        // SMS Reports & DLR Logs
+        Route::get('reports', [SmsReportController::class, 'index'])->name('reports.index');
     });
 
     Route::prefix('admin')->name('admin.')->middleware('super-admin')->group(function () {

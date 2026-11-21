@@ -102,6 +102,41 @@
                 </div>
             </div>
 
+            {{-- SMS Wallet & Pricing Controls (For Platform Super Admin) --}}
+            <div class="card bg-base-100 border border-base-300 shadow-sm">
+                <div class="card-body p-5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="ti ti-wallet text-warning text-lg"></i>
+                            <h3 class="font-bold text-sm uppercase tracking-wide opacity-70">SMS Prepaid Wallet &amp; Rates</h3>
+                        </div>
+                        <span class="badge badge-sm badge-outline">Billed per message</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs font-bold">SMS Wallet Balance (₹ INR)</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs opacity-50 font-bold">₹</span>
+                                <input type="number" step="0.01" name="sms_wallet_balance" value="{{ old('sms_wallet_balance', $organization->sms_wallet_balance ?? 0) }}"
+                                       class="input input-sm input-bordered w-full pl-7 text-xs font-mono">
+                            </div>
+                            <span class="text-[0.7rem] opacity-50 mt-1">Deducted automatically when sending SMS campaigns</span>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs font-bold">Client Rate Per SMS (₹ INR)</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs opacity-50 font-bold">₹</span>
+                                <input type="number" step="0.0001" min="0.01" max="10" name="sms_rate_per_message" value="{{ old('sms_rate_per_message', $organization->sms_rate_per_message ?? 0.25) }}"
+                                       class="input input-sm input-bordered w-full pl-7 text-xs font-mono">
+                            </div>
+                            <span class="text-[0.7rem] opacity-50 mt-1">Default: ₹0.2500 per 160-char GSM segment</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex justify-end gap-2">
                 <a href="{{ route('admin.organizations.index') }}" class="btn btn-ghost btn-sm">Cancel</a>
                 <button type="submit" class="btn btn-primary btn-sm gap-2">

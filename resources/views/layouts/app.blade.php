@@ -70,6 +70,42 @@
                     @endif
                 </div>
                 <div class="flex-none flex items-center gap-2">
+                    {{-- Multi-Channel Suite Switcher --}}
+                    @php
+                        $isSmsSuite = request()->is('sms*');
+                        $isVoiceSuite = request()->is('*voice*');
+                        $activeSuiteName = $isSmsSuite ? 'SMS Portal' : ($isVoiceSuite ? 'Voice Calling' : 'WhatsApp');
+                        $activeSuiteIcon = $isSmsSuite ? 'ti-message-dots text-warning' : ($isVoiceSuite ? 'ti-phone-outgoing text-secondary' : 'ti-brand-whatsapp text-success');
+                    @endphp
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-xs gap-1.5 border border-base-300 font-medium">
+                            <i class="ti {{ $activeSuiteIcon }} text-sm"></i>
+                            <span class="text-xs">{{ $activeSuiteName }}</span>
+                            <i class="ti ti-chevron-down text-[0.65rem] opacity-60"></i>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-40 w-56 p-2 shadow-lg border border-base-300 space-y-1">
+                            <li class="menu-title text-[0.65rem] uppercase tracking-wider opacity-60">Switch Channel Suite</li>
+                            <li>
+                                <a href="{{ route('dashboard') }}" class="flex items-center justify-between py-2 {{ ! $isSmsSuite && ! $isVoiceSuite ? 'active font-bold' : '' }}">
+                                    <span class="flex items-center gap-2"><i class="ti ti-brand-whatsapp text-success text-base"></i> WhatsApp Portal</span>
+                                    @if (! $isSmsSuite && ! $isVoiceSuite)<i class="ti ti-check text-xs"></i>@endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('sms.dashboard') }}" class="flex items-center justify-between py-2 {{ $isSmsSuite ? 'active font-bold' : '' }}">
+                                    <span class="flex items-center gap-2"><i class="ti ti-message-dots text-warning text-base"></i> SMS Gateway</span>
+                                    @if ($isSmsSuite)<i class="ti ti-check text-xs"></i>@endif
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('whatsapp.voice-campaigns.index') }}" class="flex items-center justify-between py-2 {{ $isVoiceSuite ? 'active font-bold' : '' }}">
+                                    <span class="flex items-center gap-2"><i class="ti ti-phone-outgoing text-secondary text-base"></i> Voice Telephony</span>
+                                    <span class="badge badge-xs badge-ghost">Soon</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
                     @php($currentUser = auth()->user())
                     @if ($currentUser)
                         @php($availableOrgs = $currentUser->isSuperAdmin() ? \App\Models\Organization::withoutGlobalScopes()->orderBy('name')->get() : $currentUser->organizations)

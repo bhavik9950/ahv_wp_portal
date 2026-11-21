@@ -29,6 +29,9 @@ class Organization extends Model
         'subscription_expires_at',
         'is_lifetime',
         'allowed_modules',
+        'sms_wallet_balance',
+        'sms_rate_per_message',
+        'sms_settings',
     ];
 
     protected $casts = [
@@ -36,6 +39,9 @@ class Organization extends Model
         'subscription_expires_at' => 'datetime',
         'is_lifetime' => 'boolean',
         'allowed_modules' => 'array',
+        'sms_wallet_balance' => 'decimal:2',
+        'sms_rate_per_message' => 'decimal:4',
+        'sms_settings' => 'array',
     ];
 
     protected static function booted(): void
@@ -122,6 +128,21 @@ class Organization extends Model
         }
 
         return in_array($module, $this->allowed_modules, true);
+    }
+
+    public function hasChannel(string $channel): bool
+    {
+        return $this->hasModule($channel);
+    }
+
+    public function hasSmsAccess(): bool
+    {
+        return $this->hasModule('sms');
+    }
+
+    public function hasWhatsAppAccess(): bool
+    {
+        return $this->hasModule('whatsapp');
     }
 
     public function extendSubscription(string $plan, ?int $days = null): void
