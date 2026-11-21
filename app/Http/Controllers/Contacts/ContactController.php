@@ -44,6 +44,7 @@ class ContactController extends Controller
             'limit' => $limit,
             'groups' => ContactGroup::query()->orderBy('name')->get(),
             'optInStatuses' => OptInStatus::cases(),
+            'latestImport' => \App\Models\ContactImport::query()->latest()->first(),
         ]);
     }
 

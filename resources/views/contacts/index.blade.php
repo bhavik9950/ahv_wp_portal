@@ -6,6 +6,41 @@
     @php($canExport = auth()->user()->can(\App\Enums\Permission::ContactExport->value))
 
     <div class="space-y-4">
+        {{-- Background CSV Import Notification / Alert --}}
+        @if (isset($latestImport) && $latestImport->isBusy())
+            <div class="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-sky-900 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs" data-turbo="false">
+                <div class="flex items-center gap-3">
+                    <span class="loading loading-spinner loading-sm text-sky-600 shrink-0"></span>
+                    <div>
+                        <span class="font-extrabold text-sm block">CSV Import Running in Background</span>
+                        <span class="text-sky-700">File: <strong>{{ $latestImport->original_filename }}</strong> &bull; Progress: <strong>{{ number_format((int) $latestImport->imported_rows) }} / {{ number_format((int) $latestImport->valid_rows) }}</strong> ({{ $latestImport->progressPercent() }}%)</span>
+                    </div>
+                </div>
+                <a href="{{ route('whatsapp.contacts.import.show', $latestImport) }}" class="btn btn-xs btn-primary bg-sky-600 hover:bg-sky-700 text-white border-0 rounded-xl gap-1 shrink-0">
+                    <i class="ti ti-activity"></i> View Live Progress &rarr;
+                </a>
+            </div>
+        @elseif (isset($latestImport) && $latestImport->isFinished() && $latestImport->updated_at?->gt(now()->subHours(2)))
+            <div class="p-3.5 rounded-2xl {{ $latestImport->status === 'completed' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900' }} border shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+                <div class="flex items-center gap-2.5">
+                    <i class="ti ti-{{ $latestImport->status === 'completed' ? 'circle-check text-emerald-600' : 'alert-circle text-rose-600' }} text-lg shrink-0"></i>
+                    <div>
+                        <span class="font-bold">Latest Import ({{ $latestImport->original_filename }}):</span>
+                        <span>{{ $latestImport->status === 'completed' ? number_format((int) $latestImport->imported_rows).' contact(s) added successfully.' : 'Failed: '.$latestImport->error }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    @if ($latestImport->error_report_path)
+                        <a href="{{ route('whatsapp.contacts.import.errors', $latestImport) }}" class="btn btn-xs btn-outline border-slate-300">
+                            Download Skipped ({{ number_format((int) $latestImport->invalid_rows + (int) $latestImport->duplicate_rows) }})
+                        </a>
+                    @endif
+                    <a href="{{ route('whatsapp.contacts.import.show', $latestImport) }}" class="btn btn-xs btn-ghost underline text-slate-700">
+                        Details &rarr;
+                    </a>
+                </div>
+            </div>
+        @endif
         <div class="flex items-end justify-between flex-wrap gap-3">
             <div class="flex flex-wrap items-end gap-2">
                 <x-dt-filter label="Opt-in" target="#contacts-table" col-name="Opt-in">
