@@ -141,7 +141,7 @@ class ContactController extends Controller
     {
         $this->authorize('view', $contact);
 
-        $contact->load(['groups', 'optInRecords.campaign' => fn ($q) => $q]);
+        $contact->load(['groups', 'optInRecords.campaign']);
 
         return view('contacts.show', ['contact' => $contact]);
     }
