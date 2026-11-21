@@ -1,7 +1,9 @@
 <x-app-layout>
     <x-slot name="title">Phone Numbers</x-slot>
 
-    @php($canManage = auth()->user()->can(\App\Enums\Permission::WabaManage->value))
+    @php
+        $canManage = auth()->user()->can(\App\Enums\Permission::WabaManage->value);
+    @endphp
 
     <div class="space-y-4">
         <div class="flex items-center justify-between flex-wrap gap-3">

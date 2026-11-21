@@ -53,7 +53,12 @@ final class WhatsAppWebhookService
             return ['status' => 200, 'body' => 'duplicate'];
         }
 
-        $event = $this->store($rawBody, $headers, signatureValid: true, status: 'received', fingerprint: $fingerprint);
+        try {
+            $event = $this->store($rawBody, $headers, signatureValid: true, status: 'received', fingerprint: $fingerprint);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException|\Illuminate\Database\QueryException $e) {
+            // Handle concurrent webhook retries where another thread inserted the same fingerprint
+            return ['status' => 200, 'body' => 'duplicate'];
+        }
 
         ProcessWhatsAppWebhookJob::dispatch($event->getKey())->onQueue('whatsapp-webhook');
 
