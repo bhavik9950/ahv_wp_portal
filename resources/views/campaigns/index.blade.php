@@ -33,7 +33,7 @@
                             </td>
                             <td>{{ $c->template?->name ?? '—' }}</td>
                             <td data-order="{{ $c->recipients_count }}">{{ number_format($c->recipients_count) }}</td>
-                            <td class="text-xs opacity-60" data-order="{{ $c->scheduled_at?->timestamp ?? 0 }}">{{ $c->scheduled_at?->timezone($c->timezone)->format('d M H:i') ?? '—' }}</td>
+                            <td class="text-xs opacity-75" data-order="{{ $c->scheduled_at?->timestamp ?? 0 }}">{{ $c->scheduled_at?->timezone('Asia/Kolkata')->format('d M Y, h:i A') ?? '—' }}</td>
                             <td class="text-right flex items-center justify-end gap-1">
                                 @if ($c->status === \App\Enums\CampaignStatus::Draft)
                                     <a href="{{ route('whatsapp.campaigns.edit', $c) }}" class="btn btn-xs btn-ghost">Edit</a>

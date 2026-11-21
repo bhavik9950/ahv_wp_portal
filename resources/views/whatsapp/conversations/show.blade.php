@@ -23,11 +23,11 @@
         <div class="card bg-base-200/50 border border-base-300">
             <div class="card-body gap-3 p-4">
                 @foreach ($messages as $m)
-                    @php($day = $m->created_at?->format('Y-m-d'))
+                    @php($day = $m->created_at?->timezone('Asia/Kolkata')->format('Y-m-d'))
                     @if ($day !== $lastDate)
                         @php($lastDate = $day)
                         <div class="flex items-center justify-center">
-                            <span class="badge badge-ghost badge-sm bg-base-100">{{ $m->created_at?->isToday() ? 'Today' : $m->created_at?->format('d M Y') }}</span>
+                            <span class="badge badge-ghost badge-sm bg-base-100">{{ $m->created_at?->timezone('Asia/Kolkata')->isToday() ? 'Today' : $m->created_at?->timezone('Asia/Kolkata')->format('d M Y') }}</span>
                         </div>
                     @endif
 
@@ -147,7 +147,7 @@
                             @endif
 
                             <div class="flex items-center justify-end gap-1 mt-1 text-[0.65rem] {{ $m->direction === 'outbound' ? 'text-primary-content/70' : 'opacity-50' }}">
-                                <span>{{ $m->created_at?->format('H:i') }}</span>
+                                <span>{{ $m->created_at?->timezone('Asia/Kolkata')->format('h:i A') }}</span>
                                 @if ($m->direction === 'outbound')
                                     @if ($m->status->value === 'read')
                                         <i class="ti ti-checks"></i>

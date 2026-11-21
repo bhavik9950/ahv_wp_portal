@@ -64,7 +64,7 @@
         {{-- Trend Chart --}}
         <div class="card bg-base-100 border border-base-300">
             <div class="card-body">
-                <h2 class="card-title text-base">Message volume trend</h2>
+                <h2 class="card-title text-base">Volume trend</h2>
                 @include('partials.trend-chart', ['trend' => $m['trend']])
             </div>
         </div>
@@ -74,7 +74,7 @@
             <div class="p-3 border-b border-base-300 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <i class="ti ti-rocket text-primary"></i>
-                    <span class="font-bold text-sm">Campaign Performance</span>
+                    <span class="font-bold text-sm">Campaign performance</span>
                 </div>
                 <span class="badge badge-sm badge-ghost">{{ count($campaigns) }} campaign(s)</span>
             </div>
@@ -159,16 +159,16 @@
                                 @endif
                             </td>
                             <td class="text-xs text-nowrap opacity-75">
-                                {{ $dm->sent_at?->format('d M, H:i') ?? $dm->created_at->format('d M, H:i') }}
+                                {{ ($dm->sent_at ?? $dm->created_at)?->timezone('Asia/Kolkata')->format('d M Y, h:i A') }}
                             </td>
                             <td class="text-xs text-nowrap">
                                 @if ($dm->read_at)
-                                    <span class="text-success flex items-center gap-1" title="Read at {{ $dm->read_at->format('d M Y H:i:s') }}">
-                                        <i class="ti ti-eye-check"></i> {{ $dm->read_at->format('H:i') }}
+                                    <span class="text-success flex items-center gap-1" title="Read at {{ $dm->read_at->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') }}">
+                                        <i class="ti ti-eye-check"></i> {{ $dm->read_at->timezone('Asia/Kolkata')->format('h:i A') }}
                                     </span>
                                 @elseif ($dm->delivered_at)
-                                    <span class="text-info flex items-center gap-1" title="Delivered at {{ $dm->delivered_at->format('d M Y H:i:s') }}">
-                                        <i class="ti ti-checks"></i> {{ $dm->delivered_at->format('H:i') }}
+                                    <span class="text-info flex items-center gap-1" title="Delivered at {{ $dm->delivered_at->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') }}">
+                                        <i class="ti ti-checks"></i> {{ $dm->delivered_at->timezone('Asia/Kolkata')->format('h:i A') }}
                                     </span>
                                 @else
                                     <span class="opacity-40">—</span>
@@ -216,7 +216,7 @@
                                 </span>
                             </td>
                             <td class="text-xs text-nowrap opacity-75">
-                                {{ $im->created_at->format('d M, H:i') }}
+                                {{ $im->created_at->timezone('Asia/Kolkata')->format('d M Y, h:i A') }}
                             </td>
                             <td class="text-right">
                                 <a href="{{ route('whatsapp.conversations.show', ltrim($im->to_phone, '+')) }}" class="btn btn-xs btn-ghost gap-1 text-primary">

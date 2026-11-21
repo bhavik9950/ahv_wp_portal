@@ -13,6 +13,7 @@ use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -50,6 +51,27 @@ class AppServiceProvider extends ServiceProvider
             $rule = Password::min(12)->letters()->mixedCase()->numbers();
 
             return $this->app->isProduction() ? $rule->uncompromised() : $rule;
+        });
+
+        // Indian Standard Time (IST) formatting macros
+        Carbon::macro('toIndianDate', function () {
+            /** @var Carbon $this */
+            return $this->copy()->timezone('Asia/Kolkata')->format('d M Y');
+        });
+
+        Carbon::macro('toIndianTime', function () {
+            /** @var Carbon $this */
+            return $this->copy()->timezone('Asia/Kolkata')->format('h:i A');
+        });
+
+        Carbon::macro('toIndianDateTime', function () {
+            /** @var Carbon $this */
+            return $this->copy()->timezone('Asia/Kolkata')->format('d M Y, h:i A');
+        });
+
+        Carbon::macro('toIndianFullDateTime', function () {
+            /** @var Carbon $this */
+            return $this->copy()->timezone('Asia/Kolkata')->format('d/m/Y h:i:s A');
         });
 
         // Platform-wide super admin bypasses every ability check.

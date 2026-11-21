@@ -38,7 +38,7 @@
                     @forelse ($message->statusEvents as $e)
                         <li>
                             @if (! $loop->first)<hr>@endif
-                            <div class="timeline-start text-xs opacity-60">{{ $e->occurred_at?->format('d M H:i:s') }}</div>
+                            <div class="timeline-start text-xs opacity-60 whitespace-nowrap">{{ $e->occurred_at?->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') }}</div>
                             <div class="timeline-middle">
                                 <i class="ti {{ $e->status === 'failed' ? 'ti-circle-x text-error' : 'ti-circle-check text-success' }}"></i>
                             </div>

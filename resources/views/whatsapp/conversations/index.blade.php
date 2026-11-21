@@ -20,7 +20,7 @@
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center justify-between gap-2">
                             <span class="font-medium truncate">{{ $m->contact?->name ?? '+'.$m->to_phone }}</span>
-                            <span class="text-xs opacity-50 shrink-0" title="{{ $m->created_at?->format('d M Y, H:i:s') }}">
+                            <span class="text-xs opacity-50 shrink-0" title="{{ $m->created_at?->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') }}">
                                 {{ $m->created_at?->diffForHumans() }}
                             </span>
                         </div>

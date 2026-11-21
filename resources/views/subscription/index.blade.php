@@ -19,7 +19,7 @@
                     <p class="text-sm opacity-70">
                         Organization: <span class="font-semibold text-base-content">{{ $organization->name }}</span>
                         @if (! $organization->is_lifetime && $organization->subscription_expires_at)
-                            &bull; Valid until: <span class="font-semibold text-base-content">{{ $organization->subscription_expires_at->format('d M Y, h:i A') }}</span>
+                            &bull; Valid until: <span class="font-semibold text-base-content">{{ $organization->subscription_expires_at->timezone('Asia/Kolkata')->format('d M Y, h:i A') }}</span>
                             ({{ $organization->subscriptionDaysRemaining() }} days left)
                         @endif
                     </p>
@@ -210,7 +210,7 @@
                                     <tbody>
                                         @foreach ($requests as $req)
                                             <tr>
-                                                <td class="text-xs opacity-60">{{ $req->created_at->format('d M Y') }}</td>
+                                                <td class="text-xs opacity-75 whitespace-nowrap">{{ $req->created_at->timezone('Asia/Kolkata')->format('d M Y, h:i A') }}</td>
                                                 <td class="font-medium">{{ ucfirst(str_replace('_', ' ', $req->plan)) }}</td>
                                                 <td class="font-mono">₹{{ number_format($req->amount) }}</td>
                                                 <td class="font-mono text-xs">{{ $req->utr_number }}</td>

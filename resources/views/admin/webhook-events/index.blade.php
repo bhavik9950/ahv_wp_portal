@@ -125,8 +125,8 @@
                         @php([$ki, $kc, $kbg] = $badge($e->kind()))
                         <tr class="hover cursor-pointer" data-href="{{ route($showRoute, $e) }}">
                             <td class="whitespace-nowrap text-xs opacity-70" data-order="{{ $e->received_at?->timestamp ?? 0 }}"
-                                title="{{ $e->received_at?->format('d M Y H:i:s') }}">
-                                {{ $e->received_at?->diffForHumans() ?? '—' }}
+                                title="{{ $e->received_at?->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') }}">
+                                {{ $e->received_at?->timezone('Asia/Kolkata')->format('d M Y, h:i A') ?? '—' }}
                             </td>
                             <td>
                                 <span class="inline-flex items-center gap-1.5">

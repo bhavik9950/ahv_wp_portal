@@ -16,7 +16,7 @@ class DashboardController extends Controller
     public function __invoke(Request $request, DashboardMetrics $metrics, CurrentOrganization $currentOrg): View
     {
         $org = $currentOrg->resolve();
-        $tz = $org !== null ? $org->timezone : 'UTC';
+        $tz = $org !== null && $org->timezone && $org->timezone !== 'UTC' ? $org->timezone : 'Asia/Kolkata';
         $range = DateRange::fromRequest($request->only(['range', 'from', 'to']), $tz);
         $campaignId = $request->query('campaign_id') ?: null;
 

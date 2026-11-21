@@ -74,7 +74,7 @@
                         <div class="text-xs opacity-70 flex items-center gap-3 flex-wrap">
                             <span><i class="ti ti-template"></i> Template: <strong>{{ $selectedCampaign->template?->name ?? 'Custom' }}</strong></span>
                             <span>&bull;</span>
-                            <span><i class="ti ti-calendar"></i> Filter Range: <strong>{{ $m['range']['from'] }} → {{ $m['range']['to'] }} ({{ $range->label() }})</strong></span>
+                            <span><i class="ti ti-calendar"></i> Filter Range: <strong>{{ \Carbon\Carbon::parse($m['range']['from'])->format('d M Y') }} → {{ \Carbon\Carbon::parse($m['range']['to'])->format('d M Y') }} ({{ $range->label() }})</strong></span>
                         </div>
                     </div>
 
@@ -184,7 +184,7 @@
         <div class="grid lg:grid-cols-2 gap-4">
             <div class="card bg-base-100 border border-base-300">
                 <div class="card-body">
-                    <h2 class="card-title text-base">Delivery funnel ({{ $m['range']['from'] }} → {{ $m['range']['to'] }})</h2>
+                    <h2 class="card-title text-base">Delivery funnel ({{ \Carbon\Carbon::parse($m['range']['from'])->format('d M Y') }} → {{ \Carbon\Carbon::parse($m['range']['to'])->format('d M Y') }})</h2>
                     @php($sent = $m['messages']['sent'] + $m['messages']['delivered'] + $m['messages']['read'])
                     @php($delivered = $m['messages']['delivered'] + $m['messages']['read'])
                     @php($read = $m['messages']['read'])

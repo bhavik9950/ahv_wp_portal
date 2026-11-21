@@ -21,7 +21,7 @@ class ReportsController extends Controller
         abort_unless($user !== null && $user->can(Permission::ReportView->value), 403);
 
         $org = $currentOrg->resolve();
-        $tz = $org !== null ? $org->timezone : 'UTC';
+        $tz = $org !== null && $org->timezone && $org->timezone !== 'UTC' ? $org->timezone : 'Asia/Kolkata';
         $range = DateRange::fromRequest($request->only(['range', 'from', 'to']), $tz);
 
         $from = $range->from->copy()->startOfDay();

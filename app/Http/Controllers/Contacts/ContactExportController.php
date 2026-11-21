@@ -38,8 +38,8 @@ class ContactExportController extends Controller
                         $c->country_code,
                         $c->email,
                         $c->opt_in_status->value,
-                        optional($c->opted_in_at)->toIso8601String(),
-                        $c->created_at?->toIso8601String(),
+                        $c->opted_in_at?->timezone('Asia/Kolkata')->format('d/m/Y h:i:s A') ?? '',
+                        $c->created_at?->timezone('Asia/Kolkata')->format('d/m/Y h:i:s A') ?? '',
                     ]));
                 }
             });

@@ -72,7 +72,7 @@
                             <tr class="hover">
                                 <td>
                                     <div class="font-mono font-bold text-xs">#{{ $inq->id }}</div>
-                                    <div class="text-[0.7rem] opacity-60 text-nowrap">{{ $inq->created_at->format('d M, H:i') }}</div>
+                                    <div class="text-[0.7rem] opacity-60 text-nowrap">{{ $inq->created_at->timezone('Asia/Kolkata')->format('d M Y, h:i A') }}</div>
                                 </td>
                                 <td>
                                     <div class="font-bold text-sm">{{ $inq->name }}</div>

@@ -86,7 +86,7 @@
                                     </span>
                                 </td>
                                 <td class="font-mono text-xs">₹{{ number_format($log->cost, 4) }}</td>
-                                <td class="text-xs opacity-75">{{ $log->sent_at?->format('d M, H:i:s') ?? $log->created_at->format('d M, H:i:s') }}</td>
+                                <td class="text-xs opacity-75 whitespace-nowrap">{{ ($log->sent_at ?? $log->created_at)?->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') }}</td>
                             </tr>
                         @empty
                             <tr>

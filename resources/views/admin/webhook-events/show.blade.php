@@ -50,8 +50,8 @@
                 @endif
 
                 <div class="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                    <div class="flex justify-between gap-2"><span class="opacity-50">Received</span><span>{{ $event->received_at?->format('d M Y, H:i:s') ?? '—' }}</span></div>
-                    <div class="flex justify-between gap-2"><span class="opacity-50">Processed</span><span>{{ $event->processed_at?->format('d M Y, H:i:s') ?? '—' }}</span></div>
+                    <div class="flex justify-between gap-2"><span class="opacity-50">Received</span><span>{{ $event->received_at?->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') ?? '—' }}</span></div>
+                    <div class="flex justify-between gap-2"><span class="opacity-50">Processed</span><span>{{ $event->processed_at?->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') ?? '—' }}</span></div>
                     <div class="flex justify-between gap-2"><span class="opacity-50">Source</span><span>{{ $event->source }}</span></div>
                     <div class="flex justify-between gap-2"><span class="opacity-50">Organization</span><span>{{ $event->organization_id ?? '—' }}</span></div>
                     <div class="flex justify-between gap-2 sm:col-span-2"><span class="opacity-50">Fingerprint</span><span class="font-mono text-xs truncate">{{ $event->event_fingerprint }}</span></div>

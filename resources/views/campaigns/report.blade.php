@@ -10,7 +10,7 @@
                 <h1 class="text-xl font-semibold">{{ $campaign->name }}</h1>
                 <p class="text-xs opacity-60">
                     {{ $campaign->template?->name }} · from {{ $campaign->phoneNumber?->display_phone_number ?? '—' }}
-                    @if ($campaign->scheduled_at) · scheduled {{ $campaign->scheduled_at->timezone($campaign->timezone)->format('d M Y H:i') }} ({{ $campaign->timezone }}) @endif
+                    @if ($campaign->scheduled_at) · scheduled {{ $campaign->scheduled_at->timezone('Asia/Kolkata')->format('d M Y, h:i A') }} (IST) @endif
                 </p>
             </div>
             <div class="flex items-center gap-2">

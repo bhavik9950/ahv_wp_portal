@@ -91,7 +91,7 @@ class CampaignReportController extends Controller
                                 $msg->contact?->name,
                                 $msg->bodyText(),
                                 $msg->type?->value ?? 'text',
-                                optional($msg->created_at)->toIso8601String(),
+                                $msg->created_at?->timezone('Asia/Kolkata')->format('d/m/Y h:i:s A') ?? '',
                             ]));
                         }
                     });
@@ -141,7 +141,7 @@ class CampaignReportController extends Controller
                         $r->error_code,
                         $r->error_message ?? $r->skip_reason,
                         $r->attempts,
-                        optional($r->last_attempt_at)->toIso8601String(),
+                        $r->last_attempt_at?->timezone('Asia/Kolkata')->format('d/m/Y h:i:s A') ?? '',
                     ]));
                 }
             });

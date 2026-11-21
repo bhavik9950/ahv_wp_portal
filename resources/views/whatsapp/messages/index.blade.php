@@ -39,7 +39,9 @@
                                 @php($map = ['read'=>'badge-success','delivered'=>'badge-info','sent'=>'badge-ghost','failed'=>'badge-error'])
                                 <span class="badge badge-sm {{ $map[$m->status->value] ?? 'badge-ghost' }}">{{ $m->status->value }}</span>
                             </td>
-                            <td class="text-xs opacity-60" data-order="{{ $m->sent_at?->timestamp ?? 0 }}">{{ $m->sent_at?->diffForHumans() ?? '—' }}</td>
+                            <td class="text-xs opacity-75 whitespace-nowrap" data-order="{{ $m->sent_at?->timestamp ?? 0 }}" title="{{ $m->sent_at?->timezone('Asia/Kolkata')->format('d M Y, h:i:s A') }}">
+                                {{ $m->sent_at?->timezone('Asia/Kolkata')->format('d M Y, h:i A') ?? '—' }}
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>

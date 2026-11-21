@@ -17,7 +17,7 @@ final class DateRange
     /**
      * @param  array{range?:string, from?:string, to?:string}  $input
      */
-    public static function fromRequest(array $input, string $timezone = 'UTC'): self
+    public static function fromRequest(array $input, string $timezone = 'Asia/Kolkata'): self
     {
         $key = $input['range'] ?? 'last_7_days';
         $now = Carbon::now($timezone);

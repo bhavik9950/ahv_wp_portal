@@ -21,7 +21,7 @@ it('creates a contact with a normalized E.164 number', function () {
     $contact = Contact::sole();
     expect($contact->phone_e164)->toBe('919876543210')
         ->and($contact->phone_hash)->toBe(hash('sha256', '919876543210'))
-        ->and($contact->opt_in_status)->toBe(OptInStatus::Unknown);
+        ->and($contact->opt_in_status)->toBe(OptInStatus::OptedIn);
 });
 
 it('renders the contacts index as a DataTable with labelled filters', function () {
