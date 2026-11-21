@@ -48,7 +48,22 @@
                                         {{ $n->quality_rating ?? '—' }}
                                     </span>
                                 </td>
-                                <td>{{ $n->messaging_limit_tier ?? '—' }}</td>
+                                <td>
+                                    @php
+                                        $tierMap = [
+                                            'TIER_250' => '250 / 24h',
+                                            'TIER_1K' => '1,000 / 24h',
+                                            'TIER_2K' => '2,000 / 24h',
+                                            'TIER_10K' => '10,000 / 24h',
+                                            'TIER_100K' => '100,000 / 24h',
+                                            'TIER_UNLIMITED' => 'Unlimited',
+                                        ];
+                                        $displayTier = $tierMap[$n->messaging_limit_tier] ?? $n->messaging_limit_tier;
+                                    @endphp
+                                    <span class="badge badge-sm {{ $n->messaging_limit_tier ? 'badge-primary badge-outline font-bold' : 'badge-ghost' }} font-mono">
+                                        {{ $displayTier ?: 'Check Meta' }}
+                                    </span>
+                                </td>
                                 <td>{{ ucfirst($n->status) }}</td>
                                 <td>
                                     @if ($n->is_default)

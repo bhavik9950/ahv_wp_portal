@@ -171,13 +171,27 @@ final class WabaConfigurationService
                     continue;
                 }
 
+                $quality = $raw['quality_rating'] ?? null;
+                $tier = $raw['messaging_limit_tier'] ?? null;
+
+                // Meta list endpoint often omits messaging_limit_tier; fetch directly from phone node if missing
+                if ($tier === null || $quality === null) {
+                    try {
+                        $details = $this->manager->driver()->getPhoneNumber($creds, $phoneNumberId);
+                        $quality = $details['quality_rating'] ?? $quality;
+                        $tier = $details['messaging_limit_tier'] ?? $tier;
+                    } catch (\Throwable) {
+                        // ignore and use whatever listPhoneNumbers returned
+                    }
+                }
+
                 $number = $account->phoneNumbers()->firstOrNew(['phone_number_id' => $phoneNumberId]);
                 $number->organization_id = $account->organization_id;
                 $number->fill([
                     'display_phone_number' => $raw['display_phone_number'] ?? null,
                     'verified_name' => $raw['verified_name'] ?? null,
-                    'quality_rating' => $raw['quality_rating'] ?? null,
-                    'messaging_limit_tier' => $raw['messaging_limit_tier'] ?? null,
+                    'quality_rating' => $quality,
+                    'messaging_limit_tier' => $tier,
                 ]);
                 $number->status = 'available';
                 $number->last_synced_at = now();
