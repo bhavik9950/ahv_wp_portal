@@ -55,30 +55,103 @@ class MessageController extends Controller
     }
 
     /** WhatsApp-style inbox: one row per phone number, newest conversation first. */
-    public function conversations(): View
+    public function conversations(Request $request): View
     {
         $this->authorize('viewAny', Message::class);
 
-        $latestIds = Message::query()
+        $filter = (string) $request->query('filter', 'all');
+        $search = trim((string) $request->query('q', ''));
+
+        // All phones with at least one customer reply (inbound)
+        $inboundPhones = Message::query()
+            ->where('direction', 'inbound')
+            ->distinct()
+            ->pluck('to_phone')
+            ->all();
+
+        // Latest inbound timestamps for 24-hr window detection
+        $latestInboundDates = Message::query()
+            ->where('direction', 'inbound')
+            ->select('to_phone', DB::raw('MAX(created_at) as last_inbound_at'))
+            ->groupBy('to_phone')
+            ->pluck('last_inbound_at', 'to_phone')
+            ->all();
+
+        // Phones with active 24-hr customer service window
+        $activeWindowCutoff = now()->subHours(24);
+        $activeWindowPhones = array_keys(array_filter(
+            $latestInboundDates,
+            fn ($date) => \Illuminate\Support\Carbon::parse($date)->gte($activeWindowCutoff)
+        ));
+
+        // Get latest message ID for each phone thread
+        $allLatestIds = Message::query()
             ->selectRaw('MAX(id) as id')
             ->groupBy('to_phone')
             ->pluck('id');
+
+        // Quick snapshot of latest messages for counting and filtering
+        $latestSnapshots = Message::query()
+            ->whereIn('id', $allLatestIds)
+            ->get(['id', 'to_phone', 'direction']);
+
+        $needsReplyIds = $latestSnapshots->where('direction', 'inbound')->pluck('id');
+        $inboundIds = $latestSnapshots->whereIn('to_phone', $inboundPhones)->pluck('id');
+        $activeWindowIds = $latestSnapshots->whereIn('to_phone', $activeWindowPhones)->pluck('id');
+        $outboundOnlyIds = $latestSnapshots->whereNotIn('to_phone', $inboundPhones)->pluck('id');
+
+        // Determine which IDs to load based on active filter
+        $targetIds = match ($filter) {
+            'needs_reply' => $needsReplyIds,
+            'inbound' => $inboundIds,
+            'active_window' => $activeWindowIds,
+            'outbound' => $outboundOnlyIds,
+            default => $allLatestIds,
+        };
+
+        // Query threads
+        $threadsQuery = Message::query()
+            ->with(['contact', 'template'])
+            ->whereIn('id', $targetIds);
+
+        if ($search !== '') {
+            $cleanSearch = ltrim($search, '+');
+            $threadsQuery->where(function ($q) use ($cleanSearch, $search) {
+                $q->where('to_phone', 'like', "%{$cleanSearch}%")
+                    ->orWhereHas('contact', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhere('payload', 'like', "%{$search}%");
+            });
+        }
+
+        $threads = $threadsQuery
+            ->orderByDesc('created_at')
+            ->limit(200)
+            ->get();
 
         $counts = Message::query()
             ->select('to_phone', DB::raw('count(*) as message_count'))
             ->groupBy('to_phone')
             ->pluck('message_count', 'to_phone');
 
-        $threads = Message::query()
-            ->with(['contact', 'template'])
-            ->whereIn('id', $latestIds)
-            ->orderByDesc('created_at')
-            ->limit(200)
-            ->get();
+        // Tab count badges
+        $tabCounts = [
+            'all' => $allLatestIds->count(),
+            'needs_reply' => $needsReplyIds->count(),
+            'inbound' => $inboundIds->count(),
+            'active_window' => $activeWindowIds->count(),
+        ];
 
         return view('whatsapp.conversations.index', [
             'threads' => $threads,
             'counts' => $counts,
+            'filter' => $filter,
+            'search' => $search,
+            'tabCounts' => $tabCounts,
+            'latestInboundDates' => $latestInboundDates,
+            'inboundPhones' => array_flip($inboundPhones),
+            'activeWindowPhones' => array_flip($activeWindowPhones),
         ]);
     }
 

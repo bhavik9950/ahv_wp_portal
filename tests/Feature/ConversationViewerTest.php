@@ -142,3 +142,44 @@ it('rejects free-text reply if the 24-hour service window is expired', function 
 
     expect($reply)->toBeNull();
 });
+
+it('filters conversations by inbound customer replies and needs reply', function () {
+    $org = makeOrganization();
+    $viewer = makeMember($org, 'viewer');
+
+    // Thread 1: Customer sent message last (needs reply)
+    Message::factory()->for($org)->create([
+        'to_phone' => '919876500777',
+        'direction' => 'inbound',
+        'type' => 'text',
+        'payload' => ['text' => ['body' => 'What is the price?']],
+        'created_at' => now()->subMinutes(5),
+    ]);
+
+    // Thread 2: Only outbound broadcast sent, no customer reply
+    Message::factory()->for($org)->sent()->create([
+        'to_phone' => '919876500888',
+        'direction' => 'outbound',
+        'type' => 'text',
+        'payload' => ['text' => ['body' => 'Big Sale']],
+        'created_at' => now()->subMinutes(10),
+    ]);
+
+    // All chats
+    $this->actingAs($viewer)->get(route('whatsapp.conversations.index'))
+        ->assertOk()
+        ->assertSee('919876500777')
+        ->assertSee('919876500888');
+
+    // Filter by needs reply
+    $this->actingAs($viewer)->get(route('whatsapp.conversations.index', ['filter' => 'needs_reply']))
+        ->assertOk()
+        ->assertSee('919876500777')
+        ->assertDontSee('919876500888');
+
+    // Filter by inbound customer replied
+    $this->actingAs($viewer)->get(route('whatsapp.conversations.index', ['filter' => 'inbound']))
+        ->assertOk()
+        ->assertSee('919876500777')
+        ->assertDontSee('919876500888');
+});
