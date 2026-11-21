@@ -69,27 +69,27 @@ final class SystemSettings
         return (array) $this->get('billing.plans', [
             'monthly' => [
                 'label' => '1 Month Access',
-                'price' => 1999,
+                'price' => 649,
                 'days' => 30,
-                'description' => 'Ideal for monthly campaign testing and ongoing broadcasts.',
+                'description' => 'Affordable monthly access for business broadcasts and customer chat.',
             ],
             'half_yearly' => [
                 'label' => '6 Months Access',
-                'price' => 9999,
+                'price' => 3499,
                 'days' => 180,
                 'description' => 'Popular choice for small & medium growing businesses.',
             ],
             'yearly' => [
                 'label' => '1 Year Access',
-                'price' => 17999,
+                'price' => 5999,
                 'days' => 365,
-                'description' => 'Best value for year-round customer engagement.',
+                'description' => 'Best value for year-round customer engagement and retention.',
             ],
             'lifetime' => [
                 'label' => 'Lifetime Access',
-                'price' => 20000,
+                'price' => 14999,
                 'days' => null,
-                'description' => 'One-time investment. Unlimited dashboard access forever.',
+                'description' => 'One-time investment with permanent dashboard validity.',
             ],
         ]);
     }

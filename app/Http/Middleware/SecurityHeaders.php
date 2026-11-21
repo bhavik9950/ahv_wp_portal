@@ -50,7 +50,7 @@ final class SecurityHeaders
         // Assets are bundled by Vite (same-origin).
         // 'unsafe-inline' and 'unsafe-eval' allow Blade inline event handlers, Alpine.js, and dynamic modals.
         $script = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net";
-        $connect = "connect-src 'self'";
+        $connect = "connect-src 'self' https://cdn.jsdelivr.net";
         $style = "style-src 'self' 'unsafe-inline' https://fonts.bunny.net https://cdn.jsdelivr.net";
         $font = "font-src 'self' data: https://fonts.bunny.net https://cdn.jsdelivr.net";
 
