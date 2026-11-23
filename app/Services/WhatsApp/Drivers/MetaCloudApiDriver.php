@@ -71,8 +71,8 @@ final class MetaCloudApiDriver implements WhatsAppDriver
         try {
             do {
                 $response = str_starts_with($url, 'http')
-                    ? $this->http->withToken($creds->accessToken)->timeout(30)->get($url)
-                    : $this->client($creds)->get($url);
+                    ? $this->http->withToken($creds->accessToken)->timeout(30)->retry(3, 1000)->get($url)
+                    : $this->client($creds)->retry(3, 1000)->get($url);
 
                 if (! $response->ok()) {
                     break;

@@ -28,3 +28,13 @@ it('rejects numbers that are too short or empty', function () {
 it('guesses the country code from an E.164 number', function () {
     expect($this->n->parse('+14155550100')['country_code'])->toBe('1');
 });
+
+it('does not double country code when number already starts with country code without plus', function () {
+    expect($this->n->normalize('916283211481'))->toBe('916283211481')
+        ->and($this->n->normalize('919876543210'))->toBe('919876543210');
+});
+
+it('recovers from duplicated country code', function () {
+    expect($this->n->normalize('91916283211481'))->toBe('916283211481')
+        ->and($this->n->normalize('+91916283211481'))->toBe('916283211481');
+});

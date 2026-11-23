@@ -37,17 +37,28 @@ final class PhoneNumberNormalizer
             return null;
         }
 
+        // Auto-correct accidentally duplicated Indian country code (e.g. 9191xxxxxxxxxx -> 91xxxxxxxxxx)
+        if (str_starts_with($digits, '9191') && strlen($digits) === 14) {
+            $digits = substr($digits, 2);
+        }
+
         $cc = ($countryCode !== null && $countryCode !== '')
             ? ((preg_replace('/\D/', '', $countryCode) ?: null))
             : null;
 
         if (! $hasPlus) {
-            if ($cc === null) {
-                // Assume a national number for the org's default country.
+            $effectiveCc = $cc ?: $this->defaultCountryCode;
+
+            // If the number already starts with the country code AND has full international length (e.g. 12 digits starting with 91 for India):
+            if (str_starts_with($digits, $effectiveCc) && strlen($digits) > 10) {
+                $cc = $effectiveCc;
+            } elseif ($cc !== null) {
+                if (! str_starts_with($digits, $cc)) {
+                    $digits = $cc.$digits;
+                }
+            } else {
                 $digits = $this->defaultCountryCode.$digits;
                 $cc = $this->defaultCountryCode;
-            } elseif (! str_starts_with($digits, $cc)) {
-                $digits = $cc.$digits;
             }
         }
 
