@@ -149,6 +149,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         // Groups
         Route::get('groups', [ContactGroupController::class, 'index'])->name('groups.index');
         Route::post('groups', [ContactGroupController::class, 'store'])->middleware('subscription.active')->name('groups.store');
+        Route::post('groups/{group}/contacts/add', [ContactGroupController::class, 'addContacts'])->middleware('subscription.active')->name('groups.contacts.add');
         Route::put('groups/{group}', [ContactGroupController::class, 'update'])->middleware('subscription.active')->name('groups.update');
         Route::delete('groups/{group}', [ContactGroupController::class, 'destroy'])->name('groups.destroy');
         Route::post('groups/assign', [ContactGroupController::class, 'assign'])->name('groups.assign');

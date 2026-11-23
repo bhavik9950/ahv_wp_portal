@@ -206,3 +206,34 @@ it('updates group name and description', function () {
     expect($group->name)->toBe('Renamed Group')
         ->and($group->description)->toBe('New Description');
 });
+
+it('adds contacts directly to group via pasted numbers and csv', function () {
+    $org = makeOrganization();
+    $manager = makeMember($org, 'campaign_manager');
+    $group = ContactGroup::factory()->for($org)->create(['name' => 'Failed Retry']);
+
+    // Pre-existing contact in organization
+    $c1 = Contact::factory()->for($org)->create(['phone_e164' => '919876543210']);
+
+    // Paste numbers: 1 existing ($c1) and 1 new number
+    $this->actingAs($manager)
+        ->post(route('whatsapp.groups.contacts.add', $group), [
+            'numbers' => "919876543210\n919876543211",
+        ])
+        ->assertRedirect();
+
+    $group->refresh();
+    expect($group->contacts()->count())->toBe(2);
+
+    // Upload CSV with header: phone
+    $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('failed.csv', "phone,error\n919876543212,ecosystem\n919876543210,undelivered\n");
+    $this->actingAs($manager)
+        ->post(route('whatsapp.groups.contacts.add', $group), [
+            'file' => $file,
+        ])
+        ->assertRedirect();
+
+    $group->refresh();
+    // 919876543210 was already linked, 919876543212 newly added -> total 3 in group
+    expect($group->contacts()->count())->toBe(3);
+});

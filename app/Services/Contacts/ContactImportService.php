@@ -43,13 +43,18 @@ final class ContactImportService
 
         $normalizer = $this->normalizer();
         $map = $import->column_map ?? [];
+        $options = $import->options ?? [];
+        $groupId = $options['group_id'] ?? null;
 
         $reader = $this->reader($import);
         $header = $reader->getHeader();
 
         $errorRows = [];
         $seenInFile = [];
-        $existing = Contact::query()->pluck('phone_e164')->flip();
+        $existing = Contact::query()->pluck('id', 'phone_e164');
+        $alreadyInGroup = $groupId !== null
+            ? DB::table('contact_group_contact')->where('contact_group_id', $groupId)->pluck('contact_id')->flip()
+            : null;
 
         $total = $valid = $invalid = $duplicate = 0;
 
@@ -76,11 +81,21 @@ final class ContactImportService
 
             $e164 = $parsed['e164'];
 
-            if (isset($seenInFile[$e164]) || $existing->has($e164)) {
+            if (isset($seenInFile[$e164])) {
                 $duplicate++;
-                $errorRows[] = $record + ['_reason' => isset($seenInFile[$e164]) ? 'duplicate in file' : 'already exists'];
+                $errorRows[] = $record + ['_reason' => 'duplicate in file'];
 
                 continue;
+            }
+
+            if ($existing->has($e164)) {
+                $contactId = $existing->get($e164);
+                if ($groupId === null || ($alreadyInGroup !== null && $alreadyInGroup->has($contactId))) {
+                    $duplicate++;
+                    $errorRows[] = $record + ['_reason' => $groupId !== null ? 'already in group' : 'already exists'];
+
+                    continue;
+                }
             }
 
             $seenInFile[$e164] = true;
@@ -124,10 +139,11 @@ final class ContactImportService
         $optInSource = $options['opt_in_source'] ?? 'csv_import';
         $markOptedIn = (bool) ($options['mark_opted_in'] ?? false);
 
-        $existing = Contact::query()->pluck('phone_e164')->flip();
+        $existing = Contact::query()->pluck('id', 'phone_e164');
         $seen = [];
         $imported = 0;
         $batch = [];
+        $existingGroupLinks = [];
 
         foreach ($this->reader($import)->getRecords() as $record) {
             $row = $this->mapRow($record, $map);
@@ -137,10 +153,22 @@ final class ContactImportService
             }
 
             $e164 = $parsed['e164'];
-            if (isset($seen[$e164]) || $existing->has($e164)) {
+            if (isset($seen[$e164])) {
                 continue;
             }
             $seen[$e164] = true;
+
+            if ($existing->has($e164)) {
+                if ($groupId !== null) {
+                    $existingGroupLinks[] = $existing->get($e164);
+                    if (count($existingGroupLinks) >= self::CHUNK) {
+                        $imported += $this->linkExistingToGroup($groupId, $existingGroupLinks);
+                        $existingGroupLinks = [];
+                        ContactImport::query()->whereKey($import->getKey())->update(['imported_rows' => $imported]);
+                    }
+                }
+                continue;
+            }
 
             $batch[] = [
                 'id' => (string) Str::ulid(),
@@ -170,6 +198,10 @@ final class ContactImportService
             $imported += $this->flush($batch, $groupId);
         }
 
+        if ($groupId !== null && $existingGroupLinks !== []) {
+            $imported += $this->linkExistingToGroup($groupId, $existingGroupLinks);
+        }
+
         $import->update(['status' => 'completed', 'imported_rows' => $imported]);
 
         $this->audit->log('contact.imported', $import, [
@@ -187,7 +219,7 @@ final class ContactImportService
             Contact::query()->insert($batch);
 
             if ($groupId !== null) {
-                DB::table('contact_group_contact')->insert(array_map(fn ($row) => [
+                DB::table('contact_group_contact')->insertOrIgnore(array_map(fn ($row) => [
                     'contact_group_id' => $groupId,
                     'contact_id' => $row['id'],
                     'created_at' => now(),
@@ -197,6 +229,21 @@ final class ContactImportService
 
             return count($batch);
         });
+    }
+
+    /**
+     * @param  list<string>  $contactIds
+     */
+    private function linkExistingToGroup(string $groupId, array $contactIds): int
+    {
+        $rows = array_map(fn ($id) => [
+            'contact_group_id' => $groupId,
+            'contact_id' => $id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], $contactIds);
+
+        return (int) DB::table('contact_group_contact')->insertOrIgnore($rows);
     }
 
     private function reader(ContactImport $import): Reader
