@@ -23,7 +23,15 @@ final class TemplateComposer
 
         $headerType = $data['header_type'] ?? 'none';
         if ($headerType === 'text' && filled($data['header_text'] ?? null)) {
-            $components[] = ['type' => 'HEADER', 'format' => 'TEXT', 'text' => $data['header_text']];
+            $headerText = (string) $data['header_text'];
+            $headerComp = ['type' => 'HEADER', 'format' => 'TEXT', 'text' => $headerText];
+            if (preg_match('/\{\{\s*1\s*\}\}/', $headerText)) {
+                $hSample = trim((string) ($data['sample_header_variable'] ?? ''));
+                $headerComp['example'] = [
+                    'header_text' => [$hSample !== '' ? $hSample : 'Sample'],
+                ];
+            }
+            $components[] = $headerComp;
         } elseif (in_array($headerType, ['image', 'video', 'document'], true)) {
             $header = ['type' => 'HEADER', 'format' => strtoupper($headerType)];
             // Meta requires a sample file handle when submitting a media-header
@@ -42,8 +50,10 @@ final class TemplateComposer
             // Meta requires sample values for each placeholder when creating a template.
             // E.g. example => ['body_text' => [['Sample 1', 'Sample 2']]]
             $sampleValues = [];
+            $userSamples = (array) ($data['sample_variables'] ?? []);
             foreach ($placeholders as $num) {
-                $sampleValues[] = "Sample {$num}";
+                $val = trim((string) ($userSamples[$num] ?? ($userSamples[(string) $num] ?? '')));
+                $sampleValues[] = $val !== '' ? $val : "Sample {$num}";
             }
             $bodyComponent['example'] = [
                 'body_text' => [$sampleValues],

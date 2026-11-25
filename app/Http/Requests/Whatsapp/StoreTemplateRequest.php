@@ -39,6 +39,9 @@ class StoreTemplateRequest extends FormRequest
             ],
 
             'body' => ['required', 'string', 'max:1024'],
+            'sample_variables' => ['nullable', 'array'],
+            'sample_variables.*' => ['nullable', 'string', 'max:200'],
+            'sample_header_variable' => ['nullable', 'string', 'max:200'],
             'footer' => ['nullable', 'string', 'max:60'],
 
             'buttons' => ['nullable', 'array', 'max:10'],

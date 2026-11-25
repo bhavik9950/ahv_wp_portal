@@ -57,6 +57,32 @@ it('submits a valid template and creates a PENDING local record', function () {
         ->and(collect($template->components)->pluck('type')->all())->toBe(['BODY', 'FOOTER']);
 });
 
+it('submits a template with custom sample variables for Meta review', function () {
+    $account = wabaAccount();
+    $admin = makeMember($account->organization, 'org_admin');
+
+    $this->actingAs($admin)->post(route('whatsapp.templates.store'), [
+        'name' => 'order_confirmation_samples',
+        'language' => 'en',
+        'category' => 'UTILITY',
+        'header_type' => 'text',
+        'header_text' => 'Order for {{1}}',
+        'sample_header_variable' => 'John',
+        'body' => 'Hello {{1}}, your order total is {{2}}.',
+        'sample_variables' => [
+            1 => 'John Doe',
+            2 => '$99.00',
+        ],
+    ])->assertRedirect();
+
+    $template = WhatsappTemplate::where('name', 'order_confirmation_samples')->sole();
+    $header = collect($template->components)->firstWhere('type', 'HEADER');
+    $body = collect($template->components)->firstWhere('type', 'BODY');
+
+    expect($header['example']['header_text'])->toBe(['John'])
+        ->and($body['example']['body_text'])->toBe([['John Doe', '$99.00']]);
+});
+
 it('submits a template with a call (phone number) button', function () {
     $account = wabaAccount();
     $admin = makeMember($account->organization, 'org_admin');
