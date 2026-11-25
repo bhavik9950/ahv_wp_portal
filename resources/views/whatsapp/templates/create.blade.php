@@ -27,18 +27,20 @@
 
              get placeholders() {
                  if (!this.body) return [];
-                 const matches = [...this.body.matchAll(/\{\{\s*(\d+)\s*\}\}/g)];
+                 const pattern = new RegExp('\\{' + '\\{\\s*(\\d+)\\s*\\}' + '\\}', 'g');
+                 const matches = [...this.body.matchAll(pattern)];
                  const nums = [...new Set(matches.map(m => parseInt(m[1], 10)))];
                  return nums.sort((a, b) => a - b);
              },
 
              get headerHasVar() {
-                 return /\{\{\s*1\s*\}\}/.test(this.headerText || '');
+                 const pattern = new RegExp('\\{' + '\\{\\s*1\\s*\\}' + '\\}');
+                 return pattern.test(this.headerText || '');
              },
 
              addVariable() {
                  const next = this.placeholders.length > 0 ? Math.max(...this.placeholders) + 1 : 1;
-                 const tag = `{{${next}}}`;
+                 const tag = '{' + '{' + next + '}' + '}';
                  const textarea = this.$refs.bodyTextarea;
                  if (textarea) {
                      const start = textarea.selectionStart;
@@ -94,8 +96,9 @@
                  if (this.headerHasVar) {
                      const val = this.headerSample && this.headerSample.trim() !== ''
                          ? `<span class='text-primary font-semibold underline'>${this.escapeHtml(this.headerSample)}</span>`
-                         : `<span class='badge badge-primary badge-xs font-mono'>{{1}}</span>`;
-                     txt = txt.replace(/\{\{\s*1\s*\}\}/g, val);
+                         : `<span class='badge badge-primary badge-xs font-mono'>` + '{' + '{1}' + '}' + `</span>`;
+                     const regex = new RegExp('\\{' + '\\{\\s*1\\s*\\}' + '\\}', 'g');
+                     txt = txt.replace(regex, val);
                  }
                  return txt;
              },
@@ -106,12 +109,12 @@
                  }
                  let txt = this.escapeHtml(this.body);
 
-                 // Replace {{n}} with sample value or highlighted pill
+                 // Replace variables with sample value or highlighted pill
                  this.placeholders.forEach(n => {
                      const val = this.samples[n] && this.samples[n].trim() !== ''
-                         ? `<span class='font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 underline decoration-emerald-500/50' title='Sample value for {{${n}}}'>${this.escapeHtml(this.samples[n])}</span>`
-                         : `<span class='font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20'>{{${n}}}</span>`;
-                     const regex = new RegExp(`\\{\\{\\s*${n}\\s*\\}\\}`, 'g');
+                         ? `<span class='font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 underline decoration-emerald-500/50'>${this.escapeHtml(this.samples[n])}</span>`
+                         : `<span class='font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20'>` + '{' + '{' + n + '}' + '}' + `</span>`;
+                     const regex = new RegExp('\\{' + '\\{\\s*' + n + '\\s*\\}' + '\\}', 'g');
                      txt = txt.replace(regex, val);
                  });
 
@@ -247,14 +250,14 @@
                                             <label class="label py-0 mb-1">
                                                 <span class="label-text text-[0.72rem] font-bold text-primary flex items-center gap-1">
                                                     <i class="ti ti-braces"></i>
-                                                    <span x-text="`Sample value for {{${n}}}`"></span>
+                                                    <span x-text="'Sample value for {' + '{' + n + '}' + '}'"></span>
                                                 </span>
                                             </label>
                                             <input type="text"
-                                                   :name="`sample_variables[${n}]`"
+                                                   :name="'sample_variables[' + n + ']'"
                                                    x-model="samples[n]"
                                                    class="input input-bordered input-xs w-full text-xs font-mono"
-                                                   :placeholder="`e.g. ${n === 1 ? 'Rahul' : (n === 2 ? 'Order #1024' : (n === 3 ? '₹500' : 'Sample ' + n))}`">
+                                                   :placeholder="n === 1 ? 'e.g. Rahul' : (n === 2 ? 'e.g. Order #1024' : (n === 3 ? 'e.g. ₹500' : 'Sample ' + n))">
                                         </div>
                                     </template>
                                 </div>
