@@ -5,7 +5,7 @@
     @php($v2 = '{' . '{2}' . '}')
 
     <div class="max-w-7xl mx-auto space-y-4"
-         x-data="{
+         x-data="templateCreator({
              name: @js(old('name', '')),
              language: @js(old('language', $language)),
              category: @js(old('category', 'UTILITY')),
@@ -14,118 +14,14 @@
              headerSample: @js(old('sample_header_variable', '')),
              body: @js(old('body', '')),
              footer: @js(old('footer', '')),
-             mediaPreviewUrl: null,
-             mediaName: '',
-             mediaType: '',
              samples: @js((object) old('sample_variables', [])),
              buttons: @js(collect(old('buttons', []))->map(fn ($b) => [
                  'type' => $b['type'] ?? 'quick_reply',
                  'text' => $b['text'] ?? '',
                  'url' => $b['url'] ?? '',
                  'phone_number' => $b['phone_number'] ?? '',
-             ])->values()),
-
-             get placeholders() {
-                 if (!this.body) return [];
-                 const pattern = new RegExp('\\{' + '\\{\\s*(\\d+)\\s*\\}' + '\\}', 'g');
-                 const matches = [...this.body.matchAll(pattern)];
-                 const nums = [...new Set(matches.map(m => parseInt(m[1], 10)))];
-                 return nums.sort((a, b) => a - b);
-             },
-
-             get headerHasVar() {
-                 const pattern = new RegExp('\\{' + '\\{\\s*1\\s*\\}' + '\\}');
-                 return pattern.test(this.headerText || '');
-             },
-
-             addVariable() {
-                 const next = this.placeholders.length > 0 ? Math.max(...this.placeholders) + 1 : 1;
-                 const tag = '{' + '{' + next + '}' + '}';
-                 const textarea = this.$refs.bodyTextarea;
-                 if (textarea) {
-                     const start = textarea.selectionStart;
-                     const end = textarea.selectionEnd;
-                     const val = this.body || '';
-                     this.body = val.substring(0, start) + (start > 0 && !val[start - 1].match(/\s/) ? ' ' : '') + tag + (val[end] && !val[end].match(/\s/) ? ' ' : '') + val.substring(end);
-                     this.$nextTick(() => {
-                         textarea.focus();
-                         const pos = start + tag.length + 1;
-                         textarea.setSelectionRange(pos, pos);
-                     });
-                 } else {
-                     this.body = (this.body || '') + (this.body && !this.body.endsWith(' ') ? ' ' : '') + tag;
-                 }
-             },
-
-             addButton() {
-                 if (this.buttons.length < 10) {
-                     this.buttons.push({ type: 'quick_reply', text: '', url: '', phone_number: '' });
-                 }
-             },
-
-             removeButton() {
-                 this.buttons.pop();
-             },
-
-             handleMediaChange(e) {
-                 const file = e.target.files && e.target.files[0];
-                 if (file) {
-                     this.mediaName = file.name;
-                     this.mediaType = file.type;
-                     if (file.type.startsWith('image/')) {
-                         this.mediaPreviewUrl = URL.createObjectURL(file);
-                     } else {
-                         this.mediaPreviewUrl = null;
-                     }
-                 } else {
-                     this.mediaPreviewUrl = null;
-                     this.mediaName = '';
-                     this.mediaType = '';
-                 }
-             },
-
-             escapeHtml(text) {
-                 if (!text) return '';
-                 const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#039;' };
-                 return text.replace(/[&<>\"']/g, m => map[m]);
-             },
-
-             get previewHeader() {
-                 if (this.header !== 'text' || !this.headerText) return '';
-                 let txt = this.escapeHtml(this.headerText);
-                 if (this.headerHasVar) {
-                     const val = this.headerSample && this.headerSample.trim() !== ''
-                         ? `<span class='text-primary font-semibold underline'>${this.escapeHtml(this.headerSample)}</span>`
-                         : `<span class='badge badge-primary badge-xs font-mono'>` + '{' + '{1}' + '}' + `</span>`;
-                     const regex = new RegExp('\\{' + '\\{\\s*1\\s*\\}' + '\\}', 'g');
-                     txt = txt.replace(regex, val);
-                 }
-                 return txt;
-             },
-
-             get previewBodyHtml() {
-                 if (!this.body) {
-                     return '<span class=\"opacity-40 italic\">Type your message body on the left to see live preview…</span>';
-                 }
-                 let txt = this.escapeHtml(this.body);
-
-                 // Replace variables with sample value or highlighted pill
-                 this.placeholders.forEach(n => {
-                     const val = this.samples[n] && this.samples[n].trim() !== ''
-                         ? `<span class='font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 underline decoration-emerald-500/50'>${this.escapeHtml(this.samples[n])}</span>`
-                         : `<span class='font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20'>` + '{' + '{' + n + '}' + '}' + `</span>`;
-                     const regex = new RegExp('\\{' + '\\{\\s*' + n + '\\s*\\}' + '\\}', 'g');
-                     txt = txt.replace(regex, val);
-                 });
-
-                 // WhatsApp formatting: *bold*, _italic_, ~strike~
-                 txt = txt.replace(/\*([^\*]+)\*/g, '<strong class=\"font-bold\">$1</strong>');
-                 txt = txt.replace(/_([^_]+)_/g, '<em class=\"italic\">$1</em>');
-                 txt = txt.replace(/~([^~]+)~/g, '<del class=\"line-through opacity-70\">$1</del>');
-
-                 return txt;
-             }
-         }">
+             ])->values())
+         })">
 
         <div class="alert alert-info text-sm shadow-xs border border-info/20">
             <i class="ti ti-info-circle text-lg"></i>
@@ -469,4 +365,122 @@
             </div>
         </div>
     </div>
+
+    <script>
+        @verbatim
+        window.templateCreator = function (initial) {
+            return {
+                name: initial.name || '',
+                language: initial.language || 'en',
+                category: initial.category || 'UTILITY',
+                header: initial.header || 'none',
+                headerText: initial.headerText || '',
+                headerSample: initial.headerSample || '',
+                body: initial.body || '',
+                footer: initial.footer || '',
+                mediaPreviewUrl: null,
+                mediaName: '',
+                mediaType: '',
+                samples: initial.samples || {},
+                buttons: initial.buttons || [],
+
+                get placeholders() {
+                    if (!this.body) return [];
+                    const matches = [...this.body.matchAll(/\{\{\s*(\d+)\s*\}\}/g)];
+                    const nums = [...new Set(matches.map(m => parseInt(m[1], 10)))];
+                    return nums.sort((a, b) => a - b);
+                },
+
+                get headerHasVar() {
+                    return /\{\{\s*1\s*\}\}/.test(this.headerText || '');
+                },
+
+                addVariable() {
+                    const next = this.placeholders.length > 0 ? Math.max(...this.placeholders) + 1 : 1;
+                    const tag = `{{${next}}}`;
+                    const textarea = this.$refs.bodyTextarea;
+                    if (textarea) {
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        const val = this.body || '';
+                        this.body = val.substring(0, start) + (start > 0 && !val[start - 1].match(/\s/) ? ' ' : '') + tag + (val[end] && !val[end].match(/\s/) ? ' ' : '') + val.substring(end);
+                        this.$nextTick(() => {
+                            textarea.focus();
+                            const pos = start + tag.length + 1;
+                            textarea.setSelectionRange(pos, pos);
+                        });
+                    } else {
+                        this.body = (this.body || '') + (this.body && !this.body.endsWith(' ') ? ' ' : '') + tag;
+                    }
+                },
+
+                addButton() {
+                    if (this.buttons.length < 10) {
+                        this.buttons.push({ type: 'quick_reply', text: '', url: '', phone_number: '' });
+                    }
+                },
+
+                removeButton() {
+                    this.buttons.pop();
+                },
+
+                handleMediaChange(e) {
+                    const file = e.target.files && e.target.files[0];
+                    if (file) {
+                        this.mediaName = file.name;
+                        this.mediaType = file.type;
+                        if (file.type.startsWith('image/')) {
+                            this.mediaPreviewUrl = URL.createObjectURL(file);
+                        } else {
+                            this.mediaPreviewUrl = null;
+                        }
+                    } else {
+                        this.mediaPreviewUrl = null;
+                        this.mediaName = '';
+                        this.mediaType = '';
+                    }
+                },
+
+                escapeHtml(text) {
+                    if (!text) return '';
+                    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+                    return text.replace(/[&<>"']/g, m => map[m]);
+                },
+
+                get previewHeader() {
+                    if (this.header !== 'text' || !this.headerText) return '';
+                    let txt = this.escapeHtml(this.headerText);
+                    if (this.headerHasVar) {
+                        const val = this.headerSample && this.headerSample.trim() !== ''
+                            ? `<span class="text-primary font-semibold underline">${this.escapeHtml(this.headerSample)}</span>`
+                            : `<span class="badge badge-primary badge-xs font-mono">{{1}}</span>`;
+                        txt = txt.replace(/\{\{\s*1\s*\}\}/g, val);
+                    }
+                    return txt;
+                },
+
+                get previewBodyHtml() {
+                    if (!this.body) {
+                        return '<span class="opacity-40 italic">Type your message body on the left to see live preview…</span>';
+                    }
+                    let txt = this.escapeHtml(this.body);
+
+                    this.placeholders.forEach(n => {
+                        const val = this.samples[n] && this.samples[n].trim() !== ''
+                            ? `<span class="font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 underline decoration-emerald-500/50">${this.escapeHtml(this.samples[n])}</span>`
+                            : `<span class="font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">{{${n}}}</span>`;
+                        const regex = new RegExp(`\\{\\{\\s*${n}\\s*\\}\\}`, 'g');
+                        txt = txt.replace(regex, val);
+                    });
+
+                    txt = txt.replace(/\*([^\*]+)\*/g, '<strong class="font-bold">$1</strong>');
+                    txt = txt.replace(/_([^_]+)_/g, '<em class="italic">$1</em>');
+                    txt = txt.replace(/~([^~]+)~/g, '<del class="line-through opacity-70">$1</del>');
+
+                    return txt;
+                }
+            };
+        };
+        @endverbatim
+    </script>
 </x-app-layout>
