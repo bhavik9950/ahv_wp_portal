@@ -240,11 +240,13 @@
                 </div>
 
                 {{-- Phone Shell Mockup --}}
-                <div class="bg-neutral-900 p-3 rounded-[38px] shadow-2xl border-4 border-neutral-800 max-w-[380px] mx-auto">
+                <div class="bg-neutral-900 p-3 rounded-[38px] shadow-2xl border-4 border-neutral-800 max-w-[380px] mx-auto"
+                     style="background-color: #171717; border: 4px solid #262626; border-radius: 36px; padding: 10px; max-width: 370px; margin: 0 auto;">
                     {{-- Notch / Dynamic Island --}}
-                    <div class="relative bg-neutral-950 rounded-t-[28px] pt-2 pb-1.5 px-6 flex items-center justify-between text-[0.65rem] text-white/80">
+                    <div class="relative bg-neutral-950 rounded-t-[28px] pt-2 pb-1.5 px-6 flex items-center justify-between text-[0.65rem] text-white/80"
+                         style="background-color: #0a0a0a; color: rgba(255,255,255,0.85); border-top-left-radius: 26px; border-top-right-radius: 26px;">
                         <span>9:41</span>
-                        <div class="w-20 h-4 bg-black rounded-full mx-auto"></div>
+                        <div class="w-20 h-4 bg-black rounded-full mx-auto" style="background-color: #000; width: 76px; height: 14px; border-radius: 9999px;"></div>
                         <div class="flex items-center gap-1">
                             <i class="ti ti-wifi"></i>
                             <i class="ti ti-battery-4"></i>
@@ -252,19 +254,21 @@
                     </div>
 
                     {{-- WhatsApp Header Bar --}}
-                    <div class="bg-[#075e54] text-white px-3 py-2 flex items-center gap-2 shadow-md">
+                    <div class="bg-[#075e54] text-white px-3 py-2 flex items-center gap-2 shadow-md"
+                         style="background-color: #075e54; color: #ffffff;">
                         <i class="ti ti-arrow-left text-sm cursor-pointer opacity-90"></i>
-                        <div class="w-8 h-8 rounded-full bg-emerald-700 flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/30 shrink-0">
+                        <div class="w-8 h-8 rounded-full bg-emerald-700 flex items-center justify-center text-white font-bold text-xs ring-1 ring-white/30 shrink-0"
+                             style="background-color: #047857; color: #ffffff;">
                             <i class="ti ti-brand-whatsapp text-lg"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="text-xs font-bold leading-tight truncate" x-text="name ? name : 'AH&V WhatsApp'"></div>
-                            <div class="text-[0.62rem] text-emerald-200 flex items-center gap-0.5 leading-tight">
-                                <i class="ti ti-badge-check text-emerald-300"></i>
+                            <div class="text-xs font-bold leading-tight truncate" style="color: #ffffff;" x-text="name ? name : 'AH&V WhatsApp'"></div>
+                            <div class="text-[0.62rem] text-emerald-200 flex items-center gap-0.5 leading-tight" style="color: #a7f3d0;">
+                                <i class="ti ti-badge-check" style="color: #6ee7b7;"></i>
                                 <span>Official Business</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2.5 text-white/80 text-sm">
+                        <div class="flex items-center gap-2.5 text-white/80 text-sm" style="color: rgba(255,255,255,0.85);">
                             <i class="ti ti-video"></i>
                             <i class="ti ti-phone"></i>
                             <i class="ti ti-dots-vertical"></i>
@@ -272,16 +276,19 @@
                     </div>
 
                     {{-- WhatsApp Chat Screen Body --}}
-                    <div class="bg-[#efeae2] dark:bg-[#0b141a] p-3 min-h-[420px] max-h-[540px] overflow-y-auto flex flex-col justify-end space-y-2 rounded-b-[28px] relative text-neutral-800">
-                        {{-- WhatsApp Doodle Pattern Simulation --}}
+                    <div class="bg-[#efeae2] p-3 min-h-[420px] max-h-[540px] overflow-y-auto flex flex-col justify-end space-y-2 rounded-b-[28px] relative text-neutral-800"
+                         style="background-color: #efeae2; color: #1f2937; border-bottom-left-radius: 26px; border-bottom-right-radius: 26px; min-height: 400px;">
+                        {{-- WhatsApp Date Chip --}}
                         <div class="text-center my-1">
-                            <span class="bg-white/80 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-300 text-[0.62rem] px-2.5 py-0.5 rounded-md shadow-2xs font-medium uppercase tracking-wide">
+                            <span class="bg-white/80 text-neutral-600 text-[0.62rem] px-2.5 py-0.5 rounded-md shadow-2xs font-medium uppercase tracking-wide"
+                                  style="background-color: rgba(255,255,255,0.88); color: #4b5563;">
                                 Today
                             </span>
                         </div>
 
                         {{-- WhatsApp Message Bubble --}}
-                        <div class="bg-white dark:bg-[#1f2c34] text-neutral-800 dark:text-neutral-100 rounded-xl rounded-tl-xs p-2.5 shadow-sm border border-black/5 max-w-[94%] space-y-2 relative ml-1">
+                        <div class="bg-white text-neutral-800 rounded-xl rounded-tl-xs p-2.5 shadow-sm border border-black/5 max-w-[94%] space-y-2 relative ml-1"
+                             style="background-color: #ffffff; color: #1f2937; border-radius: 12px; border-top-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.08);">
                             
                             {{-- Header Preview --}}
                             <div x-show="header !== 'none'">
@@ -331,22 +338,25 @@
                             </div>
 
                             {{-- Body Preview --}}
-                            <div class="text-xs leading-relaxed break-words whitespace-pre-line text-neutral-800 dark:text-neutral-200"
+                            <div class="text-xs leading-relaxed break-words whitespace-pre-line"
+                                 style="color: #1f2937;"
                                  x-html="previewBodyHtml"></div>
 
                             {{-- Footer Preview --}}
-                            <div x-show="footer" class="text-[0.68rem] text-neutral-400 dark:text-neutral-500 pt-0.5 border-t border-black/5" x-text="footer"></div>
+                            <div x-show="footer" class="text-[0.68rem] pt-0.5 border-t border-black/5" style="color: #6b7280;" x-text="footer"></div>
 
                             {{-- Time & Checkmarks --}}
-                            <div class="flex items-center justify-end gap-1 text-[0.62rem] text-neutral-400 dark:text-neutral-400 mt-0.5">
+                            <div class="flex items-center justify-end gap-1 text-[0.62rem] mt-0.5" style="color: #6b7280;">
                                 <span x-text="new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })"></span>
-                                <i class="ti ti-checks text-sky-500 text-xs"></i>
+                                <i class="ti ti-checks text-xs" style="color: #0ea5e9;"></i>
                             </div>
 
                             {{-- Buttons Preview --}}
                             <div x-show="buttons.length > 0" class="pt-1 space-y-1 border-t border-black/5">
                                 <template x-for="(btn, i) in buttons" :key="i">
-                                    <div x-show="btn.text" class="text-center py-1.5 px-2 bg-white dark:bg-neutral-800 hover:bg-neutral-50 text-[#00a884] font-semibold text-xs rounded-md shadow-2xs border border-neutral-200 dark:border-neutral-700 flex items-center justify-center gap-1.5 cursor-pointer">
+                                    <div x-show="btn.text"
+                                         class="text-center py-1.5 px-2 font-semibold text-xs rounded-md border flex items-center justify-center gap-1.5 cursor-pointer"
+                                         style="background-color: #f9fafb; color: #00a884; border-color: #e5e7eb;">
                                         <template x-if="btn.type === 'quick_reply'"><i class="ti ti-arrow-back-up text-xs"></i></template>
                                         <template x-if="btn.type === 'url'"><i class="ti ti-external-link text-xs"></i></template>
                                         <template x-if="btn.type === 'phone'"><i class="ti ti-phone text-xs"></i></template>
@@ -357,7 +367,7 @@
                         </div>
 
                         {{-- Helper Hint under chat bubble --}}
-                        <div class="text-center text-[0.65rem] text-neutral-500 dark:text-neutral-400 pt-1">
+                        <div class="text-center text-[0.65rem] pt-1" style="color: #6b7280;">
                             <span><i class="ti ti-info-circle"></i> This is exactly how customers see it on WhatsApp</span>
                         </div>
                     </div>
@@ -467,8 +477,8 @@
 
                     this.placeholders.forEach(n => {
                         const val = this.samples[n] && this.samples[n].trim() !== ''
-                            ? `<span class="font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-300 dark:border-emerald-800 underline decoration-emerald-500/50">${this.escapeHtml(this.samples[n])}</span>`
-                            : `<span class="font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">{{${n}}}</span>`;
+                            ? `<span style="font-weight: 600; color: #065f46; background-color: #d1fae5; padding: 1px 4px; border-radius: 4px; border: 1px solid #6ee7b7;">${this.escapeHtml(this.samples[n])}</span>`
+                            : `<span style="font-family: monospace; font-weight: 700; color: #4f46e5; background-color: #eef2ff; padding: 1px 6px; border-radius: 4px; border: 1px solid #c7d2fe;">{{${n}}}</span>`;
                         const regex = new RegExp(`\\{\\{\\s*${n}\\s*\\}\\}`, 'g');
                         txt = txt.replace(regex, val);
                     });
