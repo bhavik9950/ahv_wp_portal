@@ -152,11 +152,28 @@ class AdminInvoiceController extends Controller
     {
         $validated = $request->validate([
             'organization_id' => ['required', 'integer', 'exists:organizations,id'],
-            'billing_month' => ['required', 'date_format:Y-m'],
+            'billing_month' => ['nullable', 'date_format:Y-m'],
+            'from_date' => ['nullable', 'date'],
+            'to_date' => ['nullable', 'date'],
         ]);
 
         $org = Organization::query()->withoutGlobalScopes()->findOrFail((int) $validated['organization_id']);
-        $usage = $calculator->calculateForMonth($org, $validated['billing_month']);
+
+        if (! empty($validated['billing_month'])) {
+            $usage = $calculator->calculateForMonth($org, $validated['billing_month']);
+        } else {
+            $start = ! empty($validated['from_date'])
+                ? Carbon::parse($validated['from_date'], 'Asia/Kolkata')->startOfDay()->utc()
+                : null;
+            $end = ! empty($validated['to_date'])
+                ? Carbon::parse($validated['to_date'], 'Asia/Kolkata')->endOfDay()->utc()
+                : null;
+            $label = ($start || $end)
+                ? ($validated['from_date'] ?? 'Start').' to '.($validated['to_date'] ?? 'Now')
+                : 'All-Time History';
+
+            $usage = $calculator->calculateForPeriod($org, $start, $end, null, $label);
+        }
 
         return response()->json($usage);
     }
@@ -238,13 +255,33 @@ class AdminInvoiceController extends Controller
             ]);
         } else {
             $validated = $request->validate(array_merge($baseRules, [
-                'items' => ['required', 'array', 'min:1'],
-                'items.*.description' => ['required', 'string', 'max:255'],
-                'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-                'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+                'items' => ['nullable', 'array'],
+                'items.*.description' => ['nullable', 'string', 'max:255'],
+                'items.*.quantity' => ['nullable', 'numeric', 'min:0'],
+                'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             ]));
 
-            $items = $validated['items'];
+            $items = collect($validated['items'] ?? [])
+                ->filter(fn ($item) => filled($item['description'] ?? null))
+                ->values()
+                ->all();
+
+            if (empty($items) && ! empty($validated['organization_id'])) {
+                $org = Organization::query()->withoutGlobalScopes()->find((int) $validated['organization_id']);
+                if ($org) {
+                    $usage = $calculator->calculateForPeriod($org);
+                    $items = $usage['items'];
+                }
+            }
+
+            if (empty($items)) {
+                $items = [[
+                    'description' => 'WhatsApp Portal / Past Services',
+                    'quantity' => 1,
+                    'unit_price' => 0,
+                ]];
+            }
+
             $invoiceData = array_merge($validated, [
                 'created_by' => $request->user()?->getKey(),
             ]);

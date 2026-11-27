@@ -356,3 +356,118 @@ it('auto-generates monthly bills for a selected month and prevents duplicates', 
 
     expect(Invoice::query()->where('organization_id', $org->getKey())->count())->toBe(1);
 });
+
+it('handles 24h inbound free window, out-of-window charges, and deleted campaign template messages', function () {
+    $admin = makeSuperAdmin();
+
+    // Set service rate = 0.20 for testing out-of-window charge
+    app(\App\Services\System\SystemSettings::class)->set('billing.meta_rates', [
+        'marketing' => 0.88,
+        'utility' => 0.15,
+        'authentication' => 0.15,
+        'service' => 0.20,
+    ]);
+
+    $org = app(OrganizationProvisioner::class)->create(['name' => 'Window Test Org']);
+    $org->forceFill([
+        'billing_email' => 'window@test.local',
+        'meta_billing_mode' => 'company_card',
+    ])->save();
+
+    $waba = new WhatsappBusinessAccount(['name' => 'Win WABA', 'waba_id' => 'waba_win_1']);
+    $waba->forceFill(['organization_id' => $org->getKey()])->save();
+
+    $template = new WhatsappTemplate([
+        'name' => 'deleted_camp_tpl',
+        'language' => 'en',
+        'category' => 'MARKETING',
+    ]);
+    $template->forceFill([
+        'organization_id' => $org->getKey(),
+        'whatsapp_business_account_id' => $waba->getKey(),
+        'status' => 'APPROVED',
+    ])->save();
+
+    $phoneHash = hash('sha256', '919999922222');
+
+    // Customer inbound message 30 hours ago
+    $inbound = new Message([
+        'direction' => 'inbound',
+        'to_phone' => '919999922222',
+        'to_phone_hash' => $phoneHash,
+        'type' => MessageType::Text,
+        'idempotency_key' => 'in-1',
+    ]);
+    $inbound->forceFill([
+        'organization_id' => $org->getKey(),
+        'status' => MessageStatus::Delivered,
+        'created_at' => now()->subHours(30),
+    ])->save();
+
+    // 1. Outbound free-form reply 2 hours after inbound (inside 24h window -> FREE)
+    $freeReply = new Message([
+        'direction' => 'outbound',
+        'to_phone' => '919999922222',
+        'to_phone_hash' => $phoneHash,
+        'type' => MessageType::Text,
+        'idempotency_key' => 'out-free-1',
+    ]);
+    $freeReply->forceFill([
+        'organization_id' => $org->getKey(),
+        'status' => MessageStatus::Delivered,
+        'created_at' => now()->subHours(28),
+    ])->save();
+
+    // 2. Outbound free-form message 26 hours after inbound (outside 24h window -> ₹0.20)
+    $lateReply = new Message([
+        'direction' => 'outbound',
+        'to_phone' => '919999922222',
+        'to_phone_hash' => $phoneHash,
+        'type' => MessageType::Text,
+        'idempotency_key' => 'out-late-1',
+    ]);
+    $lateReply->forceFill([
+        'organization_id' => $org->getKey(),
+        'status' => MessageStatus::Sent,
+        'created_at' => now()->subHours(4),
+    ])->save();
+
+    // 3. Successful template message whose campaign was deleted (campaign_id = null, template_id set -> ₹0.88)
+    $deletedCampMsg = new Message([
+        'campaign_id' => null,
+        'template_id' => $template->getKey(),
+        'direction' => 'outbound',
+        'to_phone' => '919999933333',
+        'to_phone_hash' => hash('sha256', '919999933333'),
+        'type' => MessageType::Template,
+        'idempotency_key' => 'del-camp-1',
+    ]);
+    $deletedCampMsg->forceFill([
+        'organization_id' => $org->getKey(),
+        'status' => MessageStatus::Delivered,
+    ])->save();
+
+    // 4. Failed message (should NOT be billed)
+    $failedMsg = new Message([
+        'template_id' => $template->getKey(),
+        'direction' => 'outbound',
+        'to_phone' => '919999944444',
+        'to_phone_hash' => hash('sha256', '919999944444'),
+        'type' => MessageType::Template,
+        'idempotency_key' => 'fail-1',
+    ]);
+    $failedMsg->forceFill([
+        'organization_id' => $org->getKey(),
+        'status' => MessageStatus::Failed,
+    ])->save();
+
+    // Total = 0.20 (out-of-window) + 0.88 (deleted campaign template) = 1.08
+    $this->actingAs($admin)
+        ->getJson(route('admin.invoices.preview-usage', [
+            'organization_id' => $org->getKey(),
+        ]))
+        ->assertOk()
+        ->assertJsonPath('counts.free_window_replies', 1)
+        ->assertJsonPath('counts.total_billable_messages', 2)
+        ->assertJsonPath('total_amount', 1.08);
+});

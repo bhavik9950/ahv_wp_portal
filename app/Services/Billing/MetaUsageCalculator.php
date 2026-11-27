@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Billing;
 
 use App\Enums\MessageStatus;
+use App\Enums\MessageType;
 use App\Models\Message;
 use App\Models\Organization;
 use App\Services\System\SystemSettings;
@@ -17,30 +18,29 @@ final class MetaUsageCalculator
     /**
      * Calculate monthly outbound WhatsApp message usage and Meta charges for an organization.
      *
-     * @return array{
-     *     billing_month: string,
-     *     period_label: string,
-     *     meta_billing_mode: string,
-     *     uses_company_card: bool,
-     *     rates: array{marketing: float, utility: float, authentication: float, service: float},
-     *     counts: array{
-     *         total_billable_messages: int,
-     *         campaign_messages: int,
-     *         single_messages: int,
-     *         marketing: int,
-     *         utility: int,
-     *         authentication: int,
-     *         service: int
-     *     },
-     *     items: array<int, array{description: string, quantity: int, unit_price: float, amount: float, meta: array<string, mixed>}>,
-     *     total_amount: float
-     * }
+     * @return array<string, mixed>
      */
     public function calculateForMonth(Organization $organization, string $billingMonth): array
     {
         $start = Carbon::createFromFormat('Y-m', $billingMonth, 'Asia/Kolkata')->startOfMonth()->utc();
-        $end = (clone $start)->copy()->setTimezone('Asia/Kolkata')->endOfMonth()->utc();
+        $end = Carbon::createFromFormat('Y-m', $billingMonth, 'Asia/Kolkata')->endOfMonth()->utc();
+        $label = Carbon::createFromFormat('Y-m', $billingMonth)->format('F Y');
 
+        return $this->calculateForPeriod($organization, $start, $end, $billingMonth, $label);
+    }
+
+    /**
+     * Calculate outbound WhatsApp message usage across an arbitrary date range (or all-time history when null).
+     *
+     * @return array<string, mixed>
+     */
+    public function calculateForPeriod(
+        Organization $organization,
+        ?Carbon $start = null,
+        ?Carbon $end = null,
+        ?string $billingMonth = null,
+        ?string $periodLabel = null,
+    ): array {
         $rates = $this->settings->metaMessageRates();
         $usesCompanyCard = $organization->usesCompanyMetaCard();
 
@@ -50,25 +50,84 @@ final class MetaUsageCalculator
             MessageStatus::Read->value,
         ];
 
-        $messages = Message::query()
+        $outboundQuery = Message::query()
             ->withoutGlobalScopes()
             ->with(['template' => fn ($q) => $q->withoutGlobalScopes()->select('id', 'category')])
             ->where('organization_id', $organization->getKey())
             ->where('direction', 'outbound')
             ->whereIn('status', $billableStatuses)
-            ->whereBetween('created_at', [$start, $end])
-            ->get(['id', 'campaign_id', 'template_id', 'type', 'status', 'created_at']);
+            ->orderBy('created_at');
+
+        if ($start && $end) {
+            $outboundQuery->whereBetween('created_at', [$start, $end]);
+        } elseif ($start) {
+            $outboundQuery->where('created_at', '>=', $start);
+        } elseif ($end) {
+            $outboundQuery->where('created_at', '<=', $end);
+        }
+
+        $messages = $outboundQuery->get(['id', 'campaign_id', 'template_id', 'to_phone_hash', 'type', 'status', 'created_at']);
+
+        // Load inbound messages (starting 24h before $start) to accurately check 24-hour Customer Service Windows.
+        $inboundQuery = Message::query()
+            ->withoutGlobalScopes()
+            ->where('organization_id', $organization->getKey())
+            ->where('direction', 'inbound')
+            ->orderBy('created_at');
+
+        if ($start) {
+            $inboundQuery->where('created_at', '>=', (clone $start)->subHours(24));
+        }
+        if ($end) {
+            $inboundQuery->where('created_at', '<=', $end);
+        }
+
+        /** @var array<string, array<int, int>> $inboundTimestampsByPhone */
+        $inboundTimestampsByPhone = [];
+        foreach ($inboundQuery->get(['to_phone_hash', 'created_at']) as $inMsg) {
+            $hash = (string) $inMsg->to_phone_hash;
+            if ($hash !== '' && $inMsg->created_at) {
+                $inboundTimestampsByPhone[$hash][] = $inMsg->created_at->getTimestamp();
+            }
+        }
 
         $campaignCounts = ['marketing' => 0, 'utility' => 0, 'authentication' => 0, 'service' => 0];
         $singleCounts = ['marketing' => 0, 'utility' => 0, 'authentication' => 0, 'service' => 0];
+        $freeWindowReplies = 0;
 
         foreach ($messages as $msg) {
+            $isTemplate = ($msg->type === MessageType::Template) || ($msg->template_id !== null);
+            $isCampaign = $msg->campaign_id !== null;
+
+            // Check if this outbound message fell inside an active 24h inbound window
+            $within24hWindow = false;
+            $phoneHash = (string) $msg->to_phone_hash;
+            $msgTs = $msg->created_at ? $msg->created_at->getTimestamp() : 0;
+
+            if ($phoneHash !== '' && isset($inboundTimestampsByPhone[$phoneHash]) && $msgTs > 0) {
+                $cutoff = $msgTs - 86400; // 24 hours prior
+                foreach ($inboundTimestampsByPhone[$phoneHash] as $inTs) {
+                    if ($inTs <= $msgTs && $inTs >= $cutoff) {
+                        $within24hWindow = true;
+                        break;
+                    }
+                }
+            }
+
+            // Free-form (non-template) replies inside the 24h inbound window are free per Meta rules.
+            if (! $isTemplate && $within24hWindow) {
+                $freeWindowReplies++;
+                continue;
+            }
+
+            // Template messages (including from deleted campaigns where campaign_id became null)
+            // and out-of-window non-template messages are counted in their respective category.
             $category = strtolower((string) ($msg->template?->category ?? 'service'));
             if (! array_key_exists($category, $campaignCounts)) {
                 $category = 'service';
             }
 
-            if ($msg->campaign_id !== null) {
+            if ($isCampaign) {
                 $campaignCounts[$category]++;
             } else {
                 $singleCounts[$category]++;
@@ -77,20 +136,20 @@ final class MetaUsageCalculator
 
         $totalCampaign = array_sum($campaignCounts);
         $totalSingle = array_sum($singleCounts);
-        $totalMessages = $totalCampaign + $totalSingle;
+        $totalBillableMessages = $totalCampaign + $totalSingle;
 
         $items = [];
         $totalAmount = 0.0;
+        $periodTag = $billingMonth ?: ($periodLabel ?: 'History');
 
         $categoryLabels = [
             'marketing' => 'Marketing Template Messages',
             'utility' => 'Utility Template Messages',
             'authentication' => 'Authentication Template Messages',
-            'service' => 'Service / Free-form Messages',
+            'service' => 'Out-of-Window / Service Messages',
         ];
 
         foreach ($categoryLabels as $catKey => $catLabel) {
-            // Campaign messages for this category
             if ($campaignCounts[$catKey] > 0) {
                 $qty = $campaignCounts[$catKey];
                 $unit = $usesCompanyCard ? $rates[$catKey] : 0.0;
@@ -98,7 +157,7 @@ final class MetaUsageCalculator
                 $totalAmount += $amt;
 
                 $items[] = [
-                    'description' => "Campaign — {$catLabel} ({$billingMonth})",
+                    'description' => "Campaign — {$catLabel} ({$periodTag})",
                     'quantity' => $qty,
                     'unit_price' => $unit,
                     'amount' => $amt,
@@ -106,7 +165,6 @@ final class MetaUsageCalculator
                 ];
             }
 
-            // Single / Direct messages for this category
             if ($singleCounts[$catKey] > 0) {
                 $qty = $singleCounts[$catKey];
                 $unit = $usesCompanyCard ? $rates[$catKey] : 0.0;
@@ -114,7 +172,7 @@ final class MetaUsageCalculator
                 $totalAmount += $amt;
 
                 $items[] = [
-                    'description' => "Single / Direct — {$catLabel} ({$billingMonth})",
+                    'description' => "Single / Out-of-Window — {$catLabel} ({$periodTag})",
                     'quantity' => $qty,
                     'unit_price' => $unit,
                     'amount' => $amt,
@@ -125,14 +183,15 @@ final class MetaUsageCalculator
 
         return [
             'billing_month' => $billingMonth,
-            'period_label' => Carbon::createFromFormat('Y-m', $billingMonth)->format('F Y'),
+            'period_label' => $periodLabel ?? 'All-Time History',
             'meta_billing_mode' => $organization->meta_billing_mode ?? 'client_card',
             'uses_company_card' => $usesCompanyCard,
             'rates' => $rates,
             'counts' => [
-                'total_billable_messages' => $totalMessages,
+                'total_billable_messages' => $totalBillableMessages,
                 'campaign_messages' => $totalCampaign,
                 'single_messages' => $totalSingle,
+                'free_window_replies' => $freeWindowReplies,
                 'marketing' => $campaignCounts['marketing'] + $singleCounts['marketing'],
                 'utility' => $campaignCounts['utility'] + $singleCounts['utility'],
                 'authentication' => $campaignCounts['authentication'] + $singleCounts['authentication'],

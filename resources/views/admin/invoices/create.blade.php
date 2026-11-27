@@ -171,17 +171,21 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                                 <div class="p-3 rounded-lg bg-base-200/60">
                                     <div class="text-xs opacity-60">Campaign Messages</div>
                                     <div class="text-lg font-bold" x-text="usageData.counts.campaign_messages"></div>
                                 </div>
                                 <div class="p-3 rounded-lg bg-base-200/60">
-                                    <div class="text-xs opacity-60">Single / Direct Messages</div>
+                                    <div class="text-xs opacity-60">Out-of-Window / Single</div>
                                     <div class="text-lg font-bold" x-text="usageData.counts.single_messages"></div>
                                 </div>
                                 <div class="p-3 rounded-lg bg-base-200/60">
-                                    <div class="text-xs opacity-60">Total Billable Messages</div>
+                                    <div class="text-xs opacity-60">24h Free Replies (₹0)</div>
+                                    <div class="text-lg font-bold text-success" x-text="usageData.counts.free_window_replies || 0"></div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-base-200/60">
+                                    <div class="text-xs opacity-60">Total Billable</div>
                                     <div class="text-lg font-bold text-primary" x-text="usageData.counts.total_billable_messages"></div>
                                 </div>
                             </div>
@@ -192,11 +196,11 @@
                     <div x-show="usageItems.length > 0" class="space-y-2">
                         <div class="text-xs font-bold opacity-70">Line Items (Editable before generating)</div>
                         <template x-for="(item, idx) in usageItems" :key="idx">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <input type="text" :name="'items[' + idx + '][description]'" x-model="item.description" :disabled="type !== 'monthly_usage'" class="input input-bordered input-xs col-span-6" required>
-                                <input type="number" step="1" min="0" :name="'items[' + idx + '][quantity]'" x-model="item.quantity" :disabled="type !== 'monthly_usage'" class="input input-bordered input-xs col-span-2 text-right font-mono" required>
-                                <input type="number" step="0.01" min="0" :name="'items[' + idx + '][unit_price]'" x-model="item.unit_price" :disabled="type !== 'monthly_usage'" class="input input-bordered input-xs col-span-2 text-right font-mono" required>
-                                <div class="col-span-2 text-right text-xs font-bold font-mono" x-text="'₹' + (Number(item.quantity || 0) * Number(item.unit_price || 0)).toFixed(2)"></div>
+                            <div style="display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr); gap: 0.5rem; align-items: center;">
+                                <input type="text" :name="'items[' + idx + '][description]'" x-model="item.description" :disabled="type !== 'monthly_usage'" class="input input-bordered input-xs w-full" required>
+                                <input type="number" step="1" min="0" :name="'items[' + idx + '][quantity]'" x-model="item.quantity" :disabled="type !== 'monthly_usage'" class="input input-bordered input-xs w-full text-right font-mono" required>
+                                <input type="number" step="0.01" min="0" :name="'items[' + idx + '][unit_price]'" x-model="item.unit_price" :disabled="type !== 'monthly_usage'" class="input input-bordered input-xs w-full text-right font-mono" required>
+                                <div class="text-right text-xs font-bold font-mono" x-text="'₹' + (Number(item.quantity || 0) * Number(item.unit_price || 0)).toFixed(2)"></div>
                             </div>
                         </template>
                     </div>
@@ -206,30 +210,47 @@
             {{-- TAB 3: CUSTOM / PAST WORK BILL --}}
             <div x-show="type === 'custom'" class="card bg-base-100 border border-base-300 shadow-sm">
                 <div class="card-body p-5 space-y-4">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h3 class="font-bold text-sm uppercase tracking-wide opacity-70">Custom Line Items (Past Work / Services)</h3>
-                            <p class="text-xs opacity-60">Add any services, past campaign work, setup fees, or custom deliverables.</p>
+                            <h3 class="font-bold text-sm uppercase tracking-wide opacity-70">Past Work &amp; Custom Line Items (Optional)</h3>
+                            <p class="text-xs opacity-60">Auto-fetch successful campaign/single messages (even deleted campaigns &amp; out-of-window charges) or add custom items manually.</p>
                         </div>
-                        <button type="button" @click="addCustomItem()" class="btn btn-xs btn-outline btn-primary gap-1">
+                        <button type="button" @click="addCustomItem()" class="btn btn-xs btn-outline btn-primary gap-1 shrink-0">
                             <i class="ti ti-plus"></i> Add Item
                         </button>
                     </div>
 
+                    {{-- Auto-fetch client history bar --}}
+                    <div x-show="organizationId" class="p-3 rounded-lg bg-base-200/50 border border-base-300 flex flex-wrap items-end gap-3">
+                        <div class="form-control">
+                            <label class="label py-0"><span class="label-text text-[0.68rem] opacity-70">From Date (optional)</span></label>
+                            <input type="date" x-model="historyFrom" class="input input-bordered input-xs font-mono">
+                        </div>
+                        <div class="form-control">
+                            <label class="label py-0"><span class="label-text text-[0.68rem] opacity-70">To Date (optional)</span></label>
+                            <input type="date" x-model="historyTo" class="input input-bordered input-xs font-mono">
+                        </div>
+                        <button type="button" @click="fetchCustomHistory()" class="btn btn-xs btn-primary gap-1">
+                            <i class="ti ti-history"></i> Auto-Fetch Client History
+                        </button>
+                        <span x-show="historyLoading" class="loading loading-spinner loading-xs"></span>
+                    </div>
+
                     <div class="space-y-2">
-                        <div class="grid grid-cols-12 gap-2 text-[0.7rem] font-bold opacity-60 px-1">
-                            <div class="col-span-6">Description *</div>
-                            <div class="col-span-2 text-right">Qty *</div>
-                            <div class="col-span-2 text-right">Unit Price (₹) *</div>
-                            <div class="col-span-2 text-right">Amount</div>
+                        <div class="text-[0.7rem] font-bold opacity-60 px-1"
+                             style="display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr); gap: 0.5rem;">
+                            <div>Description (optional)</div>
+                            <div class="text-right">Qty</div>
+                            <div class="text-right">Unit Price (₹)</div>
+                            <div class="text-right">Amount</div>
                         </div>
 
                         <template x-for="(item, idx) in customItems" :key="idx">
-                            <div class="grid grid-cols-12 gap-2 items-center">
-                                <input type="text" :name="'items[' + idx + '][description]'" x-model="item.description" :disabled="type !== 'custom'" placeholder="e.g. WABA Setup & Past Campaign Management" class="input input-bordered input-sm col-span-6 text-xs" required>
-                                <input type="number" step="0.01" min="0.01" :name="'items[' + idx + '][quantity]'" x-model="item.quantity" :disabled="type !== 'custom'" class="input input-bordered input-sm col-span-2 text-right font-mono text-xs" required>
-                                <input type="number" step="0.01" min="0" :name="'items[' + idx + '][unit_price]'" x-model="item.unit_price" :disabled="type !== 'custom'" class="input input-bordered input-sm col-span-2 text-right font-mono text-xs" required>
-                                <div class="col-span-2 flex items-center justify-end gap-1">
+                            <div style="display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 2fr) minmax(0, 2fr) minmax(0, 2fr); gap: 0.5rem; align-items: center;">
+                                <input type="text" :name="'items[' + idx + '][description]'" x-model="item.description" :disabled="type !== 'custom'" placeholder="Optional — leave blank to auto-fetch org history, or type item" class="input input-bordered input-sm w-full text-xs">
+                                <input type="number" step="0.01" min="0" :name="'items[' + idx + '][quantity]'" x-model="item.quantity" :disabled="type !== 'custom'" class="input input-bordered input-sm w-full text-right font-mono text-xs">
+                                <input type="number" step="0.01" min="0" :name="'items[' + idx + '][unit_price]'" x-model="item.unit_price" :disabled="type !== 'custom'" class="input input-bordered input-sm w-full text-right font-mono text-xs">
+                                <div class="flex items-center justify-end gap-1">
                                     <span class="text-xs font-bold font-mono" x-text="'₹' + (Number(item.quantity || 0) * Number(item.unit_price || 0)).toFixed(2)"></span>
                                     <button type="button" @click="removeCustomItem(idx)" x-show="customItems.length > 1" class="btn btn-ghost btn-xs text-error px-1">
                                         <i class="ti ti-x"></i>
@@ -324,6 +345,9 @@
                 usageLoading: false,
                 usageData: null,
                 usageItems: [],
+                historyFrom: '',
+                historyTo: '',
+                historyLoading: false,
                 customItems: [{ description: '', quantity: 1, unit_price: 0 }],
                 taxPercent: 0,
                 discount: 0,
@@ -388,6 +412,27 @@
 
                 addCustomItem() {
                     this.customItems.push({ description: '', quantity: 1, unit_price: 0 });
+                },
+
+                async fetchCustomHistory() {
+                    if (!this.organizationId) return;
+                    this.historyLoading = true;
+                    try {
+                        let url = `${cfg.previewUrl}?organization_id=${encodeURIComponent(this.organizationId)}`;
+                        if (this.historyFrom) url += `&from_date=${encodeURIComponent(this.historyFrom)}`;
+                        if (this.historyTo) url += `&to_date=${encodeURIComponent(this.historyTo)}`;
+                        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                        const data = await res.json();
+                        if (data.items && data.items.length > 0) {
+                            this.customItems = data.items.map(i => ({ ...i }));
+                        } else {
+                            this.customItems = [{ description: 'No billable outbound messages found in selected period', quantity: 1, unit_price: 0 }];
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        this.historyLoading = false;
+                    }
                 },
 
                 removeCustomItem(idx) {
