@@ -144,6 +144,10 @@ class AdminOrganizationController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'billing_email' => ['nullable', 'email', 'max:150'],
+            'billing_address' => ['nullable', 'string', 'max:500'],
+            'gst_number' => ['nullable', 'string', 'max:30'],
+            'meta_billing_mode' => ['nullable', 'string', 'in:client_card,company_card'],
             'status' => ['required', 'string', 'in:active,suspended'],
             'plan' => ['required', 'string'],
             'is_lifetime' => ['nullable', 'boolean'],
@@ -171,6 +175,10 @@ class AdminOrganizationController extends Controller
 
         $updateData = [
             'name' => $validated['name'],
+            'billing_email' => $validated['billing_email'] ?? null,
+            'billing_address' => $validated['billing_address'] ?? null,
+            'gst_number' => $validated['gst_number'] ?? null,
+            'meta_billing_mode' => $validated['meta_billing_mode'] ?? ($organization->meta_billing_mode ?? 'client_card'),
             'status' => $validated['status'],
             'plan' => $isLifetime ? 'lifetime' : $validated['plan'],
             'is_lifetime' => $isLifetime,

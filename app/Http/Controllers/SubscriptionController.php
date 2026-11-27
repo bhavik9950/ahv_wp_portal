@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Invoice;
 use App\Models\SubscriptionRequest;
 use App\Models\User;
+use App\Services\Billing\InvoiceService;
 use App\Services\System\SystemSettings;
 use App\Support\CurrentOrganization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class SubscriptionController extends Controller
@@ -31,12 +34,34 @@ class SubscriptionController extends Controller
             ->limit(10)
             ->get();
 
+        $invoices = $org
+            ? Invoice::query()
+                ->where('organization_id', $org->getKey())
+                ->latest('id')
+                ->limit(25)
+                ->get()
+            : collect();
+
         return view('subscription.index', [
             'organization' => $org,
             'plans' => $plans,
             'upiId' => $upiId,
             'bankDetails' => $bankDetails,
             'requests' => $requests,
+            'invoices' => $invoices,
+        ]);
+    }
+
+    public function downloadInvoice(Invoice $invoice, InvoiceService $service): Response
+    {
+        $org = $this->current->resolve();
+        abort_unless($org && (int) $invoice->organization_id === (int) $org->getKey(), 403);
+
+        $bytes = $service->renderPdfBytes($invoice);
+
+        return response($bytes, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$invoice->invoice_number}.pdf\"",
         ]);
     }
 

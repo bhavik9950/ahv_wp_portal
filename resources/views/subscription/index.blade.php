@@ -231,6 +231,51 @@
                         </div>
                     </div>
                 @endif
+
+                {{-- Issued Invoices & Receipts --}}
+                @if (isset($invoices) && $invoices->isNotEmpty())
+                    <div class="card bg-base-100 border border-base-300 shadow-sm mt-6">
+                        <div class="card-body p-4">
+                            <h4 class="font-bold text-xs uppercase tracking-wide opacity-60 mb-2">Invoices &amp; Payment Receipts</h4>
+                            <div class="overflow-x-auto">
+                                <table class="table table-xs">
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice #</th>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th class="text-right">PDF</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($invoices as $inv)
+                                            <tr>
+                                                <td class="font-mono font-bold text-xs">{{ $inv->invoice_number }}</td>
+                                                <td class="text-xs opacity-75 whitespace-nowrap">{{ $inv->issue_date?->format('d M Y') }}</td>
+                                                <td class="text-xs">{{ $inv->typeLabel() }}</td>
+                                                <td class="font-mono font-semibold">₹{{ number_format((float) $inv->total_amount, 2) }}</td>
+                                                <td>
+                                                    @if ($inv->isPaid())
+                                                        <span class="badge badge-success badge-xs">Paid</span>
+                                                    @else
+                                                        <span class="badge badge-warning badge-xs">Unpaid</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-right">
+                                                    <a href="{{ route('subscription.invoices.pdf', $inv) }}" class="btn btn-xs btn-outline btn-primary gap-1">
+                                                        <i class="ti ti-download"></i> PDF
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

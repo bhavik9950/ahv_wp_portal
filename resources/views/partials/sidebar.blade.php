@@ -79,6 +79,7 @@
     {{-- Admin section is strictly for Platform Super Admins only --}}
     @if ($isSuper)
         <li class="menu-title mt-3">Platform Admin</li>
+        {!! $nav('Invoices &amp; Billing', 'ti-file-invoice', 'admin.invoices.index') !!}
         {!! $nav('Lead Inquiries', 'ti-mail-fast', 'admin.inquiries.index') !!}
         {!! $nav('Subscriptions &amp; UTRs', 'ti-receipt-2', 'admin.subscriptions.index') !!}
         {!! $nav('Client Organizations', 'ti-building', 'admin.organizations.index') !!}

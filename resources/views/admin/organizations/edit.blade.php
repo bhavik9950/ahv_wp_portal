@@ -32,6 +32,33 @@
                                 <option value="suspended" {{ old('status', $organization->status) === 'suspended' ? 'selected' : '' }}>Suspended</option>
                             </select>
                         </div>
+
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium text-xs">Billing Email (for Invoices)</span></label>
+                            <input type="email" name="billing_email" value="{{ old('billing_email', $organization->billing_email) }}" placeholder="defaults to org admin email" class="input input-bordered input-sm">
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium text-xs">Meta Payment Card Mode</span></label>
+                            <select name="meta_billing_mode" class="select select-bordered select-sm">
+                                <option value="client_card" {{ old('meta_billing_mode', $organization->meta_billing_mode ?? 'client_card') === 'client_card' ? 'selected' : '' }}>
+                                    Client's Own Meta Card (No Meta message billing)
+                                </option>
+                                <option value="company_card" {{ old('meta_billing_mode', $organization->meta_billing_mode) === 'company_card' ? 'selected' : '' }}>
+                                    Company Meta Card (Bill monthly message charges)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium text-xs">Client GSTIN (optional)</span></label>
+                            <input type="text" name="gst_number" value="{{ old('gst_number', $organization->gst_number) }}" class="input input-bordered input-sm font-mono">
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium text-xs">Billing Address (optional)</span></label>
+                            <input type="text" name="billing_address" value="{{ old('billing_address', $organization->billing_address) }}" class="input input-bordered input-sm">
+                        </div>
                     </div>
                 </div>
             </div>

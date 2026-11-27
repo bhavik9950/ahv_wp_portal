@@ -24,6 +24,10 @@ class Organization extends Model
         'name',
         'slug',
         'timezone',
+        'billing_email',
+        'billing_address',
+        'gst_number',
+        'meta_billing_mode',
         'status',
         'plan',
         'subscription_expires_at',
@@ -74,6 +78,26 @@ class Organization extends Model
     public function subscriptionRequests(): HasMany
     {
         return $this->hasMany(SubscriptionRequest::class);
+    }
+
+    /** @return HasMany<Invoice, $this> */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function usesCompanyMetaCard(): bool
+    {
+        return ($this->meta_billing_mode ?? 'client_card') === 'company_card';
+    }
+
+    public function resolveBillingEmail(): ?string
+    {
+        if (filled($this->billing_email)) {
+            return $this->billing_email;
+        }
+
+        return $this->users()->orderBy('organization_user.id')->value('email');
     }
 
     public function hasActiveSubscription(): bool

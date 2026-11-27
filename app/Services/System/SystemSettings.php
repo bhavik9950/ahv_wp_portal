@@ -93,4 +93,35 @@ final class SystemSettings
             ],
         ]);
     }
+
+    /** @return array{name: string, email: string, phone: string, address: string, gstin: string, website: string} */
+    public function companyProfile(): array
+    {
+        return (array) $this->get('billing.company_profile', [
+            'name' => env('COMPANY_NAME', 'AH&V Software Technologies'),
+            'email' => env('COMPANY_EMAIL', config('mail.from.address', 'billing@ahvsoftware.com')),
+            'phone' => env('COMPANY_PHONE', ''),
+            'address' => env('COMPANY_ADDRESS', 'Sri Ganganagar, Rajasthan, India'),
+            'gstin' => env('COMPANY_GSTIN', ''),
+            'website' => env('APP_URL', 'https://wap.ahvsoftware.com'),
+        ]);
+    }
+
+    /** @return array{marketing: float, utility: float, authentication: float, service: float} */
+    public function metaMessageRates(): array
+    {
+        $rates = (array) $this->get('billing.meta_rates', [
+            'marketing' => 0.88,
+            'utility' => 0.15,
+            'authentication' => 0.15,
+            'service' => 0.00,
+        ]);
+
+        return [
+            'marketing' => (float) ($rates['marketing'] ?? 0.88),
+            'utility' => (float) ($rates['utility'] ?? 0.15),
+            'authentication' => (float) ($rates['authentication'] ?? 0.15),
+            'service' => (float) ($rates['service'] ?? 0.00),
+        ];
+    }
 }

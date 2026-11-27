@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Permission;
+use App\Http\Controllers\Admin\AdminInvoiceController;
 use App\Http\Controllers\Admin\AdminOrganizationController;
 use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\HealthController;
@@ -70,6 +71,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     // Organization subscription status & manual UTR payment submission
     Route::get('/subscription', [SubscriptionController::class, 'index'])->name('subscription.index');
     Route::post('/subscription', [SubscriptionController::class, 'store'])->name('subscription.store');
+    Route::get('/subscription/invoices/{invoice}/pdf', [SubscriptionController::class, 'downloadInvoice'])->name('subscription.invoices.pdf');
 
     Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
         Route::view('/', 'whatsapp.overview')->name('overview');
@@ -229,6 +231,19 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('subscriptions/{subscriptionRequest}/approve', [AdminSubscriptionController::class, 'approve'])->name('subscriptions.approve');
         Route::post('subscriptions/{subscriptionRequest}/reject', [AdminSubscriptionController::class, 'reject'])->name('subscriptions.reject');
         Route::post('subscriptions/settings', [AdminSubscriptionController::class, 'updateSettings'])->name('subscriptions.settings');
+
+        // Invoices & Billing
+        Route::get('invoices', [AdminInvoiceController::class, 'index'])->name('invoices.index');
+        Route::get('invoices/create', [AdminInvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('invoices', [AdminInvoiceController::class, 'store'])->name('invoices.store');
+        Route::get('invoices/preview-usage', [AdminInvoiceController::class, 'previewUsage'])->name('invoices.preview-usage');
+        Route::get('invoices/settings', [AdminInvoiceController::class, 'settings'])->name('invoices.settings');
+        Route::post('invoices/settings', [AdminInvoiceController::class, 'updateSettings'])->name('invoices.settings.update');
+        Route::get('invoices/{invoice}', [AdminInvoiceController::class, 'show'])->name('invoices.show');
+        Route::get('invoices/{invoice}/pdf', [AdminInvoiceController::class, 'pdf'])->name('invoices.pdf');
+        Route::post('invoices/{invoice}/send', [AdminInvoiceController::class, 'send'])->name('invoices.send');
+        Route::post('invoices/{invoice}/mark-paid', [AdminInvoiceController::class, 'markPaid'])->name('invoices.mark-paid');
+        Route::delete('invoices/{invoice}', [AdminInvoiceController::class, 'destroy'])->name('invoices.destroy');
 
         Route::get('organizations', [AdminOrganizationController::class, 'index'])->name('organizations.index');
         Route::post('organizations', [AdminOrganizationController::class, 'store'])->name('organizations.store');
