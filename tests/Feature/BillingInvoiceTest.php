@@ -296,3 +296,63 @@ it('syncs updated plan prices and percentage discounts to the public pricing pag
         ->assertSee('20% OFF')
         ->assertSee('4,000');
 });
+
+it('auto-generates monthly bills for a selected month and prevents duplicates', function () {
+    $admin = makeSuperAdmin();
+
+    $org = app(OrganizationProvisioner::class)->create(['name' => 'Auto Bill Org']);
+    $org->forceFill([
+        'billing_email' => 'autobill@test.local',
+        'meta_billing_mode' => 'company_card',
+    ])->save();
+
+    $waba = new WhatsappBusinessAccount(['name' => 'Auto WABA', 'waba_id' => 'waba_auto_1']);
+    $waba->forceFill(['organization_id' => $org->getKey()])->save();
+
+    $template = new WhatsappTemplate([
+        'name' => 'auto_tpl',
+        'language' => 'en',
+        'category' => 'UTILITY',
+    ]);
+    $template->forceFill([
+        'organization_id' => $org->getKey(),
+        'whatsapp_business_account_id' => $waba->getKey(),
+        'status' => 'APPROVED',
+    ])->save();
+
+    $msg = new Message([
+        'template_id' => $template->getKey(),
+        'direction' => 'outbound',
+        'to_phone' => '919999911111',
+        'to_phone_hash' => hash('sha256', '919999911111'),
+        'type' => MessageType::Template,
+        'idempotency_key' => 'auto-bill-1',
+    ]);
+    $msg->forceFill([
+        'organization_id' => $org->getKey(),
+        'status' => MessageStatus::Delivered,
+    ])->save();
+
+    $month = now('Asia/Kolkata')->format('Y-m');
+
+    // First run generates 1 invoice (1 * 0.15 = 0.15)
+    $this->actingAs($admin)
+        ->post(route('admin.invoices.auto-generate'), [
+            'billing_month' => $month,
+            'only_company_card' => '1',
+        ])
+        ->assertRedirect(route('admin.invoices.index'));
+
+    expect(Invoice::query()->where('organization_id', $org->getKey())->count())->toBe(1)
+        ->and((float) Invoice::query()->where('organization_id', $org->getKey())->value('total_amount'))->toBe(0.15);
+
+    // Second run for same month skips existing (still 1 invoice)
+    $this->actingAs($admin)
+        ->post(route('admin.invoices.auto-generate'), [
+            'billing_month' => $month,
+            'only_company_card' => '1',
+        ])
+        ->assertRedirect(route('admin.invoices.index'));
+
+    expect(Invoice::query()->where('organization_id', $org->getKey())->count())->toBe(1);
+});

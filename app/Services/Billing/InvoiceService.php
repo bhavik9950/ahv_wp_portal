@@ -9,12 +9,16 @@ use App\Models\Invoice;
 use App\Models\Organization;
 use App\Services\System\SystemSettings;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 final class InvoiceService
 {
-    public function __construct(private readonly SystemSettings $settings) {}
+    public function __construct(
+        private readonly SystemSettings $settings,
+        private readonly MetaUsageCalculator $usageCalculator,
+    ) {}
 
     /**
      * Create an invoice with line items and computed totals.
@@ -134,6 +138,111 @@ final class InvoiceService
             'email' => trim((string) ($email ?: ($org?->resolveBillingEmail() ?? ''))),
             'address' => $org?->billing_address,
             'gst' => $org?->gst_number,
+        ];
+    }
+
+    /**
+     * Auto-generate monthly Meta usage invoices for all eligible organizations for a given YYYY-MM month.
+     *
+     * @return array{
+     *     generated: array<int, Invoice>,
+     *     skipped_existing: int,
+     *     skipped_zero_usage: int,
+     *     skipped_client_card: int,
+     *     skipped_no_email: int,
+     *     email_errors: int
+     * }
+     */
+    public function autoGenerateMonthlyBills(
+        string $billingMonth,
+        bool $onlyCompanyCard = true,
+        bool $sendEmail = false,
+        ?int $createdBy = null,
+    ): array {
+        $organizations = Organization::query()
+            ->withoutGlobalScopes()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        $generated = [];
+        $skippedExisting = 0;
+        $skippedZeroUsage = 0;
+        $skippedClientCard = 0;
+        $skippedNoEmail = 0;
+        $emailErrors = 0;
+
+        $issueDate = now('Asia/Kolkata')->toDateString();
+        $dueDate = Carbon::now('Asia/Kolkata')->addDays(7)->toDateString();
+
+        foreach ($organizations as $org) {
+            if ($onlyCompanyCard && ! $org->usesCompanyMetaCard()) {
+                $skippedClientCard++;
+                continue;
+            }
+
+            $alreadyExists = Invoice::query()
+                ->where('organization_id', $org->getKey())
+                ->where('type', Invoice::TYPE_MONTHLY_USAGE)
+                ->where('billing_month', $billingMonth)
+                ->where('status', '!=', Invoice::STATUS_CANCELLED)
+                ->exists();
+
+            if ($alreadyExists) {
+                $skippedExisting++;
+                continue;
+            }
+
+            $usage = $this->usageCalculator->calculateForMonth($org, $billingMonth);
+            if ($usage['counts']['total_billable_messages'] === 0) {
+                $skippedZeroUsage++;
+                continue;
+            }
+
+            $email = $org->resolveBillingEmail();
+            if (blank($email)) {
+                $skippedNoEmail++;
+                continue;
+            }
+
+            $invoice = $this->create([
+                'organization_id' => $org->getKey(),
+                'type' => Invoice::TYPE_MONTHLY_USAGE,
+                'client_name' => $org->name,
+                'client_email' => $email,
+                'client_address' => $org->billing_address,
+                'client_gst' => $org->gst_number,
+                'meta_billing_mode' => $usage['meta_billing_mode'],
+                'billing_month' => $billingMonth,
+                'issue_date' => $issueDate,
+                'due_date' => $dueDate,
+                'status' => Invoice::STATUS_UNPAID,
+                'metadata' => [
+                    'usage_counts' => $usage['counts'],
+                    'rates' => $usage['rates'],
+                    'auto_generated' => true,
+                ],
+                'created_by' => $createdBy,
+            ], $usage['items']);
+
+            if ($sendEmail) {
+                try {
+                    $this->sendEmail($invoice);
+                } catch (\Throwable) {
+                    $emailErrors++;
+                }
+            }
+
+            $generated[] = $invoice;
+        }
+
+        return [
+            'generated' => $generated,
+            'skipped_existing' => $skippedExisting,
+            'skipped_zero_usage' => $skippedZeroUsage,
+            'skipped_client_card' => $skippedClientCard,
+            'skipped_no_email' => $skippedNoEmail,
+            'email_errors' => $emailErrors,
         ];
     }
 }

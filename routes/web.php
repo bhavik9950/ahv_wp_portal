@@ -238,6 +238,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('invoices', [AdminInvoiceController::class, 'index'])->name('invoices.index');
         Route::get('invoices/create', [AdminInvoiceController::class, 'create'])->name('invoices.create');
         Route::post('invoices', [AdminInvoiceController::class, 'store'])->name('invoices.store');
+        Route::post('invoices/auto-generate-monthly', [AdminInvoiceController::class, 'autoGenerateMonthly'])->name('invoices.auto-generate');
         Route::get('invoices/preview-usage', [AdminInvoiceController::class, 'previewUsage'])->name('invoices.preview-usage');
         Route::get('invoices/settings', [AdminInvoiceController::class, 'settings'])->name('invoices.settings');
         Route::post('invoices/settings', [AdminInvoiceController::class, 'updateSettings'])->name('invoices.settings.update');

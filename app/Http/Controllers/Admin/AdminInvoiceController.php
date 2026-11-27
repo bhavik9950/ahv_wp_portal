@@ -58,16 +58,62 @@ class AdminInvoiceController extends Controller
 
         $organizations = Organization::query()->withoutGlobalScopes()->orderBy('name')->get(['id', 'name']);
 
+        $monthOptions = collect(range(0, 11))->map(function (int $offset): array {
+            $dt = Carbon::now('Asia/Kolkata')->startOfMonth()->subMonths($offset);
+
+            return [
+                'value' => $dt->format('Y-m'),
+                'label' => $dt->format('F Y').' ('.$dt->format('Y-m').')',
+            ];
+        })->all();
+
         return view('admin.invoices.index', [
             'invoices' => $invoices,
             'totals' => $totals,
             'organizations' => $organizations,
+            'monthOptions' => $monthOptions,
             'filters' => [
                 'type' => $type,
                 'status' => $status,
                 'organization_id' => $orgId,
                 'search' => $search,
             ],
+        ]);
+    }
+
+    public function autoGenerateMonthly(Request $request, InvoiceService $service): RedirectResponse
+    {
+        $validated = $request->validate([
+            'billing_month' => ['required', 'date_format:Y-m'],
+            'only_company_card' => ['nullable', 'boolean'],
+            'send_email' => ['nullable', 'boolean'],
+        ]);
+
+        $result = $service->autoGenerateMonthlyBills(
+            billingMonth: $validated['billing_month'],
+            onlyCompanyCard: $request->boolean('only_company_card', true),
+            sendEmail: $request->boolean('send_email', false),
+            createdBy: $request->user()?->getKey(),
+        );
+
+        $count = count($result['generated']);
+        $parts = ["Generated {$count} monthly bill(s) for {$validated['billing_month']}."];
+        if ($result['skipped_existing'] > 0) {
+            $parts[] = "Skipped {$result['skipped_existing']} already billed.";
+        }
+        if ($result['skipped_zero_usage'] > 0) {
+            $parts[] = "Skipped {$result['skipped_zero_usage']} with 0 messages.";
+        }
+        if ($result['skipped_client_card'] > 0) {
+            $parts[] = "Skipped {$result['skipped_client_card']} client-card orgs.";
+        }
+        if ($result['email_errors'] > 0) {
+            $parts[] = "{$result['email_errors']} email(s) failed.";
+        }
+
+        return redirect()->route('admin.invoices.index')->with('flash_notify', [
+            'type' => $count > 0 ? 'success' : 'info',
+            'message' => implode(' ', $parts),
         ]);
     }
 

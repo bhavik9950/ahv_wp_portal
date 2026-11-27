@@ -48,6 +48,42 @@
             </div>
         </div>
 
+        {{-- Auto-Generate Monthly Bills Bar --}}
+        <form method="POST" action="{{ route('admin.invoices.auto-generate') }}" class="card bg-base-100 border border-primary/30 shadow-xs">
+            @csrf
+            <div class="card-body p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div>
+                    <div class="font-bold text-sm flex items-center gap-1.5 text-primary">
+                        <i class="ti ti-sparkles"></i> Auto-Generate Monthly Usage Bills
+                    </div>
+                    <p class="text-xs opacity-65">Pick any month from the dropdown to automatically generate bills for all active clients with outbound messages (skips already billed months).</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <select name="billing_month" class="select select-bordered select-sm font-mono w-52" required>
+                        @foreach ($monthOptions as $opt)
+                            <option value="{{ $opt['value'] }}">{{ $opt['label'] }}</option>
+                        @endforeach
+                    </select>
+
+                    <label class="label cursor-pointer gap-1.5 py-0">
+                        <input type="hidden" name="only_company_card" value="0">
+                        <input type="checkbox" name="only_company_card" value="1" checked class="checkbox checkbox-xs checkbox-primary">
+                        <span class="label-text text-xs">Company Meta Card only</span>
+                    </label>
+
+                    <label class="label cursor-pointer gap-1.5 py-0">
+                        <input type="checkbox" name="send_email" value="1" class="checkbox checkbox-xs checkbox-primary">
+                        <span class="label-text text-xs">Auto-send emails</span>
+                    </label>
+
+                    <button type="submit" class="btn btn-primary btn-sm gap-1.5">
+                        <i class="ti ti-bolt"></i> Auto-Generate Bills
+                    </button>
+                </div>
+            </div>
+        </form>
+
         {{-- Filters --}}
         <form method="GET" action="{{ route('admin.invoices.index') }}" class="card bg-base-100 border border-base-300 shadow-xs">
             <div class="card-body p-3 flex flex-col sm:flex-row flex-wrap items-end gap-3">
