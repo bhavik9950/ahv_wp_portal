@@ -59,7 +59,7 @@
                             @csrf
                             <input type="hidden" name="plan_key" value="{{ $planKey }}">
 
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
                                 <div class="form-control sm:col-span-2">
                                     <label class="label py-0.5"><span class="label-text text-xs font-semibold">Plan Name *</span></label>
                                     <input type="text" name="label" value="{{ $plan['label'] }}" class="input input-bordered input-sm" required>
@@ -68,7 +68,21 @@
                                     <label class="label py-0.5"><span class="label-text text-xs font-semibold">Price (₹) *</span></label>
                                     <input type="number" name="price" min="0" value="{{ $plan['price'] }}" class="input input-bordered input-sm font-mono" required>
                                 </div>
+                                <div class="form-control">
+                                    <label class="label py-0.5"><span class="label-text text-xs font-semibold">Discount (% OFF)</span></label>
+                                    <input type="number" name="discount_percent" min="0" max="95" value="{{ $plan['discount_percent'] ?? 0 }}" class="input input-bordered input-sm font-mono">
+                                </div>
                             </div>
+
+                            @if (($plan['discount_percent'] ?? 0) > 0)
+                                <div class="text-xs text-success font-semibold bg-success/10 px-2.5 py-1 rounded-lg flex items-center justify-between">
+                                    <span>Client Pays ({{ $plan['discount_percent'] }}% OFF):</span>
+                                    <span class="font-mono">
+                                        <span class="line-through opacity-60 mr-1">₹{{ number_format($plan['price']) }}</span>
+                                        ₹{{ number_format($plan['final_price']) }}
+                                    </span>
+                                </div>
+                            @endif
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                                 <div class="form-control">
@@ -124,6 +138,10 @@
                         <input type="number" name="price" min="0" placeholder="1799" class="input input-bordered input-sm font-mono" required>
                     </div>
                     <div class="form-control">
+                        <label class="label py-0.5"><span class="label-text text-xs font-semibold">Discount (% OFF)</span></label>
+                        <input type="number" name="discount_percent" min="0" max="95" value="0" class="input input-bordered input-sm font-mono">
+                    </div>
+                    <div class="form-control">
                         <label class="label py-0.5"><span class="label-text text-xs font-semibold">Days</span></label>
                         <input type="number" name="days" min="1" max="3650" value="90" class="input input-bordered input-sm font-mono">
                     </div>
@@ -133,7 +151,7 @@
                             <span class="label-text text-xs font-semibold">Lifetime</span>
                         </label>
                     </div>
-                    <div class="form-control sm:col-span-2 lg:col-span-5">
+                    <div class="form-control sm:col-span-2 lg:col-span-4">
                         <label class="label py-0.5"><span class="label-text text-xs font-semibold">Description *</span></label>
                         <input type="text" name="description" placeholder="Short description shown on client pricing card..." class="input input-bordered input-sm" required>
                     </div>

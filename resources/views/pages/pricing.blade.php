@@ -1,6 +1,12 @@
+@php
+    $systemSettings = app(\App\Services\System\SystemSettings::class);
+    $publicPlans = $systemSettings->billingPlans();
+    $lowestPrice = $systemSettings->lowestPlanPrice();
+    $highestPrice = ! empty($publicPlans) ? max(array_column($publicPlans, 'final_price')) : 14999;
+@endphp
 <x-public-layout>
-    <x-slot name="title">Pricing &amp; Plans (Starts ₹649) — AHV WhatsApp Portal</x-slot>
-    <x-slot name="description">Transparent WhatsApp marketing software pricing starting at ₹649/month. Fixed ₹4,500 one-time Meta onboarding setup fee. Zero per-message markup on Meta conversation fees.</x-slot>
+    <x-slot name="title">Pricing &amp; Plans (Starts ₹{{ number_format($lowestPrice) }}) — AHV WhatsApp Portal</x-slot>
+    <x-slot name="description">Transparent WhatsApp marketing software pricing starting at ₹{{ number_format($lowestPrice) }}/month. Fixed ₹4,500 one-time Meta onboarding setup fee. Zero per-message markup on Meta conversation fees.</x-slot>
 
     {{-- Structured Data for Pricing & Offers --}}
     @php
@@ -16,9 +22,9 @@
             'offers' => [
                 '@type' => 'AggregateOffer',
                 'priceCurrency' => 'INR',
-                'lowPrice' => '649',
-                'highPrice' => '14999',
-                'offerCount' => '4'
+                'lowPrice' => (string) $lowestPrice,
+                'highPrice' => (string) $highestPrice,
+                'offerCount' => (string) count($publicPlans)
             ]
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     @endphp
@@ -84,117 +90,62 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                {{-- 1 Month Plan (Starts at ₹649) --}}
-                <div class="rounded-2xl bg-white border-2 border-emerald-500 shadow-sm flex flex-col justify-between p-5 space-y-4 hover:shadow-md transition-shadow">
-                    <div class="space-y-3">
-                        <span class="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[0.65rem] font-bold uppercase">
-                            Starter Choice
-                        </span>
-                        <h4 class="font-bold text-base text-slate-900">Monthly Plan</h4>
-                        <div class="my-1">
-                            <span class="text-3xl font-extrabold font-mono text-emerald-600">₹649</span>
-                            <span class="text-xs text-slate-500">/ 30 days</span>
-                        </div>
-                        <p class="text-xs text-slate-600 leading-relaxed">Affordable monthly access for small business broadcasts and promotions.</p>
-                        <ul class="text-xs space-y-2 text-slate-700 pt-2 border-t border-slate-100">
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Broadcast Campaigns</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Live Chat 2-Way Inbox</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Template Management</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Direct Card Meta Billing</li>
-                        </ul>
-                    </div>
-                    <div class="pt-2 border-t border-slate-100">
-                        <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%20Monthly%20Plan%20(₹649)%20for%20WhatsApp%20Cloud%20Portal."
-                           target="_blank" rel="noopener noreferrer"
-                           class="btn btn-primary min-h-[40px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl w-full gap-1.5 text-xs font-bold border-0 justify-center">
-                            <i class="ti ti-brand-whatsapp text-base"></i> Get Monthly Plan
-                        </a>
-                    </div>
-                </div>
+                @foreach ($publicPlans as $planKey => $plan)
+                    @php
+                        $isLifetime = ($plan['days'] ?? null) === null;
+                        $isFeatured = $planKey === 'monthly' || $isLifetime;
+                        $hasDiscount = ($plan['discount_percent'] ?? 0) > 0;
+                        $waText = rawurlencode("Hello AHV Software, I am interested in the {$plan['label']} (₹".number_format($plan['final_price']).") for WhatsApp Cloud Portal.");
+                    @endphp
+                    <div class="rounded-2xl bg-white {{ $isLifetime ? 'border-2 border-emerald-600' : ($isFeatured ? 'border-2 border-emerald-500' : 'border border-slate-200') }} shadow-sm flex flex-col justify-between p-5 space-y-4 hover:shadow-md transition-shadow">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between gap-2 min-h-[1.25rem]">
+                                @if ($isLifetime)
+                                    <span class="inline-block px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[0.65rem] font-bold uppercase">
+                                        ⭐ Lifetime Deal
+                                    </span>
+                                @elseif ($planKey === 'monthly')
+                                    <span class="inline-block px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[0.65rem] font-bold uppercase">
+                                        Starter Choice
+                                    </span>
+                                @else
+                                    <span class="inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[0.65rem] font-semibold uppercase">
+                                        {{ ($plan['days'] ?? 30).' Days' }}
+                                    </span>
+                                @endif
 
-                {{-- 6 Months Plan --}}
-                <div class="rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between p-5 space-y-4 hover:border-slate-300 transition-colors">
-                    <div class="space-y-3">
-                        <span class="inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[0.65rem] font-semibold uppercase">
-                            Half-Yearly
-                        </span>
-                        <h4 class="font-bold text-base text-slate-900">6 Months Plan</h4>
-                        <div class="my-1">
-                            <span class="text-3xl font-extrabold font-mono text-slate-900">₹3,499</span>
-                            <span class="text-xs text-slate-500">/ 180 days</span>
-                        </div>
-                        <p class="text-xs text-slate-600 leading-relaxed">Popular choice for growing retail stores, clinics, and marketing agencies.</p>
-                        <ul class="text-xs space-y-2 text-slate-700 pt-2 border-t border-slate-100">
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Everything in 1 Month</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Unlimited Contact Groups</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> CSV Contact Importer</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Priority Tech Support</li>
-                        </ul>
-                    </div>
-                    <div class="pt-2 border-t border-slate-100">
-                        <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%206%20Months%20Plan%20(₹3,499)%20for%20WhatsApp%20Cloud%20Portal."
-                           target="_blank" rel="noopener noreferrer"
-                           class="btn btn-outline min-h-[40px] border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl w-full gap-1.5 text-xs font-semibold justify-center">
-                            <i class="ti ti-brand-whatsapp text-emerald-600 text-base"></i> Inquire for 6 Months
-                        </a>
-                    </div>
-                </div>
+                                @if ($hasDiscount)
+                                    <span class="inline-block px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[0.65rem] font-extrabold uppercase">
+                                        {{ $plan['discount_percent'] }}% OFF
+                                    </span>
+                                @endif
+                            </div>
 
-                {{-- 1 Year Plan --}}
-                <div class="rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between p-5 space-y-4 hover:border-slate-300 transition-colors">
-                    <div class="space-y-3">
-                        <span class="inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[0.65rem] font-semibold uppercase">
-                            Annual Savings
-                        </span>
-                        <h4 class="font-bold text-base text-slate-900">1 Year Plan</h4>
-                        <div class="my-1">
-                            <span class="text-3xl font-extrabold font-mono text-slate-900">₹5,999</span>
-                            <span class="text-xs text-slate-500">/ 365 days</span>
+                            <h4 class="font-bold text-base text-slate-900">{{ $plan['label'] }}</h4>
+                            <div class="my-1">
+                                @if ($hasDiscount)
+                                    <span class="text-sm line-through text-slate-400 font-mono mr-1">₹{{ number_format($plan['price']) }}</span>
+                                @endif
+                                <span class="text-3xl font-extrabold font-mono {{ $isFeatured ? 'text-emerald-600' : 'text-slate-900' }}">₹{{ number_format($plan['final_price']) }}</span>
+                                <span class="text-xs text-slate-500">/ {{ $isLifetime ? 'one-time' : ($plan['days'].' days') }}</span>
+                            </div>
+                            <p class="text-xs text-slate-600 leading-relaxed">{{ $plan['description'] }}</p>
+                            <ul class="text-xs space-y-2 text-slate-700 pt-2 border-t border-slate-100">
+                                <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Broadcast Campaigns</li>
+                                <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Live Chat 2-Way Inbox</li>
+                                <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Template Management</li>
+                                <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Direct Card Meta Billing</li>
+                            </ul>
                         </div>
-                        <p class="text-xs text-slate-600 leading-relaxed">Best value for year-round brand awareness and repeat customer retention.</p>
-                        <ul class="text-xs space-y-2 text-slate-700 pt-2 border-t border-slate-100">
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Full Year Dashboard Access</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> High-Speed Delivery Priority</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Dedicated Setup Assistance</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-check text-emerald-600 font-bold"></i> Multi-Tenant Privacy</li>
-                        </ul>
-                    </div>
-                    <div class="pt-2 border-t border-slate-100">
-                        <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20am%20interested%20in%20the%201%20Year%20Plan%20(₹5,999)%20for%20WhatsApp%20Cloud%20Portal."
-                           target="_blank" rel="noopener noreferrer"
-                           class="btn btn-outline min-h-[40px] border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl w-full gap-1.5 text-xs font-semibold justify-center">
-                            <i class="ti ti-brand-whatsapp text-emerald-600 text-base"></i> Inquire for 1 Year
-                        </a>
-                    </div>
-                </div>
-
-                {{-- Lifetime License --}}
-                <div class="rounded-2xl bg-white border-2 border-emerald-600 shadow-sm flex flex-col justify-between p-5 space-y-4 hover:shadow-md transition-shadow">
-                    <div class="space-y-3">
-                        <span class="inline-block px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[0.65rem] font-bold uppercase">
-                            ⭐ Lifetime Deal
-                        </span>
-                        <h4 class="font-bold text-base text-slate-900">Lifetime License</h4>
-                        <div class="my-1">
-                            <span class="text-3xl font-extrabold font-mono text-emerald-600">₹14,999</span>
-                            <span class="text-xs text-slate-500">/ one-time</span>
+                        <div class="pt-2 border-t border-slate-100">
+                            <a href="https://wa.me/917878159887?text={{ $waText }}"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn {{ $isFeatured ? 'btn-primary bg-emerald-600 hover:bg-emerald-700 text-white border-0' : 'btn-outline border-slate-200 hover:border-slate-300 text-slate-700' }} min-h-[40px] rounded-xl w-full gap-1.5 text-xs font-bold justify-center">
+                                <i class="ti ti-brand-whatsapp {{ $isFeatured ? '' : 'text-emerald-600' }} text-base"></i> Get {{ $plan['label'] }}
+                            </a>
                         </div>
-                        <p class="text-xs text-slate-600 leading-relaxed">One-time payment. Permanent software access with zero recurring renewal fees.</p>
-                        <ul class="text-xs space-y-2 text-slate-700 pt-2 border-t border-slate-100">
-                            <li class="flex items-center gap-1.5"><i class="ti ti-circle-check text-emerald-600 font-bold"></i> Permanent Lifetime Validity</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-circle-check text-emerald-600 font-bold"></i> Zero Renewal Prompts</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-circle-check text-emerald-600 font-bold"></i> All Future Core Updates</li>
-                            <li class="flex items-center gap-1.5"><i class="ti ti-circle-check text-emerald-600 font-bold"></i> Early Access to AI Chatbots</li>
-                        </ul>
                     </div>
-                    <div class="pt-2 border-t border-slate-100">
-                        <a href="https://wa.me/917878159887?text=Hello%20AHV%20Software,%20I%20want%20to%20claim%20the%20Lifetime%20Access%20License%20(₹14,999)%20for%20WhatsApp%20Cloud%20Portal."
-                           target="_blank" rel="noopener noreferrer"
-                           class="btn btn-primary min-h-[40px] bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl w-full gap-1.5 text-xs font-bold border-0 justify-center">
-                            <i class="ti ti-brand-whatsapp text-base"></i> Get Lifetime Access
-                        </a>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
 

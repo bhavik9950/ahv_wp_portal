@@ -360,7 +360,7 @@
                 onPlanChange() {
                     const p = this.plans[this.plan];
                     if (!p) return;
-                    this.planAmount = p.price;
+                    this.planAmount = (p.final_price !== undefined) ? p.final_price : p.price;
                     if (p.days && this.validFrom) {
                         const d = new Date(this.validFrom + 'T00:00:00');
                         d.setDate(d.getDate() + Number(p.days));

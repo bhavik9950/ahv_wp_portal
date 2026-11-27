@@ -104,6 +104,7 @@ class AdminSubscriptionController extends Controller
             'plan_key' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9_]+$/'],
             'label' => ['required', 'string', 'max:100'],
             'price' => ['required', 'integer', 'min:0'],
+            'discount_percent' => ['nullable', 'integer', 'min:0', 'max:95'],
             'days' => ['nullable', 'integer', 'min:1', 'max:3650'],
             'is_lifetime' => ['nullable', 'boolean'],
             'description' => ['required', 'string', 'max:300'],
@@ -115,6 +116,7 @@ class AdminSubscriptionController extends Controller
         $plans[$validated['plan_key']] = [
             'label' => $validated['label'],
             'price' => (int) $validated['price'],
+            'discount_percent' => (int) ($validated['discount_percent'] ?? 0),
             'days' => $isLifetime ? null : (int) ($validated['days'] ?? 30),
             'description' => $validated['description'],
         ];

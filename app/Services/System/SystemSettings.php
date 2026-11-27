@@ -63,35 +63,64 @@ final class SystemSettings
         ]);
     }
 
-    /** @return array<string, array{label: string, price: int, days: ?int, description: string}> */
+    /** @return array<string, array{label: string, price: int, discount_percent: int, final_price: int, days: ?int, description: string}> */
     public function billingPlans(): array
     {
-        return (array) $this->get('billing.plans', [
+        $raw = (array) $this->get('billing.plans', [
             'monthly' => [
                 'label' => '1 Month Access',
                 'price' => 649,
+                'discount_percent' => 0,
                 'days' => 30,
                 'description' => 'Affordable monthly access for business broadcasts and customer chat.',
             ],
             'half_yearly' => [
                 'label' => '6 Months Access',
                 'price' => 3499,
+                'discount_percent' => 0,
                 'days' => 180,
                 'description' => 'Popular choice for small & medium growing businesses.',
             ],
             'yearly' => [
                 'label' => '1 Year Access',
                 'price' => 5999,
+                'discount_percent' => 0,
                 'days' => 365,
                 'description' => 'Best value for year-round customer engagement and retention.',
             ],
             'lifetime' => [
                 'label' => 'Lifetime Access',
                 'price' => 14999,
+                'discount_percent' => 0,
                 'days' => null,
                 'description' => 'One-time investment with permanent dashboard validity.',
             ],
         ]);
+
+        $normalized = [];
+        foreach ($raw as $key => $plan) {
+            $price = (int) ($plan['price'] ?? 0);
+            $discount = max(0, min(95, (int) ($plan['discount_percent'] ?? 0)));
+            $finalPrice = $discount > 0 ? (int) round($price * (1 - ($discount / 100))) : $price;
+
+            $normalized[(string) $key] = [
+                'label' => (string) ($plan['label'] ?? ucfirst((string) $key)),
+                'price' => $price,
+                'discount_percent' => $discount,
+                'final_price' => $finalPrice,
+                'days' => array_key_exists('days', $plan) && $plan['days'] !== null ? (int) $plan['days'] : null,
+                'description' => (string) ($plan['description'] ?? ''),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    public function lowestPlanPrice(): int
+    {
+        $prices = array_column($this->billingPlans(), 'final_price');
+
+        return ! empty($prices) ? (int) min($prices) : 649;
     }
 
     /** @return array{name: string, email: string, phone: string, address: string, gstin: string, website: string} */

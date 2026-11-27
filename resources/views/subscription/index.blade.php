@@ -43,13 +43,23 @@
                 @foreach ($plans as $planKey => $plan)
                     <div class="card bg-base-100 border {{ $planKey === 'lifetime' ? 'border-primary ring-2 ring-primary/20' : 'border-base-300' }} shadow-sm flex flex-col justify-between">
                         <div class="card-body p-5">
-                            @if ($planKey === 'lifetime')
-                                <span class="badge badge-primary badge-sm uppercase font-bold self-start mb-2">⭐ Best Value</span>
-                            @endif
+                            <div class="flex items-center justify-between gap-2 mb-2 min-h-[1.25rem]">
+                                @if ($planKey === 'lifetime')
+                                    <span class="badge badge-primary badge-sm uppercase font-bold">⭐ Best Value</span>
+                                @else
+                                    <span></span>
+                                @endif
+                                @if (($plan['discount_percent'] ?? 0) > 0)
+                                    <span class="badge badge-success badge-sm font-bold">{{ $plan['discount_percent'] }}% OFF</span>
+                                @endif
+                            </div>
                             <h4 class="font-bold text-base">{{ $plan['label'] }}</h4>
                             <div class="mt-2 mb-3">
-                                <span class="text-3xl font-extrabold font-mono">₹{{ number_format($plan['price']) }}</span>
-                                <span class="text-xs opacity-60">/ {{ $planKey === 'lifetime' ? 'one-time' : ($plan['days'] ? $plan['days'].' days' : 'period') }}</span>
+                                @if (($plan['discount_percent'] ?? 0) > 0)
+                                    <span class="text-sm line-through opacity-50 font-mono mr-1">₹{{ number_format($plan['price']) }}</span>
+                                @endif
+                                <span class="text-3xl font-extrabold font-mono">₹{{ number_format($plan['final_price']) }}</span>
+                                <span class="text-xs opacity-60">/ {{ ($plan['days'] ?? null) === null ? 'one-time' : ($plan['days'].' days') }}</span>
                             </div>
                             <p class="text-xs opacity-70 mb-4">{{ $plan['description'] }}</p>
                             <ul class="text-xs space-y-1.5 opacity-80 mb-4">
@@ -62,7 +72,7 @@
                         </div>
                         <div class="p-5 pt-0">
                             <button type="button"
-                                    onclick="selectPlan('{{ $planKey }}', {{ $plan['price'] }})"
+                                    onclick="selectPlan('{{ $planKey }}', {{ $plan['final_price'] }})"
                                     class="btn {{ $planKey === 'lifetime' ? 'btn-primary' : 'btn-outline' }} btn-sm w-full gap-1">
                                 <i class="ti ti-check"></i> Choose Plan
                             </button>
@@ -143,8 +153,8 @@
                                     <label class="label"><span class="label-text font-medium text-xs">Selected Plan</span></label>
                                     <select name="plan" id="plan-select" class="select select-bordered select-sm w-full" onchange="updatePlanAmount()" required>
                                         @foreach ($plans as $key => $p)
-                                            <option value="{{ $key }}" data-price="{{ $p['price'] }}" {{ old('plan') === $key ? 'selected' : '' }}>
-                                                {{ $p['label'] }} (₹{{ number_format($p['price']) }})
+                                            <option value="{{ $key }}" data-price="{{ $p['final_price'] }}" {{ old('plan') === $key ? 'selected' : '' }}>
+                                                {{ $p['label'] }} (₹{{ number_format($p['final_price']) }}@if(($p['discount_percent'] ?? 0) > 0) · {{ $p['discount_percent'] }}% OFF @endif)
                                             </option>
                                         @endforeach
                                     </select>
@@ -152,7 +162,8 @@
 
                                 <div class="form-control">
                                     <label class="label"><span class="label-text font-medium text-xs">Amount Paid (₹)</span></label>
-                                    <input type="number" name="amount" id="amount-input" value="{{ old('amount', $plans['monthly']['price']) }}"
+                                    @php($firstPlan = reset($plans))
+                                    <input type="number" name="amount" id="amount-input" value="{{ old('amount', $firstPlan['final_price'] ?? 649) }}"
                                            class="input input-bordered input-sm w-full font-mono font-semibold" required readonly>
                                 </div>
                             </div>

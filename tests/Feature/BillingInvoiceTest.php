@@ -275,3 +275,24 @@ it('shows Manage Client Subscription Plans to super admin and allows adding, edi
 
     expect(app(\App\Services\System\SystemSettings::class)->billingPlans())->not->toHaveKey('quarterly');
 });
+
+it('syncs updated plan prices and percentage discounts to the public pricing page', function () {
+    $admin = makeSuperAdmin();
+
+    $this->actingAs($admin)
+        ->post(route('admin.subscriptions.plans.save'), [
+            'plan_key' => 'yearly',
+            'label' => '1 Year Pro',
+            'price' => 5000,
+            'discount_percent' => 20,
+            'days' => 365,
+            'description' => 'Discounted annual plan.',
+        ])
+        ->assertRedirect();
+
+    $this->get(route('public.pricing'))
+        ->assertOk()
+        ->assertSee('1 Year Pro')
+        ->assertSee('20% OFF')
+        ->assertSee('4,000');
+});

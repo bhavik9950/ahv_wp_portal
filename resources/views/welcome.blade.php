@@ -1,6 +1,7 @@
+@php($lowestPrice = app(\App\Services\System\SystemSettings::class)->lowestPlanPrice())
 <x-public-layout>
     <x-slot name="title">AHV WhatsApp Portal — Official Meta Cloud API WhatsApp Marketing Platform</x-slot>
-    <x-slot name="description">Official Meta WhatsApp Cloud API software for high-deliverability broadcast campaigns, 2-way live chat inbox, and direct Meta card billing with ₹0 markup. Plans start at ₹649/mo.</x-slot>
+    <x-slot name="description">Official Meta WhatsApp Cloud API software for high-deliverability broadcast campaigns, 2-way live chat inbox, and direct Meta card billing with ₹0 markup. Plans start at ₹{{ number_format($lowestPrice) }}/mo.</x-slot>
 
     {{-- 1. Hero Section (Ultra-Responsive: 360px Mobile to 4K Desktop + AEO Semantic Structure) --}}
     <section class="py-12 sm:py-20 lg:py-28 px-3 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-b from-emerald-50/60 via-white to-white border-b border-slate-200/80">
@@ -34,7 +35,7 @@
                 </a>
                 <a href="{{ route('public.pricing') }}"
                    class="btn btn-outline min-h-[44px] px-6 sm:px-8 py-3 border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold shadow-2xs gap-2 justify-center">
-                    <i class="ti ti-tags text-base text-emerald-600"></i> View Pricing (Starts ₹649)
+                    <i class="ti ti-tags text-base text-emerald-600"></i> View Pricing (Starts ₹{{ number_format($lowestPrice) }})
                 </a>
             </div>
 
@@ -293,7 +294,7 @@
             </span>
 
             <h2 class="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                Monthly Plans Starting at Just <span class="text-emerald-400">₹649</span>
+                Monthly Plans Starting at Just <span class="text-emerald-400">₹{{ number_format($lowestPrice) }}</span>
             </h2>
 
             <p class="text-xs sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
