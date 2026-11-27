@@ -100,8 +100,9 @@
         @endif
 
         {{-- table --}}
-        <div class="flex flex-wrap items-end gap-2">
-            <x-dt-filter label="Status" target="#webhook-events-table" :col="2" class="min-w-[9rem]">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div class="flex flex-wrap items-end gap-2">
+                <x-dt-filter label="Status" target="#webhook-events-table" :col="2" class="min-w-[9rem]">
                 <option value="">Any status</option>
                 @foreach (['received','processing','processed','failed','ignored'] as $s)
                     <option value="{{ $s }}">{{ ucfirst($s) }}</option>
@@ -113,6 +114,16 @@
                 <option value="status">Status update</option>
                 <option value="template">Template update</option>
             </x-dt-filter>
+            </div>
+
+            <form method="GET" action="{{ route($indexRoute) }}" class="flex items-center gap-1.5">
+                <input type="text" name="q" value="{{ $search ?? '' }}" placeholder="All-time search (phone, wamid, error...)"
+                       class="input input-bordered input-sm w-64 text-xs">
+                <button type="submit" class="btn btn-sm btn-primary gap-1"><i class="ti ti-search"></i> Search All</button>
+                @if (! empty($search))
+                    <a href="{{ route($indexRoute) }}" class="btn btn-sm btn-ghost">Reset</a>
+                @endif
+            </form>
         </div>
 
         <div class="card bg-base-100 border border-base-300 overflow-x-auto">

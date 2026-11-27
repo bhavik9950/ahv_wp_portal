@@ -63,16 +63,36 @@ class WebhookEventController extends Controller
             }
         }
 
+        $search = trim((string) $request->query('q', ''));
+
         // Strictly scoped to the currently active organization:
         // No client or admin ever sees another tenant's webhook events.
-        $events = WebhookEvent::query()
-            ->where('organization_id', $orgId)
+        $eventsQuery = WebhookEvent::query()
+            ->where('organization_id', $orgId);
+
+        if ($search !== '') {
+            $digits = preg_replace('/\D+/', '', $search) ?: '';
+            $eventsQuery->where(function ($q) use ($search, $digits): void {
+                $q->where('payload', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('error_message', 'like', "%{$search}%");
+                if ($digits !== '' && $digits !== $search) {
+                    $q->orWhere('payload', 'like', "%{$digits}%");
+                }
+                if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
+                    $q->orWhere('payload', 'like', '%'.substr($digits, 2).'%');
+                }
+            });
+        }
+
+        $events = $eventsQuery
             ->orderByDesc('received_at')
             ->limit(500)
             ->get();
 
         return view('admin.webhook-events.index', [
             'events' => $events,
+            'search' => $search,
             'stats' => [
                 'total' => $events->count(),
                 'inbound' => $events->filter(fn ($e) => str_starts_with($e->kind(), 'inbound'))->count(),

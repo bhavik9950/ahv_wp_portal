@@ -23,14 +23,31 @@ use Illuminate\View\View;
 
 class MessageController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', Message::class);
 
         $limit = 1000;
+        $search = trim((string) $request->query('q', ''));
 
-        $messages = Message::query()
-            ->with(['contact', 'template'])
+        $query = Message::query()
+            ->with(['contact', 'template']);
+
+        if ($search !== '') {
+            $digits = preg_replace('/\D+/', '', $search) ?: '';
+            $query->where(function ($q) use ($search, $digits): void {
+                $q->where('to_phone', 'like', "%{$search}%")
+                    ->orWhere('wamid', 'like', "%{$search}%")
+                    ->orWhere('error_code', 'like', "%{$search}%")
+                    ->orWhere('error_message', 'like', "%{$search}%")
+                    ->orWhereHas('contact', fn ($c) => $c->where('name', 'like', "%{$search}%"));
+                if ($digits !== '') {
+                    $q->orWhere('to_phone', 'like', "%{$digits}%");
+                }
+            });
+        }
+
+        $messages = $query
             ->latest()
             ->limit($limit + 1)
             ->get();
@@ -40,6 +57,7 @@ class MessageController extends Controller
             'messages' => $messages->take($limit),
             'capped' => $messages->count() > $limit,
             'limit' => $limit,
+            'search' => $search,
         ]);
     }
 

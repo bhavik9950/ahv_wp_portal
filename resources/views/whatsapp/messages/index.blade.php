@@ -2,18 +2,29 @@
     <x-slot name="title">Messages</x-slot>
 
     <div class="space-y-4">
-        <div class="flex flex-wrap items-end gap-2">
-            <x-dt-filter label="Direction" target="#messages-table" :col="1">
-                <option value="">Any direction</option>
-                <option value="outbound">Outbound</option>
-                <option value="inbound">Inbound</option>
-            </x-dt-filter>
-            <x-dt-filter label="Status" target="#messages-table" :col="4">
-                <option value="">Any status</option>
-                @foreach (['pending','queued','sent','delivered','read','failed','skipped'] as $s)
-                    <option value="{{ $s }}">{{ ucfirst($s) }}</option>
-                @endforeach
-            </x-dt-filter>
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div class="flex flex-wrap items-end gap-2">
+                <x-dt-filter label="Direction" target="#messages-table" :col="1">
+                    <option value="">Any direction</option>
+                    <option value="outbound">Outbound</option>
+                    <option value="inbound">Inbound</option>
+                </x-dt-filter>
+                <x-dt-filter label="Status" target="#messages-table" :col="4">
+                    <option value="">Any status</option>
+                    @foreach (['pending','queued','sent','delivered','read','failed','skipped'] as $s)
+                        <option value="{{ $s }}">{{ ucfirst($s) }}</option>
+                    @endforeach
+                </x-dt-filter>
+            </div>
+
+            <form method="GET" action="{{ route('whatsapp.messages.index') }}" class="flex items-center gap-1.5">
+                <input type="text" name="q" value="{{ $search ?? '' }}" placeholder="All-time search (phone, name, error...)"
+                       class="input input-bordered input-sm w-64 text-xs">
+                <button type="submit" class="btn btn-sm btn-primary gap-1"><i class="ti ti-search"></i> Search All</button>
+                @if (! empty($search))
+                    <a href="{{ route('whatsapp.messages.index') }}" class="btn btn-sm btn-ghost">Reset</a>
+                @endif
+            </form>
         </div>
 
         @if ($capped ?? false)
