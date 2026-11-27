@@ -96,7 +96,15 @@
                             <input type="text" name="client_gst" x-model="clientGst" class="input input-bordered input-sm font-mono">
                         </div>
 
-                        <div class="form-control sm:col-span-2">
+                        <div class="form-control">
+                            <label class="label py-1"><span class="label-text text-xs font-semibold">Meta Card Billing Mode</span></label>
+                            <select name="meta_billing_mode" x-model="metaBillingMode" @change="onMetaModeChange()" class="select select-bordered select-sm">
+                                <option value="client_card">Client's Own Meta Card (₹0 Meta Charge)</option>
+                                <option value="company_card">Company Meta Card (Apply Meta Rates)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-control">
                             <label class="label py-1"><span class="label-text text-xs font-semibold">Client Address (optional)</span></label>
                             <input type="text" name="client_address" x-model="clientAddress" class="input input-bordered input-sm">
                         </div>
@@ -337,6 +345,7 @@
                 clientEmail: '',
                 clientAddress: '',
                 clientGst: '',
+                metaBillingMode: 'client_card',
                 plan: 'monthly',
                 planAmount: (cfg.plans && cfg.plans.monthly) ? cfg.plans.monthly.price : 649,
                 validFrom: new Date().toISOString().slice(0, 10),
@@ -371,6 +380,7 @@
                         this.clientEmail = org.email || '';
                         this.clientAddress = org.address || '';
                         this.clientGst = org.gst || '';
+                        this.metaBillingMode = org.meta_billing_mode || 'client_card';
                         if (org.plan && this.plans[org.plan]) {
                             this.plan = org.plan;
                             this.onPlanChange();
@@ -394,11 +404,19 @@
                     }
                 },
 
+                onMetaModeChange() {
+                    if (this.type === 'monthly_usage' && this.organizationId) {
+                        this.fetchUsage();
+                    } else if (this.type === 'custom' && this.organizationId) {
+                        this.fetchCustomHistory();
+                    }
+                },
+
                 async fetchUsage() {
                     if (!this.organizationId || !this.billingMonth) return;
                     this.usageLoading = true;
                     try {
-                        const url = `${cfg.previewUrl}?organization_id=${encodeURIComponent(this.organizationId)}&billing_month=${encodeURIComponent(this.billingMonth)}`;
+                        const url = `${cfg.previewUrl}?organization_id=${encodeURIComponent(this.organizationId)}&billing_month=${encodeURIComponent(this.billingMonth)}&meta_billing_mode=${encodeURIComponent(this.metaBillingMode)}`;
                         const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
                         const data = await res.json();
                         this.usageData = data;
@@ -418,7 +436,7 @@
                     if (!this.organizationId) return;
                     this.historyLoading = true;
                     try {
-                        let url = `${cfg.previewUrl}?organization_id=${encodeURIComponent(this.organizationId)}`;
+                        let url = `${cfg.previewUrl}?organization_id=${encodeURIComponent(this.organizationId)}&meta_billing_mode=${encodeURIComponent(this.metaBillingMode)}`;
                         if (this.historyFrom) url += `&from_date=${encodeURIComponent(this.historyFrom)}`;
                         if (this.historyTo) url += `&to_date=${encodeURIComponent(this.historyTo)}`;
                         const res = await fetch(url, { headers: { 'Accept': 'application/json' } });

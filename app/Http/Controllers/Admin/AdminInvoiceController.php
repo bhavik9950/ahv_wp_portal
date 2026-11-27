@@ -155,12 +155,16 @@ class AdminInvoiceController extends Controller
             'billing_month' => ['nullable', 'date_format:Y-m'],
             'from_date' => ['nullable', 'date'],
             'to_date' => ['nullable', 'date'],
+            'meta_billing_mode' => ['nullable', 'in:company_card,client_card'],
         ]);
 
         $org = Organization::query()->withoutGlobalScopes()->findOrFail((int) $validated['organization_id']);
+        $forceCompanyCard = isset($validated['meta_billing_mode'])
+            ? $validated['meta_billing_mode'] === 'company_card'
+            : null;
 
         if (! empty($validated['billing_month'])) {
-            $usage = $calculator->calculateForMonth($org, $validated['billing_month']);
+            $usage = $calculator->calculateForMonth($org, $validated['billing_month'], $forceCompanyCard);
         } else {
             $start = ! empty($validated['from_date'])
                 ? Carbon::parse($validated['from_date'], 'Asia/Kolkata')->startOfDay()->utc()
@@ -172,7 +176,7 @@ class AdminInvoiceController extends Controller
                 ? ($validated['from_date'] ?? 'Start').' to '.($validated['to_date'] ?? 'Now')
                 : 'All-Time History';
 
-            $usage = $calculator->calculateForPeriod($org, $start, $end, null, $label);
+            $usage = $calculator->calculateForPeriod($org, $start, $end, null, $label, $forceCompanyCard);
         }
 
         return response()->json($usage);
@@ -189,6 +193,7 @@ class AdminInvoiceController extends Controller
             'client_email' => ['required', 'email', 'max:150'],
             'client_address' => ['nullable', 'string', 'max:500'],
             'client_gst' => ['nullable', 'string', 'max:30'],
+            'meta_billing_mode' => ['nullable', 'in:company_card,client_card'],
             'issue_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date'],
             'tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -234,7 +239,10 @@ class AdminInvoiceController extends Controller
             ]));
 
             $org = Organization::query()->withoutGlobalScopes()->findOrFail((int) $validated['organization_id']);
-            $usage = $calculator->calculateForMonth($org, $validated['billing_month']);
+            $forceCompanyCard = isset($validated['meta_billing_mode'])
+                ? $validated['meta_billing_mode'] === 'company_card'
+                : null;
+            $usage = $calculator->calculateForMonth($org, $validated['billing_month'], $forceCompanyCard);
 
             $items = ! empty($validated['items']) ? $validated['items'] : $usage['items'];
             if (empty($items)) {
@@ -269,7 +277,10 @@ class AdminInvoiceController extends Controller
             if (empty($items) && ! empty($validated['organization_id'])) {
                 $org = Organization::query()->withoutGlobalScopes()->find((int) $validated['organization_id']);
                 if ($org) {
-                    $usage = $calculator->calculateForPeriod($org);
+                    $forceCompanyCard = isset($validated['meta_billing_mode'])
+                        ? $validated['meta_billing_mode'] === 'company_card'
+                        : null;
+                    $usage = $calculator->calculateForPeriod($org, null, null, null, null, $forceCompanyCard);
                     $items = $usage['items'];
                 }
             }

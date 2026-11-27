@@ -20,13 +20,13 @@ final class MetaUsageCalculator
      *
      * @return array<string, mixed>
      */
-    public function calculateForMonth(Organization $organization, string $billingMonth): array
+    public function calculateForMonth(Organization $organization, string $billingMonth, ?bool $forceCompanyCard = null): array
     {
         $start = Carbon::createFromFormat('Y-m', $billingMonth, 'Asia/Kolkata')->startOfMonth()->utc();
         $end = Carbon::createFromFormat('Y-m', $billingMonth, 'Asia/Kolkata')->endOfMonth()->utc();
         $label = Carbon::createFromFormat('Y-m', $billingMonth)->format('F Y');
 
-        return $this->calculateForPeriod($organization, $start, $end, $billingMonth, $label);
+        return $this->calculateForPeriod($organization, $start, $end, $billingMonth, $label, $forceCompanyCard);
     }
 
     /**
@@ -40,9 +40,11 @@ final class MetaUsageCalculator
         ?Carbon $end = null,
         ?string $billingMonth = null,
         ?string $periodLabel = null,
+        ?bool $forceCompanyCard = null,
     ): array {
         $rates = $this->settings->metaMessageRates();
-        $usesCompanyCard = $organization->usesCompanyMetaCard();
+        $usesCompanyCard = $forceCompanyCard ?? $organization->usesCompanyMetaCard();
+        $effectiveMode = $usesCompanyCard ? 'company_card' : 'client_card';
 
         $billableStatuses = [
             MessageStatus::Sent->value,
@@ -184,7 +186,7 @@ final class MetaUsageCalculator
         return [
             'billing_month' => $billingMonth,
             'period_label' => $periodLabel ?? 'All-Time History',
-            'meta_billing_mode' => $organization->meta_billing_mode ?? 'client_card',
+            'meta_billing_mode' => $effectiveMode,
             'uses_company_card' => $usesCompanyCard,
             'rates' => $rates,
             'counts' => [
