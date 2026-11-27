@@ -56,28 +56,48 @@
                     </select>
 
                     @if ($campaign->template_id && $placeholders > 0)
-                        <h3 class="font-medium text-sm mt-2">3 · Map {{ $placeholders }} variable(s)</h3>
-                        @for ($i = 1; $i <= $placeholders; $i++)
-                            @php($spec = $vm[(string) $i] ?? ['type' => 'static', 'value' => ''])
-                            <div class="grid grid-cols-2 gap-2" x-data="{ type: '{{ $spec['type'] }}' }">
-                                <select name="variable_map[{{ $i }}][type]" x-model="type" class="select select-bordered select-sm">
-                                    <option value="static">Static text</option>
-                                    <option value="contact_field">Contact field</option>
-                                    <option value="custom_field">Custom field</option>
-                                </select>
-                                <template x-if="type === 'contact_field'">
-                                    <select name="variable_map[{{ $i }}][value]" class="select select-bordered select-sm">
-                                        <option value="name" @selected(($spec['value'] ?? '') === 'name')>Name</option>
-                                        <option value="phone" @selected(($spec['value'] ?? '') === 'phone')>Phone</option>
-                                        <option value="email" @selected(($spec['value'] ?? '') === 'email')>Email</option>
-                                    </select>
-                                </template>
-                                <template x-if="type !== 'contact_field'">
-                                    <input name="variable_map[{{ $i }}][value]" value="{{ $spec['value'] ?? '' }}"
-                                           class="input input-bordered input-sm" placeholder="Value for variable {{ $i }}">
-                                </template>
+                        <div class="mt-2 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-medium text-sm">3 · Map {{ $placeholders }} variable(s)</h3>
+                                <span class="text-[0.7rem] opacity-60">Match each template placeholder to a contact/custom field</span>
                             </div>
-                        @endfor
+                            @for ($i = 1; $i <= $placeholders; $i++)
+                                @php($spec = $vm[(string) $i] ?? ['type' => 'static', 'value' => ''])
+                                <div class="grid grid-cols-12 gap-2 items-center" x-data="{ type: '{{ $spec['type'] }}' }"
+                                     style="display: grid; grid-template-columns: 48px 1fr 1.4fr; gap: 0.5rem; align-items: center;">
+                                    <span class="badge badge-primary badge-sm font-mono font-bold">&#123;&#123;{{ $i }}&#125;&#125;</span>
+                                    <select name="variable_map[{{ $i }}][type]" x-model="type" class="select select-bordered select-sm w-full">
+                                        <option value="contact_field">Contact field</option>
+                                        <option value="custom_field">Custom field (CSV)</option>
+                                        <option value="static">Static text</option>
+                                    </select>
+                                    <template x-if="type === 'contact_field'">
+                                        <select name="variable_map[{{ $i }}][value]" class="select select-bordered select-sm w-full">
+                                            <option value="name" @selected(($spec['value'] ?? '') === 'name')>Name</option>
+                                            <option value="phone" @selected(($spec['value'] ?? '') === 'phone')>Phone</option>
+                                            <option value="email" @selected(($spec['value'] ?? '') === 'email')>Email</option>
+                                        </select>
+                                    </template>
+                                    <template x-if="type === 'custom_field'">
+                                        @if (! empty($customFieldKeys))
+                                            <select name="variable_map[{{ $i }}][value]" class="select select-bordered select-sm w-full font-mono text-xs">
+                                                <option value="">— Select CSV custom field —</option>
+                                                @foreach ($customFieldKeys as $cfKey)
+                                                    <option value="{{ $cfKey }}" @selected(($spec['value'] ?? '') === $cfKey)>{{ $cfKey }}</option>
+                                                @endforeach
+                                            </select>
+                                        @else
+                                            <input name="variable_map[{{ $i }}][value]" value="{{ $spec['value'] ?? '' }}"
+                                                   class="input input-bordered input-sm w-full font-mono text-xs" placeholder="Custom field key (e.g. Var2_RegNo)">
+                                        @endif
+                                    </template>
+                                    <template x-if="type === 'static'">
+                                        <input name="variable_map[{{ $i }}][value]" value="{{ $spec['value'] ?? '' }}"
+                                               class="input input-bordered input-sm w-full" placeholder="Fixed text for variable {{ $i }}">
+                                    </template>
+                                </div>
+                            @endfor
+                        </div>
                     @endif
 
                     <div class="mt-2">
@@ -172,8 +192,69 @@
             </div>
         </div>
 
-        {{-- Launch panel --}}
+        {{-- Right column: WhatsApp Phone Preview + Launch panel --}}
         <div class="space-y-4">
+            {{-- Live WhatsApp Phone Mockup --}}
+            <div class="card bg-base-100 border border-base-300 shadow-sm">
+                <div class="card-body p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider opacity-70 flex items-center gap-1.5">
+                            <i class="ti ti-brand-whatsapp text-success text-base"></i> WhatsApp Preview
+                        </span>
+                        @if ($sampleContact)
+                            <span class="badge badge-xs badge-outline font-mono">{{ $sampleContact->name ?: $sampleContact->phone_e164 }}</span>
+                        @endif
+                    </div>
+
+                    <div style="background-color: #171717; border: 4px solid #262626; border-radius: 28px; padding: 8px;">
+                        <div style="background-color: #075e54; color: #ffffff; padding: 8px 12px; border-top-left-radius: 20px; border-top-right-radius: 20px; display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 28px; height: 28px; border-radius: 9999px; background-color: #047857; display: flex; align-items: center; justify-content: center;">
+                                <i class="ti ti-brand-whatsapp"></i>
+                            </div>
+                            <div style="min-width: 0; flex: 1;">
+                                <div class="text-xs font-bold truncate">{{ $campaign->phoneNumber?->display_name ?? ($campaign->organization?->name ?? 'AH&V WhatsApp') }}</div>
+                                <div class="text-[0.6rem]" style="color: #a7f3d0;">Official Business</div>
+                            </div>
+                        </div>
+
+                        <div style="background-color: #efeae2; padding: 12px; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; min-height: 200px;">
+                            <div style="background-color: #ffffff; color: #1f2937; border-radius: 10px; border-top-left-radius: 3px; padding: 10px; box-shadow: 0 1px 2px rgba(0,0,0,0.08); font-size: 12px; line-height: 1.5;">
+                                @if (! empty($headerText))
+                                    <div class="font-bold text-xs pb-1 mb-1 border-b border-black/10">{{ $headerText }}</div>
+                                @elseif ($campaign->media)
+                                    <div class="mb-2 p-2 rounded bg-emerald-50 border border-emerald-200 text-[0.68rem] text-emerald-800 flex items-center gap-1.5">
+                                        <i class="ti ti-paperclip"></i> {{ $campaign->media->original_name }}
+                                    </div>
+                                @endif
+
+                                <div class="whitespace-pre-line break-words">{{ $preview ?: 'Select a template and save variables to see the WhatsApp preview.' }}</div>
+
+                                @if (! empty($footerText))
+                                    <div class="text-[0.65rem] mt-1.5 pt-1 border-t border-black/5" style="color: #6b7280;">{{ $footerText }}</div>
+                                @endif
+
+                                <div class="flex items-center justify-end gap-1 text-[0.6rem] mt-1" style="color: #6b7280;">
+                                    <span>{{ now('Asia/Kolkata')->format('h:i a') }}</span>
+                                    <i class="ti ti-checks" style="color: #0ea5e9;"></i>
+                                </div>
+
+                                @if (! empty($templateButtons))
+                                    <div class="mt-2 pt-1.5 border-t border-black/10 space-y-1">
+                                        @foreach ($templateButtons as $btn)
+                                            <div class="text-center py-1 px-2 rounded text-xs font-semibold border"
+                                                 style="background-color: #f9fafb; color: #00a884; border-color: #e5e7eb;">
+                                                <i class="ti {{ ($btn['type'] ?? '') === 'URL' ? 'ti-external-link' : (($btn['type'] ?? '') === 'PHONE_NUMBER' ? 'ti-phone' : 'ti-arrow-back-up') }} text-xs"></i>
+                                                {{ $btn['text'] ?? 'Button' }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card bg-base-100 border border-base-300 sticky top-20">
                 <div class="card-body">
                     <h2 class="card-title text-base">6 · Launch</h2>

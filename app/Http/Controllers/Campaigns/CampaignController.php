@@ -62,7 +62,23 @@ class CampaignController extends Controller
         $this->authorize('view', $campaign);
 
         $campaign->load(['template', 'phoneNumber', 'media']);
-        $sampleContact = $this->audience->query($campaign)->first();
+        $sampleContact = $this->audience->query($campaign)->first() ?? Contact::query()->latest('id')->first();
+
+        $customFieldKeys = Contact::query()
+            ->whereNotNull('custom_fields')
+            ->latest('id')
+            ->limit(25)
+            ->pluck('custom_fields')
+            ->flatMap(fn ($cf) => is_array($cf) ? array_keys($cf) : [])
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        $templateComponents = collect($campaign->template?->components ?? []);
+        $headerComp = $templateComponents->firstWhere('type', 'HEADER');
+        $footerComp = $templateComponents->firstWhere('type', 'FOOTER');
+        $buttonsComp = $templateComponents->firstWhere('type', 'BUTTONS');
 
         return view('campaigns.edit', [
             'campaign' => $campaign,
@@ -70,9 +86,14 @@ class CampaignController extends Controller
             'templates' => WhatsappTemplate::query()->where('status', TemplateStatus::Approved->value)->orderBy('name')->get(),
             'groups' => ContactGroup::query()->withCount('contacts')->orderBy('name')->get(),
             'media' => Media::query()->latest()->get(),
+            'customFieldKeys' => $customFieldKeys,
+            'sampleContact' => $sampleContact,
             'audienceCount' => $campaign->template_id ? $this->audience->count($campaign) : 0,
             'placeholders' => count($this->renderer->render($campaign, null)),
             'preview' => $this->buildPreview($campaign, $sampleContact),
+            'headerText' => is_array($headerComp) && ($headerComp['format'] ?? '') === 'TEXT' ? ($headerComp['text'] ?? '') : '',
+            'footerText' => is_array($footerComp) ? ($footerComp['text'] ?? '') : '',
+            'templateButtons' => is_array($buttonsComp) ? ($buttonsComp['buttons'] ?? []) : [],
             'validationErrors' => $this->launcher->validate($campaign),
         ]);
     }
