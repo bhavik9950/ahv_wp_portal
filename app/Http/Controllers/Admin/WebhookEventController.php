@@ -74,8 +74,7 @@ class WebhookEventController extends Controller
             $digits = preg_replace('/\D+/', '', $search) ?: '';
             $eventsQuery->where(function ($q) use ($search, $digits): void {
                 $q->where('payload', 'like', "%{$search}%")
-                    ->orWhere('status', 'like', "%{$search}%")
-                    ->orWhere('error_message', 'like', "%{$search}%");
+                    ->orWhere('status', 'like', "%{$search}%");
                 if ($digits !== '' && $digits !== $search) {
                     $q->orWhere('payload', 'like', "%{$digits}%");
                 }
