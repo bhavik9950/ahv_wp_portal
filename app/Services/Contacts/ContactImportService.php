@@ -159,8 +159,22 @@ final class ContactImportService
             $seen[$e164] = true;
 
             if ($existing->has($e164)) {
+                $existingId = (string) $existing->get($e164);
+                $newCustom = $this->customFields($record, $map);
+                if ($newCustom !== [] || ! empty($row['name']) || ! empty($row['email'])) {
+                    $existingContact = Contact::query()->find($existingId);
+                    if ($existingContact) {
+                        $mergedCustom = array_merge($existingContact->custom_fields ?? [], $newCustom);
+                        $existingContact->forceFill([
+                            'name' => ! empty($row['name']) ? $row['name'] : $existingContact->name,
+                            'email' => ! empty($row['email']) ? $row['email'] : $existingContact->email,
+                            'custom_fields' => $mergedCustom,
+                        ])->save();
+                    }
+                }
+
                 if ($groupId !== null) {
-                    $existingGroupLinks[] = $existing->get($e164);
+                    $existingGroupLinks[] = $existingId;
                     if (count($existingGroupLinks) >= self::CHUNK) {
                         $imported += $this->linkExistingToGroup($groupId, $existingGroupLinks);
                         $existingGroupLinks = [];
