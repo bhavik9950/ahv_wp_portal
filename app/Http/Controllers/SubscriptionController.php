@@ -24,8 +24,17 @@ class SubscriptionController extends Controller
 
     public function index(): View
     {
-        $org = $this->current->resolve();
         $plans = $this->settings->billingPlans();
+
+        if (auth()->user()?->isSuperAdmin()) {
+            return view('admin.subscriptions.plans', [
+                'plans' => $plans,
+                'upiId' => $this->settings->billingUpiId(),
+                'bankDetails' => $this->settings->billingBankDetails(),
+            ]);
+        }
+
+        $org = $this->current->resolve();
         $upiId = $this->settings->billingUpiId();
         $bankDetails = $this->settings->billingBankDetails();
 

@@ -97,5 +97,62 @@ class AdminSubscriptionController extends Controller
             'message' => 'Billing and payment information updated successfully.',
         ]);
     }
+
+    public function savePlan(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'plan_key' => ['required', 'string', 'max:50', 'regex:/^[a-z0-9_]+$/'],
+            'label' => ['required', 'string', 'max:100'],
+            'price' => ['required', 'integer', 'min:0'],
+            'days' => ['nullable', 'integer', 'min:1', 'max:3650'],
+            'is_lifetime' => ['nullable', 'boolean'],
+            'description' => ['required', 'string', 'max:300'],
+        ]);
+
+        $plans = $this->settings->billingPlans();
+        $isLifetime = $request->boolean('is_lifetime');
+
+        $plans[$validated['plan_key']] = [
+            'label' => $validated['label'],
+            'price' => (int) $validated['price'],
+            'days' => $isLifetime ? null : (int) ($validated['days'] ?? 30),
+            'description' => $validated['description'],
+        ];
+
+        $this->settings->set('billing.plans', $plans);
+
+        return back()->with('flash_notify', [
+            'type' => 'success',
+            'message' => "Plan '{$validated['label']}' saved successfully.",
+        ]);
+    }
+
+    public function deletePlan(string $planKey): RedirectResponse
+    {
+        $plans = $this->settings->billingPlans();
+
+        if (! isset($plans[$planKey])) {
+            return back()->with('flash_notify', [
+                'type' => 'warning',
+                'message' => 'Plan not found.',
+            ]);
+        }
+
+        if (count($plans) <= 1) {
+            return back()->with('flash_notify', [
+                'type' => 'error',
+                'message' => 'At least one subscription plan must remain active for clients.',
+            ]);
+        }
+
+        $label = $plans[$planKey]['label'] ?? $planKey;
+        unset($plans[$planKey]);
+        $this->settings->set('billing.plans', $plans);
+
+        return back()->with('flash_notify', [
+            'type' => 'success',
+            'message' => "Plan '{$label}' removed.",
+        ]);
+    }
 }
 

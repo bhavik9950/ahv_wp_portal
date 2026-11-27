@@ -171,9 +171,13 @@ class Organization extends Model
 
     public function extendSubscription(string $plan, ?int $days = null): void
     {
-        if ($plan === 'lifetime') {
+        $plans = app(\App\Services\System\SystemSettings::class)->billingPlans();
+        $planConfig = $plans[$plan] ?? null;
+        $isLifetimePlan = $plan === 'lifetime' || ($planConfig !== null && ($planConfig['days'] ?? 30) === null);
+
+        if ($isLifetimePlan) {
             $this->forceFill([
-                'plan' => 'lifetime',
+                'plan' => $plan,
                 'is_lifetime' => true,
                 'subscription_expires_at' => null,
             ])->save();
@@ -181,12 +185,12 @@ class Organization extends Model
             return;
         }
 
-        $addDays = $days ?? match ($plan) {
+        $addDays = $days ?? ($planConfig['days'] ?? match ($plan) {
             'monthly' => 30,
             'half_yearly' => 180,
             'yearly' => 365,
             default => 30,
-        };
+        });
 
         $base = ($this->subscription_expires_at && $this->subscription_expires_at->isFuture())
             ? $this->subscription_expires_at

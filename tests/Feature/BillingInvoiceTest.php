@@ -242,3 +242,36 @@ it('allows a tenant to download their own invoice PDF but blocks other tenants',
         ->get(route('subscription.invoices.pdf', $invoiceB))
         ->assertForbidden();
 });
+
+it('shows Manage Client Subscription Plans to super admin and allows adding, editing, and deleting plans', function () {
+    $admin = makeSuperAdmin();
+
+    // Super admin sees plan management instead of "Choose Plan"
+    $this->actingAs($admin)
+        ->get(route('subscription.index'))
+        ->assertOk()
+        ->assertSee('Client Subscription Plans')
+        ->assertDontSee('Choose Plan');
+
+    // Add custom quarterly plan
+    $this->actingAs($admin)
+        ->post(route('admin.subscriptions.plans.save'), [
+            'plan_key' => 'quarterly',
+            'label' => '3 Months Access',
+            'price' => 1799,
+            'days' => 90,
+            'description' => 'Quarterly plan for growing clients.',
+        ])
+        ->assertRedirect();
+
+    $plans = app(\App\Services\System\SystemSettings::class)->billingPlans();
+    expect($plans)->toHaveKey('quarterly')
+        ->and($plans['quarterly']['price'])->toBe(1799);
+
+    // Delete quarterly plan
+    $this->actingAs($admin)
+        ->delete(route('admin.subscriptions.plans.delete', 'quarterly'))
+        ->assertRedirect();
+
+    expect(app(\App\Services\System\SystemSettings::class)->billingPlans())->not->toHaveKey('quarterly');
+});

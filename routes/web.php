@@ -231,6 +231,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
         Route::post('subscriptions/{subscriptionRequest}/approve', [AdminSubscriptionController::class, 'approve'])->name('subscriptions.approve');
         Route::post('subscriptions/{subscriptionRequest}/reject', [AdminSubscriptionController::class, 'reject'])->name('subscriptions.reject');
         Route::post('subscriptions/settings', [AdminSubscriptionController::class, 'updateSettings'])->name('subscriptions.settings');
+        Route::post('subscriptions/plans', [AdminSubscriptionController::class, 'savePlan'])->name('subscriptions.plans.save');
+        Route::delete('subscriptions/plans/{planKey}', [AdminSubscriptionController::class, 'deletePlan'])->name('subscriptions.plans.delete');
 
         // Invoices & Billing
         Route::get('invoices', [AdminInvoiceController::class, 'index'])->name('invoices.index');
