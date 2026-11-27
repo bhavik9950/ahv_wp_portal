@@ -40,6 +40,7 @@ class UpdateCampaignRequest extends FormRequest
             'audience_filter.contact_ids.*' => ['string', Scoped::exists('contacts')],
             'audience_filter.exclude_group_ids' => ['nullable', 'array'],
             'audience_filter.exclude_group_ids.*' => ['string', Scoped::exists('contact_groups')],
+            'audience_filter.exclude_already_sent_template' => ['nullable', 'boolean'],
             'audience_filter.opt_in' => ['nullable', 'in:opted_in,any'],
         ];
     }

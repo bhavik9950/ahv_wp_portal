@@ -165,3 +165,37 @@ it('dispatch-due command starts a scheduled campaign whose time has come', funct
 
     expect($campaign->fresh()->status)->toBe(CampaignStatus::Completed);
 });
+
+it('excludes contacts who already received the same template successfully when exclude_already_sent_template is enabled', function () {
+    [$campaign] = campaignSetup();
+    $alreadySent = Contact::factory()->for($campaign->organization)->create();
+    $newContact = Contact::factory()->for($campaign->organization)->create();
+
+    $msg = new \App\Models\Message([
+        'contact_id' => $alreadySent->getKey(),
+        'template_id' => $campaign->template_id,
+        'direction' => 'outbound',
+        'to_phone' => $alreadySent->phone_e164,
+        'to_phone_hash' => $alreadySent->phone_hash,
+        'type' => \App\Enums\MessageType::Template,
+        'idempotency_key' => 'prev-sent-1',
+    ]);
+    $msg->forceFill([
+        'organization_id' => $campaign->organization_id,
+        'status' => \App\Enums\MessageStatus::Delivered,
+    ])->save();
+
+    $campaign->forceFill([
+        'audience_filter' => [
+            'type' => 'all',
+            'exclude_already_sent_template' => true,
+        ],
+    ])->save();
+
+    $eligibleIds = app(\App\Services\Campaigns\CampaignAudienceResolver::class)
+        ->query($campaign)
+        ->pluck('id')
+        ->all();
+
+    expect($eligibleIds)->toBe([$newContact->getKey()]);
+});

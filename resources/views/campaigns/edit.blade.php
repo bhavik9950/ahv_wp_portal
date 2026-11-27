@@ -134,6 +134,19 @@
                         </div>
                     </div>
 
+                    <div class="pt-1">
+                        <label class="label cursor-pointer justify-start gap-2.5 p-2.5 rounded-lg border border-base-300 bg-base-200/40">
+                            <input type="hidden" name="audience_filter[exclude_already_sent_template]" value="0">
+                            <input type="checkbox" name="audience_filter[exclude_already_sent_template]" value="1"
+                                   class="checkbox checkbox-sm checkbox-primary"
+                                   @checked(! empty($af['exclude_already_sent_template']))>
+                            <div>
+                                <span class="label-text text-xs font-semibold">Skip contacts who already received this template</span>
+                                <span class="block text-[0.7rem] opacity-65">Prevents duplicate messages when you import new registrations later and re-run with the same template.</span>
+                            </div>
+                        </label>
+                    </div>
+
                     <div class="alert alert-info text-sm">
                         <i class="ti ti-users"></i>
                         <span>Eligible recipients now: <strong>{{ number_format($audienceCount) }}</strong>.

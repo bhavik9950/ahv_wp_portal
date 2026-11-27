@@ -67,6 +67,21 @@ final class CampaignAudienceResolver
             $query->whereDoesntHave('groups', fn ($g) => $g->whereKey($filter['exclude_group_ids']));
         }
 
+        if (! empty($filter['exclude_already_sent_template']) && $campaign->template_id) {
+            $query->whereNotExists(function ($sub) use ($campaign): void {
+                $sub->selectRaw('1')
+                    ->from('messages')
+                    ->whereColumn('messages.contact_id', 'contacts.id')
+                    ->where('messages.organization_id', $campaign->organization_id)
+                    ->where('messages.template_id', $campaign->template_id)
+                    ->whereIn('messages.status', [
+                        \App\Enums\MessageStatus::Sent->value,
+                        \App\Enums\MessageStatus::Delivered->value,
+                        \App\Enums\MessageStatus::Read->value,
+                    ]);
+            });
+        }
+
         return $query;
     }
 
