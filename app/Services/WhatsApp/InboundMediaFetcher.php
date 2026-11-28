@@ -30,6 +30,11 @@ final class InboundMediaFetcher
         if ($message->media_id !== null) {
             $existing = $message->media()->withoutGlobalScopes()->first();
             if ($existing instanceof Media) {
+                if ((int) $existing->organization_id !== (int) $org->getKey()) {
+                    $existing->forceFill(['organization_id' => $org->getKey()])->save();
+                }
+                $message->setRelation('media', $existing);
+
                 return $existing;
             }
         }

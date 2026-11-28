@@ -185,7 +185,12 @@ class MessageController extends Controller
             ->where(function ($q) use ($cleanPhone, $phone) {
                 $q->where('to_phone', $cleanPhone)->orWhere('to_phone', $phone);
             })
-            ->with(['media', 'contact', 'template', 'phoneNumber'])
+            ->with([
+                'media' => fn ($q) => $q->withoutGlobalScopes(),
+                'contact',
+                'template',
+                'phoneNumber',
+            ])
             ->orderBy('created_at')
             ->orderBy('id')
             ->get();
