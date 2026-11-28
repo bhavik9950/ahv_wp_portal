@@ -115,7 +115,7 @@ final class MediaLibrary
 
         $checksum = hash('sha256', $contents);
         $existing = Media::query()->where('checksum_sha256', $checksum)->first();
-        if ($existing !== null) {
+        if ($existing !== null && Storage::disk($existing->disk)->exists($existing->path)) {
             return $existing;
         }
 

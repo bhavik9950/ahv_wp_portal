@@ -9,6 +9,7 @@ use App\Models\Message;
 use App\Models\WhatsappBusinessAccount;
 use App\Models\WhatsappPhoneNumber;
 use App\Support\TenantContext;
+use Illuminate\Support\Facades\Storage;
 
 final class InboundMediaFetcher
 {
@@ -29,7 +30,7 @@ final class InboundMediaFetcher
 
         if ($message->media_id !== null) {
             $existing = $message->media()->withoutGlobalScopes()->first();
-            if ($existing instanceof Media) {
+            if ($existing instanceof Media && Storage::disk($existing->disk)->exists($existing->path)) {
                 if ((int) $existing->organization_id !== (int) $org->getKey()) {
                     $existing->forceFill(['organization_id' => $org->getKey()])->save();
                 }
