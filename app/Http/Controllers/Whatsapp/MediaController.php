@@ -45,15 +45,17 @@ class MediaController extends Controller
     }
 
     /** Serve a stored file for the local disk via a signed, time-limited URL. */
-    public function show(Request $request, Media $media): StreamedResponse
+    public function show(Request $request, string $media): StreamedResponse
     {
         abort_unless($request->hasValidSignature(), 403);
 
-        $disk = Storage::disk($media->disk);
-        abort_unless($disk->exists($media->path), 404);
+        $record = Media::query()->withoutGlobalScopes()->findOrFail($media);
 
-        return $disk->response($media->path, $media->original_name, [
-            'Content-Type' => $media->mime_type,
+        $disk = Storage::disk($record->disk);
+        abort_unless($disk->exists($record->path), 404);
+
+        return $disk->response($record->path, $record->original_name, [
+            'Content-Type' => $record->mime_type,
             'Cache-Control' => 'private, max-age=300',
         ]);
     }
