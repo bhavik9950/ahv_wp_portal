@@ -6,6 +6,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- Turbo Drive: cross-fade between pages (Chrome View Transitions API). --}}
     <meta name="view-transition" content="same-origin">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AHV Portal">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/images/pwa-192.png">
     <title>{{ $title ?? '' }}{{ isset($title) ? ' · ' : '' }}{{ config('app.name') }}</title>
     {{ $head ?? '' }}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -72,6 +78,10 @@
                     @endif
                 </div>
                 <div class="flex-none flex items-center gap-2">
+                    <button type="button" id="pwa-install-btn" class="btn btn-xs btn-outline btn-primary gap-1 hidden" title="Install Portal App">
+                        <i class="ti ti-download text-xs"></i>
+                        <span class="hidden sm:inline">Install App</span>
+                    </button>
                     {{-- Multi-Channel Suite Switcher --}}
                     @php
                         $isSmsSuite = request()->is('sms*');
@@ -209,5 +219,27 @@
     </div>
 
     <script type="application/json" id="flash-notify">@json(session('flash_notify'))</script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+        let deferredPwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPwaPrompt = e;
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.classList.remove('hidden');
+        });
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('#pwa-install-btn');
+            if (!btn || !deferredPwaPrompt) return;
+            deferredPwaPrompt.prompt();
+            await deferredPwaPrompt.userChoice;
+            deferredPwaPrompt = null;
+            btn.classList.add('hidden');
+        });
+    </script>
 </body>
 </html>

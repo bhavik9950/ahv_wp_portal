@@ -47,7 +47,7 @@
                                             <i class="ti ti-download text-sm"></i>
                                         </a>
                                     </div>
-                                @elseif ($m->hasDownloadableMedia())
+                                @elseif ($m->hasDownloadableMedia() && ! ($failedMediaIds[$m->getKey()] ?? false))
                                     <div class="flex items-center gap-2 opacity-70 py-2">
                                         <span class="loading loading-spinner loading-xs"></span> Downloading image…
                                     </div>
@@ -63,7 +63,7 @@
                                        class="text-xs {{ $m->direction === 'outbound' ? 'text-primary-content/80' : 'link' }}">
                                         <i class="ti ti-download"></i> Download
                                     </a>
-                                @elseif ($m->hasDownloadableMedia())
+                                @elseif ($m->hasDownloadableMedia() && ! ($failedMediaIds[$m->getKey()] ?? false))
                                     <div class="flex items-center gap-2 opacity-70 py-2">
                                         <span class="loading loading-spinner loading-xs"></span> Downloading video…
                                     </div>
@@ -82,7 +82,7 @@
                                             <i class="ti ti-download"></i>
                                         </a>
                                     </div>
-                                @elseif ($m->hasDownloadableMedia())
+                                @elseif ($m->hasDownloadableMedia() && ! ($failedMediaIds[$m->getKey()] ?? false))
                                     <div class="flex items-center gap-2 opacity-70 py-2">
                                         <span class="loading loading-spinner loading-xs"></span> Downloading voice message…
                                     </div>
@@ -98,7 +98,7 @@
                                         <span class="truncate">{{ $m->media->original_name }}</span>
                                         <i class="ti ti-download text-sm opacity-70"></i>
                                     </a>
-                                @elseif ($m->hasDownloadableMedia())
+                                @elseif ($m->hasDownloadableMedia() && ! ($failedMediaIds[$m->getKey()] ?? false))
                                     <div class="flex items-center gap-2 opacity-70 py-2">
                                         <span class="loading loading-spinner loading-xs"></span> Downloading document…
                                     </div>

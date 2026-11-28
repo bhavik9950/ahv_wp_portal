@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Models\Message;
-use App\Models\WhatsappBusinessAccount;
-use App\Services\WhatsApp\MediaLibrary;
-use App\Services\WhatsApp\WhatsAppManager;
-use App\Support\TenantContext;
+use App\Services\WhatsApp\InboundMediaFetcher;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -36,35 +33,18 @@ class DownloadInboundMediaJob implements ShouldQueue
 
     public function __construct(public string $messageId) {}
 
-    public function handle(WhatsAppManager $manager, MediaLibrary $mediaLibrary, TenantContext $tenant): void
+    public function handle(InboundMediaFetcher $fetcher): void
     {
         $message = Message::query()->withoutGlobalScopes()->find($this->messageId);
         if ($message === null || $message->media_id !== null || ! $message->hasDownloadableMedia()) {
             return;
         }
 
-        $tenant->set($message->organization()->firstOrFail());
-
-        $account = $message->phoneNumber?->businessAccount;
-        if (! $account instanceof WhatsappBusinessAccount) {
-            return;
-        }
-
-        $mediaId = $message->metaMediaId();
-        if ($mediaId === null) {
-            return;
-        }
-
         try {
-            $creds = $manager->credentialsFor($account, $message->phoneNumber);
-            $file = $manager->driver()->downloadMedia($creds, $mediaId);
-            $media = $mediaLibrary->storeRaw($file['contents'], $file['mime_type'], "{$mediaId}");
-
-            $message->forceFill(['media_id' => $media->getKey()])->save();
+            $fetcher->fetch($message);
         } catch (Throwable $e) {
             // Non-fatal: the message itself is already stored; the chat view
-            // just falls back to "media unavailable". Let the retry/backoff
-            // above absorb transient Graph API errors.
+            // will retry on demand or fall back to "media unavailable".
             report($e);
 
             throw $e;

@@ -13,6 +13,7 @@ use App\Models\WhatsappPhoneNumber;
 use App\Models\WhatsappTemplate;
 use App\Services\WhatsApp\Data\OutboundMessage;
 use App\Services\WhatsApp\Data\Recipient;
+use App\Services\WhatsApp\InboundMediaFetcher;
 use App\Services\WhatsApp\MediaLibrary;
 use App\Services\WhatsApp\OutboundMessageService;
 use Illuminate\Http\RedirectResponse;
@@ -174,7 +175,7 @@ class MessageController extends Controller
     }
 
     /** One phone number's full history rendered as a WhatsApp-style chat thread. */
-    public function conversation(string $phone, MediaLibrary $mediaLibrary): View
+    public function conversation(string $phone, MediaLibrary $mediaLibrary, InboundMediaFetcher $mediaFetcher): View
     {
         $this->authorize('viewAny', Message::class);
 
@@ -191,8 +192,18 @@ class MessageController extends Controller
 
         abort_if($messages->isEmpty(), 404);
 
-        $mediaUrls = $messages->mapWithKeys(function (Message $m) use ($mediaLibrary): array {
+        $failedMediaIds = [];
+        $mediaUrls = $messages->mapWithKeys(function (Message $m) use ($mediaLibrary, $mediaFetcher, &$failedMediaIds): array {
             $media = $m->media;
+
+            if ($media === null && $m->hasDownloadableMedia()) {
+                try {
+                    $media = $mediaFetcher->fetch($m);
+                } catch (\Throwable $e) {
+                    report($e);
+                    $failedMediaIds[$m->getKey()] = true;
+                }
+            }
 
             return $media instanceof Media ? [$m->getKey() => $mediaLibrary->temporaryUrl($media)] : [];
         });
@@ -215,6 +226,7 @@ class MessageController extends Controller
             'contact' => $messages->last(fn (Message $m) => $m->contact !== null)?->contact,
             'messages' => $messages,
             'mediaUrls' => $mediaUrls,
+            'failedMediaIds' => $failedMediaIds,
             'latestInbound' => $latestInbound,
             'windowExpiresAt' => $windowExpiresAt,
             'isWindowActive' => $isWindowActive,
