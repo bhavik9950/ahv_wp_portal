@@ -7,6 +7,7 @@ namespace App\Services\WhatsApp;
 use App\Models\Media;
 use App\Models\Message;
 use App\Models\WhatsappBusinessAccount;
+use App\Models\WhatsappPhoneNumber;
 use App\Support\TenantContext;
 
 final class InboundMediaFetcher
@@ -34,8 +35,18 @@ final class InboundMediaFetcher
 
         $this->tenant->set($org);
 
-        $phoneNumber = $message->phoneNumber()->withoutGlobalScopes()->first();
-        $account = $phoneNumber?->businessAccount()->withoutGlobalScopes()->first();
+        $phoneNumber = $message->phoneNumber()->withoutGlobalScopes()->first()
+            ?? WhatsappPhoneNumber::query()->withoutGlobalScopes()
+                ->where('organization_id', $org->getKey())
+                ->orderByDesc('is_default')
+                ->first();
+
+        $account = $phoneNumber?->businessAccount()->withoutGlobalScopes()->first()
+            ?? WhatsappBusinessAccount::query()->withoutGlobalScopes()
+                ->where('organization_id', $org->getKey())
+                ->orderByDesc('is_active')
+                ->first();
+
         if (! $account instanceof WhatsappBusinessAccount) {
             return null;
         }

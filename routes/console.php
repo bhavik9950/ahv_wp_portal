@@ -24,3 +24,4 @@ Schedule::command('voice:dispatch-due')->everyMinute()->withoutOverlapping();
 Schedule::job(new PollVoiceReportsJob, 'default')->everyTwoMinutes()->withoutOverlapping();
 
 Schedule::command('queue:prune-failed --hours=168')->daily();
+Schedule::command('logs:prune --days=3 --max-mb=2')->daily();

@@ -201,6 +201,9 @@ class MessageController extends Controller
                     $media = $mediaFetcher->fetch($m);
                 } catch (\Throwable $e) {
                     report($e);
+                }
+
+                if (! $media instanceof Media) {
                     $failedMediaIds[$m->getKey()] = true;
                 }
             }

@@ -218,6 +218,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     Route::prefix('admin')->name('admin.')->middleware('super-admin')->group(function () {
         Route::get('health', [HealthController::class, 'show'])->name('health');
+        Route::post('health/clear-logs', [HealthController::class, 'clearLogs'])->name('health.clear-logs');
 
         Route::get('controls', [SystemControlController::class, 'index'])->name('controls');
         Route::post('controls/sending', [SystemControlController::class, 'toggleSending'])->name('controls.sending');
