@@ -20,20 +20,23 @@ final class InboundMediaFetcher
 
     public function fetch(Message $message): ?Media
     {
+        $org = $message->organization()->first();
+        if ($org === null) {
+            throw new \RuntimeException("Message {$message->getKey()} has no organization.");
+        }
+
+        $this->tenant->set($org);
+
         if ($message->media_id !== null) {
-            return $message->media()->first();
+            $existing = $message->media()->withoutGlobalScopes()->first();
+            if ($existing instanceof Media) {
+                return $existing;
+            }
         }
 
         if (! $message->hasDownloadableMedia()) {
             return null;
         }
-
-        $org = $message->organization()->first();
-        if ($org === null) {
-            return null;
-        }
-
-        $this->tenant->set($org);
 
         $phoneNumber = $message->phoneNumber()->withoutGlobalScopes()->first()
             ?? WhatsappPhoneNumber::query()->withoutGlobalScopes()
@@ -48,7 +51,7 @@ final class InboundMediaFetcher
                 ->first();
 
         if (! $account instanceof WhatsappBusinessAccount) {
-            return null;
+            throw new \RuntimeException("No WhatsApp Business Account found for organization {$org->getKey()}.");
         }
 
         $mediaId = $message->metaMediaId();
